@@ -1,9 +1,5 @@
-﻿mod home_page;
 mod about_page;
+mod home_page;
 mod provider_entry;
 
-pub use self::{
-    home_page::*,
-    about_page::*,
-    provider_entry::*,
-};
+pub use self::{about_page::*, home_page::*, provider_entry::*};

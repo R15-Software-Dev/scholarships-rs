@@ -1,4 +1,4 @@
-﻿use leptos::prelude::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn ProviderEntry() -> impl IntoView {

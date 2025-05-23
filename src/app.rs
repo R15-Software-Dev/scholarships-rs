@@ -5,7 +5,7 @@ use leptos_router::{
     StaticSegment,
 };
 
-use crate::pages::{HomePage, AboutPage, ProviderEntry};
+use crate::pages::{AboutPage, HomePage, ProviderEntry};
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {

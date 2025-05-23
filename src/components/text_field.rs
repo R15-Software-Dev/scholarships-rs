@@ -1,10 +1,10 @@
-﻿use leptos::prelude::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn OutlinedTextField(
     #[prop(default = String::from(""))] placeholder: String,
     #[prop(default = RwSignal::new("".to_string()))] value: RwSignal<String>,
-    #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>
+    #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
 ) -> impl IntoView {
     view! (
         <input
