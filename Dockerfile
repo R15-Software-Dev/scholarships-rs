@@ -1,25 +1,28 @@
 ﻿FROM rust:1.86 AS builder
 
 # Install node for tailwind capability
-RUN apt-get update -y && apt-get install -y --no-install-recommends clang libc6 nodejs npm
-RUN node -v
-RUN npm -v
-
+RUN apt-get update -y && apt-get install -y --no-install-recommends clang libc6
 RUN wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz
 RUN tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz
 RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 
 RUN cargo binstall cargo-leptos -y
-
 RUN rustup target add wasm32-unknown-unknown
 
+# Set up working directory
 RUN mkdir -p /app
 WORKDIR /app
 COPY . .
 
-RUN npm install tailwindcss @tailwindcss/cli
-
-RUN cargo leptos build --release -vv
+# Setup fnm and build with leptos
+RUN cargo binstall fnm -y \
+    && fnm --version \
+    && eval "$(fnm env)" \
+    && fnm install 20 \
+    && fnm use 20 \
+    && node -v \
+    && npm install tailwindcss @tailwindcss/cli \
+    && cargo leptos build --release -vv
 
 # Start second phase of build - install ca-certs and copy all build outputs from previous step into a
 # Debian image in the /app directory.

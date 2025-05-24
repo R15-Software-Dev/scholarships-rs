@@ -1,0 +1,9 @@
+﻿
+services:
+  leptos-watch:
+    image: rust:1.86
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/app
+    command: cargo leptos watch
