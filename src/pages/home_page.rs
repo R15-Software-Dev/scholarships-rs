@@ -3,54 +3,106 @@ use leptos::prelude::*;
 use leptos::leptos_dom::logging::console_log;
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "ssr")]
+use aws_sdk_dynamodb::{
+    Client,
+    types::AttributeValue,
+    error::ProvideErrorMetadata
+};
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct StudentSubmission {
+pub struct StudentInfo {
     first_name: String,
     last_name: String
 }
 
+#[server(GetSubmission)]
+pub async fn get_submission(id: String)
+    -> Result<StudentInfo, ServerFnError> {
+
+    let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
+    let dbclient = Client::new(&config);
+
+    console_log(format!("Getting values from API using key {}", id).as_str());
+
+    match dbclient
+        .get_item()
+        .table_name("student-applications")
+        .key("Email", AttributeValue::S(id))
+        .send()
+        .await
+    {
+        Ok(output) => {
+            console_log("Found submission with passed key.");
+            let item = output.item.unwrap();
+            let first_name = item.get("studentFirstName").unwrap().as_s().unwrap().clone();
+            let last_name = item.get("studentLastName").unwrap().as_s().unwrap().clone();
+            Ok(StudentInfo {
+                first_name,
+                last_name
+            })
+        }
+        Err(err) => {
+            let msg = err.message().unwrap_or("Unknown error");
+            console_log(format!("Exception while getting submission information: {}", msg).as_str());
+            Err(ServerFnError::new(msg))
+        }
+    }
+}
+
 #[server(CreateSampleSubmission)]
-pub async fn create_sample_submission() -> Result<StudentSubmission, ServerFnError> {
+pub async fn create_sample_submission(student_info: StudentInfo) -> Result<(), ServerFnError> {
     use aws_sdk_dynamodb::{types::AttributeValue, Client};
 
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
     let dbclient = Client::new(&config);
 
-    console_log("Getting values from API");
+    console_log(format!("Creating sample submission with name {} {}", student_info.first_name, student_info.last_name).as_str());
+
+    let submission_id = String::from("testing_student");
 
     match dbclient
-        .get_item()
+        .update_item()
         .table_name("student-applications")
-        .key("Email", AttributeValue::S("google_113247439743075864879".to_string()))
+        .key("Email", AttributeValue::S(submission_id))
+        .expression_attribute_values(":studentFirstName", AttributeValue::S(student_info.first_name))
+        .expression_attribute_values(":studentLastName", AttributeValue::S(student_info.last_name))
+        .expression_attribute_names("#studentFirstName", "studentFirstName")
+        .expression_attribute_names("#studentLastName", "studentLastName")
+        .update_expression("SET #studentFirstName = :studentFirstName, #studentLastName = :studentLastName")
         .send()
         .await
     {
-        Ok(output) => {
-            println!("Found submission with passed key.");
-            let item = output.item.unwrap();
-            let first_name = item.get("studentFirstName").unwrap().as_s().unwrap().clone();
-            let last_name = item.get("studentLastName").unwrap().as_s().unwrap().clone();
-            Ok(StudentSubmission {
-                first_name: first_name,
-                last_name: last_name
-            })
-        }
-        Err(e) => Err(ServerFnError::new("Couldn't find a submission with that ID."))
+        Ok(_) => Ok(()),
+        Err(err) => Err(ServerFnError::new(err.into_service_error().to_string()))
     }
 }
 
 #[component]
 pub fn HomePage() -> impl IntoView {
+    let sample_id = RwSignal::new("google_113247439743075864879".to_string());
     // Creates a reactive value to update the button
     let count = RwSignal::new(0);
     let elements_disabled = RwSignal::new(false);
-    let server_resource = Resource::new(|| {}, |_| async {
-        create_sample_submission().await.unwrap()
-    });
+
+    let server_resource = Resource::new(
+        move || { sample_id.get() },
+        async |id| {
+            get_submission(id).await.unwrap_or_else(|e| {
+                console_log(e.to_string().as_str());
+                StudentInfo {
+                    first_name: String::from("Error"),
+                    last_name: String::from("")
+                }
+            })
+        }
+    );
     let on_click = move |_| {
         *count.write() += 1;
         *elements_disabled.write() = count.get() == 10;
     };
+    let submit_action = ServerAction::<CreateSampleSubmission>::new();
+
 
     view! {
         <h1>"Welcome to Leptos!"</h1>
@@ -64,9 +116,30 @@ pub fn HomePage() -> impl IntoView {
                 }}
             </Suspense>
         </p>
-        <OutlinedTextField
-            placeholder="Testing...".to_string()
-            disabled={elements_disabled} />
-        <ActionButton on:click=on_click disabled={elements_disabled}>"Click Me: " {count}</ActionButton>
+        <ActionForm action=submit_action>
+            <div>
+                <OutlinedTextField
+                    label="First Name".into()
+                    placeholder="John".into()
+                    disabled={elements_disabled}
+                    name="student_info[first_name]".into() />
+            </div>
+            <div>
+                <OutlinedTextField
+                    label="Last Name".into()
+                    placeholder="Smith".into()
+                    disabled={elements_disabled}
+                    name="student_info[last_name]".into() />
+            </div>
+            <div>
+                <ActionButton
+                    on:click=on_click
+                    disabled={elements_disabled}
+                    button_type="submit".to_string()
+                >
+                    "Submit"
+                </ActionButton>
+            </div>
+        </ActionForm>
     }
 }
