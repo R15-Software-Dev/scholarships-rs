@@ -6,7 +6,7 @@ pub fn OutlinedTextField(
     #[prop(default = RwSignal::new("".to_string()))] value: RwSignal<String>,
     #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
     #[prop(default = String::from(""))] name: String,
-    #[prop(default = String::from(""))] label: String
+    #[prop(default = String::from(""))] label: String,
 ) -> impl IntoView {
     view! (
         <label>
@@ -16,7 +16,7 @@ pub fn OutlinedTextField(
                 class=(["border-red-700"], move || !disabled.get())
                 class=(["border-gray-600", "pointer-events-none"], move || disabled.get())
                 r#type="text"
-                disabled={disabled.get()}
+                disabled={move || disabled.get()}
                 placeholder={placeholder}
                 prop:name=name
                 bind:value=value  // This is a two-way binding - it is allowed to read *and* write.
