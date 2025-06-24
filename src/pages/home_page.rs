@@ -1,16 +1,10 @@
 use crate::components::{ActionButton, OutlinedTextField};
+use crate::common::StudentInfo;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
-use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{error::ProvideErrorMetadata, types::AttributeValue, Client};
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct StudentInfo {
-    first_name: String,
-    last_name: String,
-}
 
 #[server(GetSubmission, endpoint = "/get-submission")]
 pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {

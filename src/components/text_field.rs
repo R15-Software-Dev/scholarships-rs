@@ -12,7 +12,7 @@ pub fn OutlinedTextField(
         <label>
             { label }
             <input
-                class="flex-row border-2 m-1.5 p-1.5 rounded-md bg-transparent mt-6 relative transition-all duration-400"
+                class="border-2 m-1.5 p-1.5 rounded-md bg-transparent mt-6 relative transition-all duration-400"
                 class=(["border-red-700"], move || !disabled.get())
                 class=(["border-gray-600", "pointer-events-none"], move || disabled.get())
                 r#type="text"
