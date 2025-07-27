@@ -1,0 +1,3 @@
+brace_style = "PreferSameLine"
+indent_style = "Visual"
+tab_spaces = 4

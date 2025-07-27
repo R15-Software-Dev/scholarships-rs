@@ -1,5 +1,5 @@
+use crate::components::{MultiEntry, OutlinedTextField};
 use leptos::prelude::*;
-use crate::components::OutlinedTextField;
 
 #[component]
 pub fn ProviderEntry() -> impl IntoView {
@@ -11,6 +11,13 @@ pub fn ProviderEntry() -> impl IntoView {
                 placeholder = "Testing information...".into()
                 name = "testing_input".into()
                 label = "This is a testing question.".into()
+            />
+        </div>
+        <div>
+            <p>This is an example of the multientry element.</p>
+            <MultiEntry
+                nameMember="name".into()
+                infoMember="info".into()
             />
         </div>
     )
