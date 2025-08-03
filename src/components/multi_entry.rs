@@ -2,18 +2,56 @@ use std::collections::HashMap;
 
 use leptos::{leptos_dom::logging::console_log, prelude::*};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+use crate::components::ActionButton;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct MultiEntryData {
-    pub id: usize,
+    pub id: Uuid,
     pub data: HashMap<String, ValueType>,
 }
 
 impl MultiEntryData {
+    /// Creates a new MultiEntryData struct.
     pub fn new() -> Self {
         Self {
-            id: 0,
+            id: Uuid::new_v4(),
             data: HashMap::new(),
+        }
+    }
+}
+
+/// Contains all information required to display an entry in the MultiEntry component.
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct MultiEntryMember {
+    /// The name of the member, used for display only.
+    pub display_name: String,
+    /// The actual name of the member, used to get the data from an Entry struct.
+    pub member_name: String
+}
+
+impl MultiEntryMember {
+    /// Creates a new MultiEntryMember struct.
+    pub fn new() -> Self {
+        Self {
+            display_name: String::new(),
+            member_name: String::new()
+        }
+    }
+
+    /// Creates a new MultiEntryMember struct with the specified information.
+    pub fn from(display_name: String, member_name: String) -> Self {
+        Self {
+            display_name,
+            member_name
+        }
+    }
+
+    /// Creates a new MultiEntryMember struct with the specified information. Uses string slices.
+    pub fn from_str(display_name: &str, member_name: &str) -> Self {
+        Self {
+            display_name: display_name.into(),
+            member_name: member_name.into()
         }
     }
 }
@@ -40,66 +78,80 @@ impl ValueType {
 pub fn Entry(
     /// The data for this entry.
     #[prop()]
-    entryData: MultiEntryData,
+    entry_data: MultiEntryData,
     /// The main display member for this entry.
     #[prop()]
-    nameMember: String,
+    name_member: Signal<MultiEntryMember>,
     /// The secondary display member for this entry.
     #[prop()]
-    infoMember: String,
+    info_member: Signal<MultiEntryMember>,
+    /// The child components of this Entry view.
+    #[prop()]
+    children: Children
 ) -> impl IntoView {
-    let nameData = entryData.data.get(&nameMember).unwrap();
-    let infoData = entryData.data.get(&infoMember).unwrap();
+    let nameData = entry_data.data.get(&name_member.get().member_name).unwrap();
+    let infoData = entry_data.data.get(&info_member.get().member_name).unwrap();
 
     view! {
-        <div>
-            <p>{nameData.as_string()}</p>
-            <p>{infoData.as_string()}</p>
+        // This div MUST have the same spacing CSS as the second-level header div
+        <div class="flex rounded-sm transition-shadow shadow-sm hover:shadow-lg/30 p-3 m-1">
+            <span class="flex-1">{nameData.as_string()}</span>
+            <span class="flex-1">{infoData.as_string()}</span>
         </div>
     }
 }
 
 #[component]
 pub fn MultiEntry(
+    /// The list of entries to use.
+    #[prop()]
+    entries: RwSignal<Vec<MultiEntryData>>,
     /// the main display member for each entry object.
     #[prop()]
-    nameMember: String,
+    name_member: Signal<MultiEntryMember>,
     /// The secondary display member for each entry object.
     #[prop()]
-    infoMember: String,
+    info_member: Signal<MultiEntryMember>
 ) -> impl IntoView {
-    let entries: Signal<Vec<MultiEntryData>> = Signal::from(vec![]);
-
-    let nameKey = nameMember.clone();
-    let infoKey = infoMember.clone();
-
+    // Creates an entry in the given entries list.
     let create_entry = move |_| {
-        console_log("Found button click");
         let mut new_entry = MultiEntryData::new();
-        new_entry.id = entries.get().len() as usize;
         new_entry
             .data
-            .insert(nameKey.clone(), ValueType::String(String::from("Testing")));
+            .insert(name_member.get().member_name, ValueType::String(String::from("Testing")));
         new_entry
             .data
-            .insert(infoKey.clone(), ValueType::Number(new_entry.id as i32));
-        entries.get().push(new_entry);
-        console_log(format!("{:?}", entries.get()).as_str());
+            .insert(info_member.get().member_name, ValueType::String(new_entry.id.to_string()));
+        entries.update(|entry_vec| entry_vec.push(new_entry));
     };
 
     view! {
-        <div>
-            // Entries will go here for right now.
-            <For
-                each = move || entries.get()
-                key = |entry: &MultiEntryData| entry.id
-                children = move |entry| view! {
-                    <Entry entryData=entry.clone() nameMember=nameMember.clone() infoMember=infoMember.clone()/>
-                }
-            />
+        <div class="flex-auto p-2 m-5">
+            // Header section
+            <div class="rounded-md bg-red-700">
+                // This div MUST have the same spacing CSS as the main entry div
+                <div class="flex bg-inherit p-3 m-1">
+                    <span class="flex-1 text-white font-bold">{name_member.get().display_name}</span>
+                    <span class="flex-1 text-white font-bold">{info_member.get().display_name}</span>
+                </div>
+            </div>
+            // Entry section
+            <div>
+                <For
+                    each = move || entries.get()
+                    key = |entry: &MultiEntryData| entry.id
+                    children = move |entry| view! {
+                        <Entry
+                            entry_data=entry.clone()
+                            name_member=name_member
+                            info_member=info_member
+                        />
+                    }
+                />
+            </div>
         </div>
-            <button on:click=create_entry>
+        <ActionButton on:click=create_entry>
             Add Entry
-        </button>
+        </ActionButton>
     }
 }

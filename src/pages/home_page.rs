@@ -37,7 +37,6 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
         }
         Err(err) => {
             let msg = err.message().unwrap_or("Unknown error");
-            // console_log(format!("Exception while getting submission information: {}", msg).as_str());
             Err(ServerFnError::new(msg))
         }
     }
@@ -141,7 +140,7 @@ pub fn HomePage() -> impl IntoView {
                 <ActionButton
                     on:click=on_click
                     disabled={elements_disabled}
-                    button_type="submit".to_string()
+                    button_type="submit".into()
                 >
                     "Submit"
                 </ActionButton>

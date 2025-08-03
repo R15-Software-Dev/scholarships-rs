@@ -4,6 +4,5 @@ mod form_definition;
 
 pub use self::{
     loaner_user::*,
-    student_info::*,
-    form_definition::*
+    student_info::*
 };

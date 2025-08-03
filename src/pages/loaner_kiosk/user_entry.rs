@@ -22,7 +22,7 @@ pub fn UserEntry(
     /// A callback function used when the control has determined this stage is finished.
     #[prop()] mut on_submit: impl FnMut() + 'static,
     /// The global user record.
-    #[prop()] mut user: RwSignal<LoanerUser>,
+    #[prop()] user: RwSignal<LoanerUser>,
     /// Whether this control is shown. Required for use with CSS animations.
     #[prop()] shown: bool
 ) -> impl IntoView {
