@@ -1,23 +1,20 @@
-﻿//! This defines the base component of the Chromebook loaner kiosk application.
+//! This defines the base component of the Chromebook loaner kiosk application.
 //! There are going to be 3 definitive screens that the users are able to see and use:
 //!  - The username entry screen: users will enter their name and email.
 //!  - The action selection screen: users will be given a choice regarding their loaner status.
 //!  - The completion screen: users will be given a success message should their information save.
 //! Refer to each component's file for more information about how they work.
 
-use leptos::prelude::*;
+use super::{action_selection::ActionSelection, user_entry::UserEntry};
 use crate::common::LoanerUser;
-use super::{
-    user_entry::UserEntry,
-    action_selection::ActionSelection
-};
+use leptos::prelude::*;
 
 /// Used to keep track of the currently displayed controls.
 #[derive(Clone, Copy, PartialEq)]
 pub enum LoanerKioskState {
     UserEntry,
     ActionSelection,
-    Complete
+    Complete,
 }
 
 /// The base Chromebook loaner kiosk component.
@@ -27,7 +24,7 @@ pub enum LoanerKioskState {
 pub fn LoanerKiosk() -> impl IntoView {
     let current_state = RwSignal::new(LoanerKioskState::UserEntry);
     let user = RwSignal::new(LoanerUser::new());
-    
+
     view! {
         <div class="flex w-screen h-screen justify-center items-center">
             <UserEntry

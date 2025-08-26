@@ -1,7 +1,9 @@
+use leptos::prelude::event_target_value;
+
 pub mod app;
+mod common;
 mod components;
 mod pages;
-mod common;
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]

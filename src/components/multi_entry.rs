@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
+use crate::components::ActionButton;
 use leptos::{leptos_dom::logging::console_log, prelude::*};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::components::ActionButton;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct MultiEntryData {
@@ -27,7 +27,7 @@ pub struct MultiEntryMember {
     /// The name of the member, used for display only.
     pub display_name: String,
     /// The actual name of the member, used to get the data from an Entry struct.
-    pub member_name: String
+    pub member_name: String,
 }
 
 impl MultiEntryMember {
@@ -35,7 +35,7 @@ impl MultiEntryMember {
     pub fn new() -> Self {
         Self {
             display_name: String::new(),
-            member_name: String::new()
+            member_name: String::new(),
         }
     }
 
@@ -43,7 +43,7 @@ impl MultiEntryMember {
     pub fn from(display_name: String, member_name: String) -> Self {
         Self {
             display_name,
-            member_name
+            member_name,
         }
     }
 
@@ -51,7 +51,7 @@ impl MultiEntryMember {
     pub fn from_str(display_name: &str, member_name: &str) -> Self {
         Self {
             display_name: display_name.into(),
-            member_name: member_name.into()
+            member_name: member_name.into(),
         }
     }
 }
@@ -85,9 +85,6 @@ pub fn Entry(
     /// The secondary display member for this entry.
     #[prop()]
     info_member: Signal<MultiEntryMember>,
-    /// The child components of this Entry view.
-    #[prop()]
-    children: Children
 ) -> impl IntoView {
     let nameData = entry_data.data.get(&name_member.get().member_name).unwrap();
     let infoData = entry_data.data.get(&info_member.get().member_name).unwrap();
@@ -111,17 +108,19 @@ pub fn MultiEntry(
     name_member: Signal<MultiEntryMember>,
     /// The secondary display member for each entry object.
     #[prop()]
-    info_member: Signal<MultiEntryMember>
+    info_member: Signal<MultiEntryMember>,
 ) -> impl IntoView {
     // Creates an entry in the given entries list.
     let create_entry = move |_| {
         let mut new_entry = MultiEntryData::new();
-        new_entry
-            .data
-            .insert(name_member.get().member_name, ValueType::String(String::from("Testing")));
-        new_entry
-            .data
-            .insert(info_member.get().member_name, ValueType::String(new_entry.id.to_string()));
+        new_entry.data.insert(
+            name_member.get().member_name,
+            ValueType::String(String::from("Testing")),
+        );
+        new_entry.data.insert(
+            info_member.get().member_name,
+            ValueType::String(new_entry.id.to_string()),
+        );
         entries.update(|entry_vec| entry_vec.push(new_entry));
     };
 

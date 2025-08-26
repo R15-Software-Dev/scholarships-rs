@@ -1,9 +1,8 @@
 mod action_button;
-mod text_field;
+mod loading;
 mod multi_entry;
+mod text_field;
+mod select;
+mod checkboxes;
 
-pub use self::{
-    action_button::*,
-    text_field::*,
-    multi_entry::*
-};
+pub use self::{action_button::*, loading::*, multi_entry::*, text_field::*, select::*};

@@ -1,15 +1,14 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
-
 
 #[derive(Serialize, Deserialize)]
 struct FormDefinition {
-    sections: Vec<Section>
+    sections: Vec<Section>,
 }
 
 #[derive(Serialize, Deserialize)]
 struct Section {
-    questions: Vec<QuestionType>
+    questions: Vec<QuestionType>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -20,12 +19,10 @@ enum QuestionType {
     Dropdown,
     Checkbox,
     Radio,
-    Multi
+    Multi,
 }
 
-struct TextInput {
-    
-}
+struct TextInput {}
 
 #[derive(Serialize, Deserialize)]
 struct QuestionComponent {
@@ -34,5 +31,5 @@ struct QuestionComponent {
     placeholder: Option<String>,
 
     // Used in <select> and <checkbox> elements
-    options: Option<HashMap<String, String>>
+    options: Option<HashMap<String, String>>,
 }
