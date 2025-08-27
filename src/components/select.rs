@@ -16,12 +16,14 @@ pub fn Select(
             <label>
                 {label}
                 <select
-                    class="relative border-2 m-1.5 p-1.5 rounded-md"
-                    class=(["border-red-700", "bg-transparent"], move || !disabled.get())
-                    class=(["border-gray-600", "pointer-events-none", "bg-gray-600/33"], move || disabled.get())
+                    class="relative border-2 m-1.5 p-1.5 rounded-md
+                        transition-border duration-150
+                        border-red-700 bg-transparent
+                        disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
                     on:change:target=move |e| {
                         value.set(e.target().value());
-                    }>
+                    }
+                    disabled = disabled >
                     // This closure handles the display of the options.
                     {move || {
                         value_list.iter().map(

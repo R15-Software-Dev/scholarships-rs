@@ -4,7 +4,8 @@ use leptos::prelude::*;
 pub fn Checkbox(
     #[prop()] checked: Signal<bool>,
     #[prop(into)] on_change: Callback<(), ()>,
-    #[prop(into)] value: String
+    #[prop(into)] value: String,
+    #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
 ) -> impl IntoView {
     view! {
         <label for=value
@@ -20,14 +21,17 @@ pub fn Checkbox(
                 id={value.clone()}
                 on:change = move |_| on_change.run(())
                 prop:checked = checked
+                disabled = disabled
             />
             // This div displays the box for the checkbox, and applies some styling to the child
             // span element.
             <div
-                class="relative inline-block h-5 w-5 m-1 rounded-sm border border-gray-300 bg-white
+                class="relative inline-block h-5 w-5 m-1 mr-2 rounded-sm border border-gray-300 bg-white
                     transition-bg duration-150 peer-checked:bg-red-700 peer-checked:border-red-700
-                    [&>span]:opacity-0 peer-checked:[&>span]:opacity-100"
-            >  
+                    [&>span]:opacity-0 peer-checked:[&>span]:opacity-100
+                    peer-disabled:bg-gray-600/33 peer-disabled:border-gray-600
+                    peer-disabled:peer-checked:bg-gray-600"
+            >
                 // This span is the check icon. It is centered within the div and has a border on the bottom
                 // and right sides, which is then rotated to appear like a checkmark.
                 <span
@@ -44,7 +48,8 @@ pub fn Checkbox(
 #[component]
 pub fn CheckboxList(
     #[prop(default = RwSignal::new(vec![]))] selected: RwSignal<Vec<String>>,
-    #[prop()] items: Vec<String>
+    #[prop()] items: Vec<String>,
+    #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
 ) -> impl IntoView {
     view! {
         // Checkbox elements go in here. Each one will have a derived signal
@@ -53,39 +58,42 @@ pub fn CheckboxList(
 
         // Somehow create a derived signal??
 
-        {
-            items.into_iter().map(|item| {
-                let is_checked = {
-                    let item_name = item.clone();
-                    move || {
-                        // Check if this checkbox should be selected
-                        selected.get().contains(&item_name)
-                    }
-                };
-
-                let checked_signal = Signal::derive(is_checked);
-
-                view! {
-                    <Checkbox
-                        checked = checked_signal
-                        on_change = {
-                            // Clone this value to avoid moving it into the closure
-                            let item_name = item.clone();
-                            move || {
-                                selected.update(|list| {
-                                    // Check if the list contains this element. If so, remove it. If not, add it.
-                                    if let Some(index) = list.iter().position(|val| *val == item_name) {
-                                        list.remove(index);
-                                    } else {
-                                        list.push(item_name.clone());
-                                    }
-                                });
-                            }
+        <div>
+            {
+                items.into_iter().map(|item| {
+                    let is_checked = {
+                        let item_name = item.clone();
+                        move || {
+                            // Check if this checkbox should be selected
+                            selected.get().contains(&item_name)
                         }
-                        // The actual selected values are tracked by this element, not by the checkboxes themselves.
-                        value = item.clone() />
-                }
-            }).collect::<Vec<_>>()
-        }
+                    };
+
+                    let checked_signal = Signal::derive(is_checked);
+
+                    view! {
+                        <Checkbox
+                            checked = checked_signal
+                            on_change = {
+                                // Clone this value to avoid moving it into the closure
+                                let item_name = item.clone();
+                                move || {
+                                    selected.update(|list| {
+                                        // Check if the list contains this element. If so, remove it. If not, add it.
+                                        if let Some(index) = list.iter().position(|val| *val == item_name) {
+                                            list.remove(index);
+                                        } else {
+                                            list.push(item_name.clone());
+                                        }
+                                    });
+                                }
+                            }
+                            // The actual selected values are tracked by this element, not by the checkboxes themselves.
+                            value = item.clone()
+                            disabled = disabled />
+                    }
+                }).collect::<Vec<_>>()
+            }
+        </div>
     }
 }

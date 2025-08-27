@@ -22,19 +22,21 @@ where
     };
 
     view! (
-        <label>
-            { label }
-            <input
-                class="border-2 m-1.5 p-1.5 rounded-md bg-transparent mt-6 relative transition-all duration-400"
-                class=(["border-red-700", "bg-transparent"], move || !disabled.get())
-                class=(["border-gray-600", "pointer-events-none", "bg-gray-600/33"], move || disabled.get())
-                r#type={input_type}
-                disabled={disabled}
-                placeholder={placeholder}
-                prop:name=name
-                prop:value={move || value.get().to_string()}  // Sets the initial value.
-                on:input=on_input  // Sets the value on each input.
-            />
-        </label>
+        <div>
+            <label>
+                { label }
+                <input
+                    class="border-2 m-1.5 p-1.5 rounded-md bg-transparent mt-6 relative transition-all duration-150
+                        border-red-700 bg-transparent
+                        disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
+                    r#type={input_type}
+                    disabled={disabled}
+                    placeholder={placeholder}
+                    prop:name=name
+                    prop:value={move || value.get().to_string()}  // Sets the initial value.
+                    on:input=on_input  // Sets the value on each input.
+                />
+            </label>
+        </div>
     )
 }

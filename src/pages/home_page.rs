@@ -155,39 +155,43 @@ pub fn HomePage() -> impl IntoView {
                             let select_value = RwSignal::new(String::from("Math"));
                             let chk_select = RwSignal::new(vec!["Testing 2".into()]);
 
+                            let elements_disabled = RwSignal::new(false);
+
                             view! {
                                 <p>
                                     "Current user's reported full name from the API: "
                                     {reactive_info.first_name}" "{reactive_info.last_name}
                                 </p>
 
-                                <form>
-                                    <div>
+                                <form
+                                    class="flex flex-col gap-4">
+                                    <div class="flex flex-row gap-2">
                                         <OutlinedTextField
                                             label="First Name".into()
                                             placeholder="John".into()
+                                            disabled=elements_disabled
                                             value=reactive_info.first_name />
-                                    </div>
-                                    <div>
                                         <OutlinedTextField
                                             label="Last Name".into()
                                             placeholder="Smith".into()
+                                            disabled=elements_disabled
                                             value=reactive_info.last_name />
-                                    </div>
-                                    <div>
                                         <OutlinedTextField
                                             label="Testing".into()
                                             placeholder="Test".into()
+                                            disabled=elements_disabled
                                             value=reactive_info.math_sat_score />
                                     </div>
-                                    <Select
-                                        value_list = vec!["Math".into(), "English".into(), "Science".into()]
-                                        value = select_value
-                                    />
-                                    <div>
+                                    <div class="flex flex-row gap-2">
+                                        <Select
+                                            value_list = vec!["Math".into(), "English".into(), "Science".into()]
+                                            value = select_value
+                                            disabled=elements_disabled
+                                        />
                                         <CheckboxList
                                             selected = chk_select
-                                            items = vec!["Testing 1".into(), "Testing 2".into()] />
+                                            items = vec!["Testing 1".into(), "Testing 2".into()]
+                                            disabled=elements_disabled />
                                     </div>
                                     <div>
                                         <ActionButton
