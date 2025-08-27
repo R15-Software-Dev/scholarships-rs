@@ -4,7 +4,6 @@ use crate::components::{Loading, MultiEntry, MultiEntryData, MultiEntryMember, O
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated, LogoutLink};
-use serde::{Deserialize, Serialize};
 
 #[component]
 pub fn ProviderEntry() -> impl IntoView {

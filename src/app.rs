@@ -60,7 +60,7 @@ pub fn App() -> impl IntoView {
         // <AuthErrorContext><AuthErrorView/></AuthErrorContext>
 
         // sets the document title
-        <Title text="Welcome to Leptos"/>
+        <Title text="R15 Scholarship App DEV"/>
 
         // content for this welcome page
         <Router>

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use aws_sdk_dynamodb::{error::ProvideErrorMetadata, types::AttributeValue, Client};
 use crate::app::Unauthenticated;
 use crate::common::{StudentInfo, StudentInfoReactive, UserClaims};
-use crate::components::{ActionButton, Loading, OutlinedTextField, Select};
+use crate::components::{ActionButton, Loading, OutlinedTextField, Select, CheckboxList};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
@@ -154,6 +154,7 @@ pub fn HomePage() -> impl IntoView {
                             let reactive_info = StudentInfoReactive::new(submission);
 
                             let select_value = RwSignal::new(String::from("Math"));
+                            let chk_select = RwSignal::new(vec!["Testing 2".into()]);
 
                             view! {
                                 <p>
@@ -185,8 +186,14 @@ pub fn HomePage() -> impl IntoView {
                                         value = select_value
                                     />
                                     <div>
+                                        <CheckboxList
+                                            selected = chk_select
+                                            items = vec!["Testing 1".into(), "Testing 2".into()] />
+                                    </div>
+                                    <div>
                                         <ActionButton
                                             on:click=move |_| {
+                                                console_log(format!("Found value {:?}", chk_select.get()).as_str());
                                                 submit_action.dispatch(CreateSampleSubmission {
                                                     student_info: reactive_info.capture(),
                                                     subject: user_claims.get().unwrap().claims.subject.clone()

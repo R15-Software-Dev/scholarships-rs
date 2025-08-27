@@ -1,1 +1,33 @@
 ﻿@import "tailwindcss";
+
+/* Check icon styling */
+.checkbox-icon:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    bottom: 50%;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+}
+
+/* Checkbox styling */
+.checkbox-box {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    border-radius: 2px;
+}
+
+/* 
+ * Checkbox selected styling.
+ * Selects the first checkbox-icon class after a checked input element within
+ * this checkbox-box.
+ */
+.checkbox-box input:checked ~ .checkbox-icon {
+    background-color: var(--color-red-700);  /* Use the tailwindcss variables */
+}
