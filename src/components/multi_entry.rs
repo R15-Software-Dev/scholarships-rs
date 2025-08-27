@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::components::ActionButton;
-use leptos::{leptos_dom::logging::console_log, prelude::*};
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -32,7 +32,7 @@ pub struct MultiEntryMember {
 
 impl MultiEntryMember {
     /// Creates a new MultiEntryMember struct.
-    pub fn new() -> Self {
+    pub fn _new() -> Self {
         Self {
             display_name: String::new(),
             member_name: String::new(),
@@ -40,7 +40,7 @@ impl MultiEntryMember {
     }
 
     /// Creates a new MultiEntryMember struct with the specified information.
-    pub fn from(display_name: String, member_name: String) -> Self {
+    pub fn _new_with_data(display_name: String, member_name: String) -> Self {
         Self {
             display_name,
             member_name,

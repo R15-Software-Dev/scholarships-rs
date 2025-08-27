@@ -1,5 +1,3 @@
-use leptos::prelude::event_target_value;
-
 pub mod app;
 mod common;
 mod components;

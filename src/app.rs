@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
 use leptos_oidc::{
-    Auth, AuthLoaded, AuthParameters, AuthSignal, Authenticated, Challenge, LoginLink, LogoutLink,
+    Auth, AuthParameters, AuthSignal, Challenge, LoginLink,
 };
 use leptos_router::{
     components::{Route, Router, Routes},

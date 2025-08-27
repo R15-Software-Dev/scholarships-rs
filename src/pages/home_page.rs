@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{error::ProvideErrorMetadata, types::AttributeValue, Client};
 use crate::app::Unauthenticated;
