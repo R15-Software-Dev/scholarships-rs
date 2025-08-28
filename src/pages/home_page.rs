@@ -197,13 +197,15 @@ pub fn HomePage() -> impl IntoView {
                                     </Row>
                                     <Row>
                                         <Select
-                                            value_list = vec!["Math".into(), "English".into(), "Science".into()]
+                                            value_list = vec!["Math", "English", "Science"]
+                                                .into_iter().map(|s| s.into()).collect()
                                             value = select_value
                                             disabled=elements_disabled
                                         />
                                         <CheckboxList
                                             selected = chk_select
-                                            items = vec!["Testing 1".into(), "Testing 2".into()]
+                                            items = vec!["Testing 1", "Testing 2"]
+                                                .into_iter().map(|s| s.into()).collect()
                                             disabled=elements_disabled />
                                     </Row>
                                     <Row>
