@@ -1,4 +1,4 @@
-﻿use leptos::prelude::*;
+use leptos::prelude::*;
 
 /// A custom-styled select input.
 ///

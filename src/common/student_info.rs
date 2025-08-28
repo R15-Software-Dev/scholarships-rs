@@ -6,4 +6,5 @@ pub struct StudentInfo {
     pub first_name: String,
     pub last_name: String,
     pub math_sat_score: i32,
+    pub student_email: String,
 }

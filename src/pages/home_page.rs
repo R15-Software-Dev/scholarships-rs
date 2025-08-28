@@ -2,7 +2,7 @@
 use aws_sdk_dynamodb::{error::ProvideErrorMetadata, types::AttributeValue, Client};
 use crate::app::Unauthenticated;
 use crate::common::{StudentInfo, StudentInfoReactive, UserClaims};
-use crate::components::{ActionButton, Loading, OutlinedTextField, Select, CheckboxList};
+use crate::components::{ActionButton, Loading, OutlinedTextField, Select, CheckboxList, Panel, Row};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
@@ -42,12 +42,19 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
                 .map(|n| n.parse::<i32>().unwrap_or(0))
                 .unwrap_or_default();
 
+            let student_email = item
+                .get("studentEmail")
+                .and_then(|attr| attr.as_s().ok())
+                .map(|s| s.to_owned())
+                .unwrap_or_default();
+
             console_log(format!("Got values from API: {} {}", first_name, last_name).as_str());
 
             Ok(StudentInfo {
                 first_name,
                 last_name,
                 math_sat_score,
+                student_email,
             })
         }
         Err(err) => {
@@ -130,14 +137,16 @@ pub fn HomePage() -> impl IntoView {
                 console_log(e.to_string().as_str());
                 StudentInfo {
                     first_name: String::from("Error"),
-                    last_name: String::from(""),
+                    last_name: String::new(),
                     math_sat_score: 0,
+                    student_email: String::new()
                 }
             }),
             None => StudentInfo {
                 first_name: String::new(),
                 last_name: String::new(),
                 math_sat_score: 0,
+                student_email: String::new()
             },
         },
     );
@@ -158,31 +167,35 @@ pub fn HomePage() -> impl IntoView {
                             let elements_disabled = RwSignal::new(false);
 
                             view! {
-                                <p>
-                                    "Current user's reported full name from the API: "
-                                    {reactive_info.first_name}" "{reactive_info.last_name}
-                                </p>
-
-                                <form
-                                    class="flex flex-col gap-4">
-                                    <div class="flex flex-row gap-2">
+                                <div class="flex flex-row">
+                                <Panel>
+                                    <p>"Testing paragraph! This panel should be the same size as the other."</p>
+                                </Panel>
+                                <Panel>
+                                    <Row>
+                                        <p>
+                                            "Current user's reported full name from the API: "
+                                            {reactive_info.first_name}" "{reactive_info.last_name}
+                                        </p>
+                                    </Row>
+                                    <Row>
                                         <OutlinedTextField
-                                            label="First Name".into()
-                                            placeholder="John".into()
+                                            label="First Name:"
+                                            placeholder="John"
                                             disabled=elements_disabled
                                             value=reactive_info.first_name />
                                         <OutlinedTextField
-                                            label="Last Name".into()
-                                            placeholder="Smith".into()
+                                            label="Last Name:"
+                                            placeholder="Smith"
                                             disabled=elements_disabled
                                             value=reactive_info.last_name />
                                         <OutlinedTextField
-                                            label="Testing".into()
-                                            placeholder="Test".into()
+                                            label="Contact Email"
+                                            placeholder="temp@region15.org"
                                             disabled=elements_disabled
-                                            value=reactive_info.math_sat_score />
-                                    </div>
-                                    <div class="flex flex-row gap-2">
+                                            value=reactive_info.student_email />
+                                    </Row>
+                                    <Row>
                                         <Select
                                             value_list = vec!["Math".into(), "English".into(), "Science".into()]
                                             value = select_value
@@ -192,8 +205,8 @@ pub fn HomePage() -> impl IntoView {
                                             selected = chk_select
                                             items = vec!["Testing 1".into(), "Testing 2".into()]
                                             disabled=elements_disabled />
-                                    </div>
-                                    <div>
+                                    </Row>
+                                    <Row>
                                         <ActionButton
                                             on:click=move |_| {
                                                 console_log(format!("Found value {:?}", chk_select.get()).as_str());
@@ -205,8 +218,9 @@ pub fn HomePage() -> impl IntoView {
                                         >
                                             "Submit"
                                         </ActionButton>
-                                    </div>
-                                </form>
+                                    </Row>
+                                </Panel>
+                                </div>
                             }
                         })
                     }}

@@ -25,9 +25,9 @@ pub fn ProviderEntry() -> impl IntoView {
                 <h2>It would usually have a series of questions that we ask the providers</h2>
                 <div>
                     <OutlinedTextField
-                        placeholder = "Testing information...".into()
-                        name = "testing_input".into()
-                        label = "This is a testing question.".into()
+                        placeholder = "Testing information..."
+                        name = "testing_input"
+                        label = "This is a testing question."
                         value = RwSignal::new("".to_owned())
                     />
                 </div>
