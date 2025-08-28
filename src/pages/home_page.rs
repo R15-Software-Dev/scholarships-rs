@@ -158,73 +158,82 @@ pub fn HomePage() -> impl IntoView {
                 // Replace this fallback with a real loading screen.
                 <Suspense fallback=Loading>
                     {move || {
-                        server_resource.get().map(|submission: StudentInfo| {
-                            let reactive_info = StudentInfoReactive::new(submission);
+                        server_resource
+                            .get()
+                            .map(|submission: StudentInfo| {
+                                let reactive_info = StudentInfoReactive::new(submission);
+                                let select_value = RwSignal::new(String::from("Math"));
+                                let chk_select = RwSignal::new(vec!["Testing 2".into()]);
+                                let elements_disabled = RwSignal::new(false);
 
-                            let select_value = RwSignal::new(String::from("Math"));
-                            let chk_select = RwSignal::new(vec!["Testing 2".into()]);
-
-                            let elements_disabled = RwSignal::new(false);
-
-                            view! {
-                                <div class="flex flex-row">
-                                <Panel>
-                                    <p>"Testing paragraph! This panel should be the same size as the other."</p>
-                                </Panel>
-                                <Panel>
-                                    <Row>
-                                        <p>
-                                            "Current user's reported full name from the API: "
-                                            {reactive_info.first_name}" "{reactive_info.last_name}
-                                        </p>
-                                    </Row>
-                                    <Row>
-                                        <OutlinedTextField
-                                            label="First Name:"
-                                            placeholder="John"
-                                            disabled=elements_disabled
-                                            value=reactive_info.first_name />
-                                        <OutlinedTextField
-                                            label="Last Name:"
-                                            placeholder="Smith"
-                                            disabled=elements_disabled
-                                            value=reactive_info.last_name />
-                                        <OutlinedTextField
-                                            label="Contact Email"
-                                            placeholder="temp@region15.org"
-                                            disabled=elements_disabled
-                                            value=reactive_info.student_email />
-                                    </Row>
-                                    <Row>
-                                        <Select
-                                            value_list = vec!["Math", "English", "Science"]
-                                                .into_iter().map(|s| s.into()).collect()
-                                            value = select_value
-                                            disabled=elements_disabled
-                                        />
-                                        <CheckboxList
-                                            selected = chk_select
-                                            items = vec!["Testing 1", "Testing 2"]
-                                                .into_iter().map(|s| s.into()).collect()
-                                            disabled=elements_disabled />
-                                    </Row>
-                                    <Row>
-                                        <ActionButton
-                                            on:click=move |_| {
-                                                console_log(format!("Found value {:?}", chk_select.get()).as_str());
-                                                submit_action.dispatch(CreateSampleSubmission {
-                                                    student_info: reactive_info.capture(),
-                                                    subject: user_claims.get().unwrap().claims.subject.clone()
-                                                });
-                                            }
-                                        >
-                                            "Submit"
-                                        </ActionButton>
-                                    </Row>
-                                </Panel>
-                                </div>
-                            }
-                        })
+                                view! {
+                                    <div class="flex flex-row">
+                                        <Panel>
+                                            <p>
+                                                "Testing paragraph! This panel should be the same size as the other."
+                                            </p>
+                                        </Panel>
+                                        <Panel>
+                                            <Row>
+                                                <p>
+                                                    "Current user's reported full name from the API: "
+                                                    {reactive_info.first_name}" "{reactive_info.last_name}
+                                                </p>
+                                            </Row>
+                                            <Row>
+                                                <OutlinedTextField
+                                                    label="First Name:"
+                                                    placeholder="John"
+                                                    disabled=elements_disabled
+                                                    value=reactive_info.first_name
+                                                />
+                                                <OutlinedTextField
+                                                    label="Last Name:"
+                                                    placeholder="Smith"
+                                                    disabled=elements_disabled
+                                                    value=reactive_info.last_name
+                                                />
+                                                <OutlinedTextField
+                                                    label="Contact Email"
+                                                    placeholder="temp@region15.org"
+                                                    disabled=elements_disabled
+                                                    value=reactive_info.student_email
+                                                />
+                                            </Row>
+                                            <Row>
+                                                <Select
+                                                    value_list=vec!["Math", "English", "Science"]
+                                                        .into_iter()
+                                                        .map(|s| s.into())
+                                                        .collect()
+                                                    value=select_value
+                                                    disabled=elements_disabled
+                                                />
+                                                <CheckboxList
+                                                    selected=chk_select
+                                                    items=vec!["Testing 1", "Testing 2"]
+                                                        .into_iter()
+                                                        .map(|s| s.into())
+                                                        .collect()
+                                                    disabled=elements_disabled
+                                                />
+                                            </Row>
+                                            <Row>
+                                                <ActionButton on:click=move |_| {
+                                                    console_log(
+                                                        format!("Found value {:?}", chk_select.get()).as_str(),
+                                                    );
+                                                    submit_action
+                                                        .dispatch(CreateSampleSubmission {
+                                                            student_info: reactive_info.capture(),
+                                                            subject: user_claims.get().unwrap().claims.subject.clone(),
+                                                        });
+                                                }>"Submit"</ActionButton>
+                                            </Row>
+                                        </Panel>
+                                    </div>
+                                }
+                            })
                     }}
                 </Suspense>
             </Authenticated>
