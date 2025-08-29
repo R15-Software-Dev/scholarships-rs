@@ -47,7 +47,6 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
 #[server(CreateSampleSubmission, endpoint = "/create-sample-submission")]
 pub async fn create_sample_submission(
     student_info: StudentInfo,
-    subject: String,
 ) -> Result<(), ServerFnError> {
     use aws_sdk_dynamodb::Client;
 
@@ -179,7 +178,6 @@ pub fn HomePage() -> impl IntoView {
                                                     submit_action
                                                         .dispatch(CreateSampleSubmission {
                                                             student_info: reactive_info.capture(),
-                                                            subject: user_claims.get().unwrap().claims.subject.clone(),
                                                         });
                                                 }>"Submit"</ActionButton>
                                             </Row>
