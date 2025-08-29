@@ -7,17 +7,19 @@ use std::default::Default;
 pub struct StudentInfo {
     /// The email address of the student. This was used in the previous version of the database,
     /// and should now be deprecated.
+    ///
+    /// This is the primary key of the table, and should not have a default value.
     pub Email: String,
     /// The student's first name.
     #[serde(default)]
-    pub studentFirstName: String,
+    pub first_name: String,
     /// The student's last name.
     #[serde(default)]
-    pub studentLastName: String,
+    pub last_name: String,
     /// The student's highest math score on the SAT.
     #[serde(default)]
-    pub mathScoreSAT: i32,
+    pub math_sat: i32,
     /// The student's desired contact email.
     #[serde(default)]
-    pub studentEmail: String,
+    pub contact_email: String,
 }

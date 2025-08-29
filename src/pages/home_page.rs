@@ -1,3 +1,5 @@
+use std::fmt::format;
+
 // Server dependencies
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{error::ProvideErrorMetadata, types::AttributeValue, Client};
@@ -29,13 +31,15 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
         .await
     {
         Ok(output) => {
-            let item = output.item.unwrap();
-
-            let info: StudentInfo = from_item(item).unwrap();
-
-            console_log(format!("Got info from API: {:?}", info).as_str());
-
-            Ok(info)
+            if let Some(item) = output.item {
+                console_log(format!("Found item from API: {item:?}").as_str());
+                Ok(from_item(item).unwrap())
+            } else {
+                console_log("Couldn't find entry, returning default.");
+                let mut info = StudentInfo::default();
+                info.Email = id;  // Set the correct subject
+                Ok(info)
+            }
         }
         Err(err) => {
             let msg = err.message().unwrap_or("Unknown error");
@@ -56,14 +60,23 @@ pub async fn create_sample_submission(
     // The put_item action can create or update an item in a DynamoDB table.
     // It will completely replace any existing item with the same primary key,
     // which is the desired behavior.
-    let item = to_item(student_info).unwrap();
+    let item = to_item(student_info.clone()).unwrap();
+    console_log(format!("Arguments for sample submission: {:?}", item).as_str());
     match dbclient
         .put_item()
+        .table_name("student-applications")
         .set_item(Some(item))
         .send().await
     {
-        Ok(_) => Ok(()),
-        Err(err) => Err(ServerFnError::new(err.into_service_error().to_string())),
+        Ok(_) => {
+            console_log(format!("Set up student information: {:?}", student_info).as_str());
+            Ok(())
+        },
+        Err(err) => {
+            let msg = err.message().unwrap_or("An unknown error occurred.");
+            console_log(format!("Error creating sample submission: {}", msg).as_str());
+            Err(ServerFnError::new(msg))
+        },
     }
 }
 
@@ -128,8 +141,7 @@ pub fn HomePage() -> impl IntoView {
                                             <Row>
                                                 <p>
                                                     "Current user's reported full name from the API: "
-                                                    {reactive_info.studentFirstName}" "
-                                                    {reactive_info.studentLastName}
+                                                    {reactive_info.first_name}" " {reactive_info.last_name}
                                                 </p>
                                             </Row>
                                             <Row>
@@ -137,19 +149,19 @@ pub fn HomePage() -> impl IntoView {
                                                     label="First Name:"
                                                     placeholder="John"
                                                     disabled=elements_disabled
-                                                    value=reactive_info.studentFirstName
+                                                    value=reactive_info.first_name
                                                 />
                                                 <OutlinedTextField
                                                     label="Last Name:"
                                                     placeholder="Smith"
                                                     disabled=elements_disabled
-                                                    value=reactive_info.studentLastName
+                                                    value=reactive_info.last_name
                                                 />
                                                 <OutlinedTextField
                                                     label="Contact Email"
                                                     placeholder="temp@region15.org"
                                                     disabled=elements_disabled
-                                                    value=reactive_info.studentEmail
+                                                    value=reactive_info.contact_email
                                                 />
                                             </Row>
                                             <Row>
