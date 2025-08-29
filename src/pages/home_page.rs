@@ -1,8 +1,15 @@
+// Server dependencies
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{error::ProvideErrorMetadata, types::AttributeValue, Client};
+
+#[cfg(feature = "ssr")]
+use serde_dynamo::{from_item, to_item};
+
 use crate::app::Unauthenticated;
 use crate::common::{StudentInfo, StudentInfoReactive, UserClaims};
-use crate::components::{ActionButton, Loading, OutlinedTextField, Select, CheckboxList, Panel, Row};
+use crate::components::{
+    ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, Row, Select,
+};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
@@ -24,38 +31,11 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
         Ok(output) => {
             let item = output.item.unwrap();
 
-            let first_name: String = item
-                .get("studentFirstName")
-                .and_then(|attr| attr.as_s().ok())
-                .map(|s| s.to_owned())
-                .unwrap_or_default();
+            let info: StudentInfo = from_item(item).unwrap();
 
-            let last_name: String = item
-                .get("studentLastName")
-                .and_then(|attr| attr.as_s().ok())
-                .map(|s| s.to_owned())
-                .unwrap_or_default();
+            console_log(format!("Got info from API: {:?}", info).as_str());
 
-            let math_sat_score = item
-                .get("mathSAT")
-                .and_then(|attr| attr.as_n().ok())
-                .map(|n| n.parse::<i32>().unwrap_or(0))
-                .unwrap_or_default();
-
-            let student_email = item
-                .get("studentEmail")
-                .and_then(|attr| attr.as_s().ok())
-                .map(|s| s.to_owned())
-                .unwrap_or_default();
-
-            console_log(format!("Got values from API: {} {}", first_name, last_name).as_str());
-
-            Ok(StudentInfo {
-                first_name,
-                last_name,
-                math_sat_score,
-                student_email,
-            })
+            Ok(info)
         }
         Err(err) => {
             let msg = err.message().unwrap_or("Unknown error");
@@ -69,45 +49,19 @@ pub async fn create_sample_submission(
     student_info: StudentInfo,
     subject: String,
 ) -> Result<(), ServerFnError> {
-    use aws_sdk_dynamodb::{types::AttributeValue, Client};
+    use aws_sdk_dynamodb::Client;
 
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
     let dbclient = Client::new(&config);
 
-    console_log(
-        format!(
-            "Creating sample submission with name {} {}, math score {}, and subject {}",
-            student_info.first_name, student_info.last_name, student_info.math_sat_score, subject
-        )
-        .as_str(),
-    );
-
+    // The put_item action can create or update an item in a DynamoDB table.
+    // It will completely replace any existing item with the same primary key,
+    // which is the desired behavior.
+    let item = to_item(student_info).unwrap();
     match dbclient
-        .update_item()
-        .table_name("student-applications")
-        .key("Email", AttributeValue::S(subject))
-        .expression_attribute_values(
-            ":studentFirstName",
-            AttributeValue::S(student_info.first_name),
-        )
-        .expression_attribute_values(
-            ":studentLastName",
-            AttributeValue::S(student_info.last_name),
-        )
-        .expression_attribute_values(
-            ":mathScoreSAT",
-            AttributeValue::N(student_info.math_sat_score.to_string()),
-        )
-        .expression_attribute_names("#studentFirstName", "studentFirstName")
-        .expression_attribute_names("#studentLastName", "studentLastName")
-        .expression_attribute_names("#mathScoreSAT", "mathScoreSAT")
-        .update_expression(
-            concat!("SET #studentFirstName = :studentFirstName, ",
-                "#studentLastName = :studentLastName, ",
-                "#mathScoreSAT = :mathScoreSAT"),
-        )
-        .send()
-        .await
+        .put_item()
+        .set_item(Some(item))
+        .send().await
     {
         Ok(_) => Ok(()),
         Err(err) => Err(ServerFnError::new(err.into_service_error().to_string())),
@@ -133,21 +87,14 @@ pub fn HomePage() -> impl IntoView {
     let server_resource = Resource::new(
         move || user_claims.get().map(|claim| claim.claims.subject.clone()),
         async |opt_username| match opt_username {
-            Some(username) => get_submission(username).await.unwrap_or_else(|e| {
-                console_log(e.to_string().as_str());
-                StudentInfo {
-                    first_name: String::from("Error"),
-                    last_name: String::new(),
-                    math_sat_score: 0,
-                    student_email: String::new()
+            Some(username) => get_submission(username)
+                .await
+                .unwrap_or_else(|e| {
+                    console_log(e.to_string().as_str());
+                    StudentInfo::default()
                 }
-            }),
-            None => StudentInfo {
-                first_name: String::new(),
-                last_name: String::new(),
-                math_sat_score: 0,
-                student_email: String::new()
-            },
+            ),
+            None => StudentInfo::default()
         },
     );
     let submit_action = ServerAction::<CreateSampleSubmission>::new();
@@ -169,15 +116,21 @@ pub fn HomePage() -> impl IntoView {
                                 view! {
                                     <div class="flex flex-row">
                                         <Panel>
-                                            <p>
-                                                "Testing paragraph! This panel should be the same size as the other."
-                                            </p>
+                                            <Row>
+                                                <p>
+                                                    "Testing paragraph! This panel should be the same size as the other."
+                                                </p>
+                                            </Row>
+                                            <Row>
+                                                <p>"Current user's subject ID: "{reactive_info.Email}</p>
+                                            </Row>
                                         </Panel>
                                         <Panel>
                                             <Row>
                                                 <p>
                                                     "Current user's reported full name from the API: "
-                                                    {reactive_info.first_name}" "{reactive_info.last_name}
+                                                    {reactive_info.studentFirstName}" "
+                                                    {reactive_info.studentLastName}
                                                 </p>
                                             </Row>
                                             <Row>
@@ -185,19 +138,19 @@ pub fn HomePage() -> impl IntoView {
                                                     label="First Name:"
                                                     placeholder="John"
                                                     disabled=elements_disabled
-                                                    value=reactive_info.first_name
+                                                    value=reactive_info.studentFirstName
                                                 />
                                                 <OutlinedTextField
                                                     label="Last Name:"
                                                     placeholder="Smith"
                                                     disabled=elements_disabled
-                                                    value=reactive_info.last_name
+                                                    value=reactive_info.studentLastName
                                                 />
                                                 <OutlinedTextField
                                                     label="Contact Email"
                                                     placeholder="temp@region15.org"
                                                     disabled=elements_disabled
-                                                    value=reactive_info.student_email
+                                                    value=reactive_info.studentEmail
                                                 />
                                             </Row>
                                             <Row>
