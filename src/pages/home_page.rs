@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 // Server dependencies
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{error::ProvideErrorMetadata, types::AttributeValue, Client};
