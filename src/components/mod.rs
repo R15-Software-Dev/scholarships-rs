@@ -1,19 +1,14 @@
 mod action_button;
+mod checkbox;
 mod loading;
 mod multi_entry;
-mod text_field;
-mod select;
-mod checkboxes;
 mod panel;
+mod radio;
 mod row;
+mod select;
+mod text_field;
 
 pub use self::{
-    action_button::*,
-    loading::*,
-    multi_entry::*,
-    text_field::*,
-    select::*,
-    checkboxes::*,
-    panel::*,
-    row::*
+    action_button::*, checkbox::*, loading::*, multi_entry::*, panel::*, radio::*, row::*,
+    select::*, text_field::*,
 };

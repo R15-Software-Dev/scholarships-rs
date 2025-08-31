@@ -9,6 +9,7 @@ use crate::app::Unauthenticated;
 use crate::common::{StudentInfo, StudentInfoReactive, UserClaims};
 use crate::components::{
     ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, Row, Select,
+    RadioList
 };
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
@@ -122,6 +123,7 @@ pub fn HomePage() -> impl IntoView {
                                 let select_value = RwSignal::new(String::from("Math"));
                                 let chk_select = RwSignal::new(vec!["Testing 2".into()]);
                                 let elements_disabled = RwSignal::new(false);
+                                let radio_value = RwSignal::new(String::from("Test"));
 
                                 view! {
                                     <div class="flex flex-row">
@@ -171,6 +173,14 @@ pub fn HomePage() -> impl IntoView {
                                                     value=select_value
                                                     disabled=elements_disabled
                                                 />
+                                                <RadioList
+                                                    selected=radio_value
+                                                    items=vec!["Test", "Testing 2"]
+                                                        .into_iter()
+                                                        .map(|s| s.into())
+                                                        .collect()
+                                                    disabled=elements_disabled
+                                                />
                                                 <CheckboxList
                                                     selected=chk_select
                                                     items=vec!["Testing 1", "Testing 2"]
@@ -183,7 +193,7 @@ pub fn HomePage() -> impl IntoView {
                                             <Row>
                                                 <ActionButton on:click=move |_| {
                                                     console_log(
-                                                        format!("Found value {:?}", chk_select.get()).as_str(),
+                                                        format!("Found value {:?}", radio_value.get()).as_str(),
                                                     );
                                                     submit_action
                                                         .dispatch(CreateSampleSubmission {
