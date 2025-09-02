@@ -47,12 +47,6 @@ pub fn RadioList(
     #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
 ) -> impl IntoView {
     view! {
-        // Checkbox elements go in here. Each one will have a derived signal
-        // that checks if the name/value of that checkbox is in the selected items
-        // vec. If so, display as selected. If not, clear that checkbox.
-
-        // Somehow create a derived signal??
-
         <div>
             {items
                 .into_iter()
