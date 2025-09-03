@@ -18,11 +18,14 @@ use traits::{AsReactive, ReactiveCapture};
 
 #[server(GetSubmission, endpoint = "/get-submission")]
 pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
+
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
     let dbclient = Client::new(&config);
 
     console_log(format!("Getting values from API using username {}", id).as_str());
 
+    // Gets the item from the database. It only returns an error if the database
+    // experiences an error - not if the item is not found.
     match dbclient
         .get_item()
         .table_name("student-applications")
@@ -52,7 +55,6 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
 pub async fn create_sample_submission(
     student_info: StudentInfo,
 ) -> Result<(), ServerFnError> {
-    use aws_sdk_dynamodb::Client;
 
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
     let dbclient = Client::new(&config);
@@ -69,10 +71,12 @@ pub async fn create_sample_submission(
         .send().await
     {
         Ok(_) => {
+            // The student's information was successfully created
             console_log(format!("Set up student information: {:?}", student_info).as_str());
             Ok(())
         },
         Err(err) => {
+            // There was an error while creating the student's information
             let msg = err.message().unwrap_or("An unknown error occurred.");
             console_log(format!("Error creating sample submission: {}", msg).as_str());
             Err(ServerFnError::new(msg))
