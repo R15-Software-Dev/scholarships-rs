@@ -6,7 +6,7 @@ use aws_sdk_dynamodb::{error::ProvideErrorMetadata, types::AttributeValue, Clien
 use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
-use crate::common::{StudentInfo, StudentInfoReactive, UserClaims};
+use crate::common::{StudentInfo, UserClaims};
 use crate::components::{
     ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, Row, Select,
     RadioList
@@ -14,6 +14,7 @@ use crate::components::{
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
+use traits::{AsReactive, ReactiveCapture};
 
 #[server(GetSubmission, endpoint = "/get-submission")]
 pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
@@ -119,7 +120,7 @@ pub fn HomePage() -> impl IntoView {
                         server_resource
                             .get()
                             .map(|submission: StudentInfo| {
-                                let reactive_info = StudentInfoReactive::new(submission);
+                                let reactive_info = submission.as_reactive();
                                 let select_value = RwSignal::new(String::from("Math"));
                                 let chk_select = RwSignal::new(vec!["Testing 2".into()]);
                                 let elements_disabled = RwSignal::new(false);
