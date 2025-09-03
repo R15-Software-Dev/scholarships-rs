@@ -65,7 +65,7 @@ pub trait AsReactive {
 ///
 /// impl ReactiveCapture for UserReactive {
 ///     type CaptureType = User;
-///     fn capture(self) -> User {
+///     fn capture(&self) -> User {
 ///         User {
 ///             id: self.id.get(),
 ///             name: self.name.get()

@@ -61,12 +61,12 @@ use syn::{parse_macro_input, Data, Ident};
 /// ```
 /// let user: User = User::new();
 /// let user_reactive: UserReactive = user.as_reactive();
-/// let custom_reactive: CustomTypeReactive = user_reactive.custom.as_reactive();
+/// let custom_reactive: CustomTypeReactive = user_reactive.custom.get().as_reactive();
 /// // And then convert back...
 /// user_reactive.custom.set(custom_reactive.capture());
 /// ```
 /// If a shorthand for the `capture` and `as_reactive` functions are absolutely *required*, then this
-/// macro is probably not the way to go - as of now, this functionality should be impmlemented manually.
+/// macro is probably not the way to go - as of now, this functionality should be implemented manually.
 #[proc_macro_derive(Reactive)]
 pub fn make_reactive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as syn::DeriveInput);
