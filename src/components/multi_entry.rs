@@ -2,10 +2,11 @@ use std::collections::HashMap;
 
 use crate::components::ActionButton;
 use leptos::prelude::*;
+use macros::Reactive;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Reactive, Default)]
 pub struct MultiEntryData {
     pub id: Uuid,
     pub data: HashMap<String, ValueType>,
@@ -130,27 +131,31 @@ pub fn MultiEntry(
             <div class="rounded-md bg-red-700">
                 // This div MUST have the same spacing CSS as the main entry div
                 <div class="flex bg-inherit p-3 m-1">
-                    <span class="flex-1 text-white font-bold">{name_member.get().display_name}</span>
-                    <span class="flex-1 text-white font-bold">{info_member.get().display_name}</span>
+                    <span class="flex-1 text-white font-bold">
+                        {name_member.get().display_name}
+                    </span>
+                    <span class="flex-1 text-white font-bold">
+                        {info_member.get().display_name}
+                    </span>
                 </div>
             </div>
             // Entry section
             <div>
                 <For
-                    each = move || entries.get()
-                    key = |entry: &MultiEntryData| entry.id
-                    children = move |entry| view! {
-                        <Entry
-                            entry_data=entry.clone()
-                            name_member=name_member
-                            info_member=info_member
-                        />
+                    each=move || entries.get()
+                    key=|entry: &MultiEntryData| entry.id
+                    children=move |entry| {
+                        view! {
+                            <Entry
+                                entry_data=entry.clone()
+                                name_member=name_member
+                                info_member=info_member
+                            />
+                        }
                     }
                 />
             </div>
         </div>
-        <ActionButton on:click=create_entry>
-            Add Entry
-        </ActionButton>
+        <ActionButton on:click=create_entry>Add Entry</ActionButton>
     }
 }

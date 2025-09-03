@@ -6,7 +6,7 @@ use aws_sdk_dynamodb::{error::ProvideErrorMetadata, types::AttributeValue, Clien
 use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
-use crate::common::{StudentInfo, StudentInfoReactive, UserClaims};
+use crate::common::{StudentInfo, UserClaims};
 use crate::components::{
     ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, Row, Select,
     RadioList
@@ -14,14 +14,18 @@ use crate::components::{
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
+use traits::{AsReactive, ReactiveCapture};
 
 #[server(GetSubmission, endpoint = "/get-submission")]
 pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
+
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
     let dbclient = Client::new(&config);
 
     console_log(format!("Getting values from API using username {}", id).as_str());
 
+    // Gets the item from the database. It only returns an error if the database
+    // experiences an error - not if the item is not found.
     match dbclient
         .get_item()
         .table_name("student-applications")
@@ -51,7 +55,6 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
 pub async fn create_sample_submission(
     student_info: StudentInfo,
 ) -> Result<(), ServerFnError> {
-    use aws_sdk_dynamodb::Client;
 
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
     let dbclient = Client::new(&config);
@@ -68,10 +71,12 @@ pub async fn create_sample_submission(
         .send().await
     {
         Ok(_) => {
+            // The student's information was successfully created
             console_log(format!("Set up student information: {:?}", student_info).as_str());
             Ok(())
         },
         Err(err) => {
+            // There was an error while creating the student's information
             let msg = err.message().unwrap_or("An unknown error occurred.");
             console_log(format!("Error creating sample submission: {}", msg).as_str());
             Err(ServerFnError::new(msg))
@@ -119,7 +124,7 @@ pub fn HomePage() -> impl IntoView {
                         server_resource
                             .get()
                             .map(|submission: StudentInfo| {
-                                let reactive_info = StudentInfoReactive::new(submission);
+                                let reactive_info = submission.as_reactive();
                                 let select_value = RwSignal::new(String::from("Math"));
                                 let chk_select = RwSignal::new(vec!["Testing 2".into()]);
                                 let elements_disabled = RwSignal::new(false);

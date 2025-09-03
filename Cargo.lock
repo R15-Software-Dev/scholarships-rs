@@ -2159,6 +2159,7 @@ version = "0.1.0"
 dependencies = [
  "quote",
  "syn",
+ "traits",
 ]
 
 [[package]]
@@ -2960,6 +2961,7 @@ dependencies = [
  "serde",
  "serde_dynamo",
  "tokio",
+ "traits",
  "url",
  "uuid",
  "wasm-bindgen",
@@ -3643,6 +3645,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e672c95779cf947c5311f83787af4fa8fffd12fb27e4993211a84bdfd9610f9c"
 dependencies = [
  "once_cell",
+]
+
+[[package]]
+name = "traits"
+version = "0.1.0"
+dependencies = [
+ "leptos",
 ]
 
 [[package]]
