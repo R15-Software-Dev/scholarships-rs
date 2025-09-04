@@ -9,8 +9,8 @@ This repo requires that you have `cargo`, `clang`, and `node` installed.
 
 ## How to run
 Run the command `cargo leptos watch` to compile and run an instance of the server on your local machine. To access info
-from the AWS resources, you will need to be approved by me or someone else with AWS administrator access to obtain a 
-usable auth key from AWS IAM.
+from the AWS resources, you will need to be approved by someone with AWS administrator access to obtain a usable auth
+key from AWS IAM.
 
 ## Current Tasks
 There are several tasks left to complete. These are a few of the larger ones:
