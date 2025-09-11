@@ -45,9 +45,11 @@ pub fn RadioList(
     #[prop(default = RwSignal::new(String::new()))] selected: RwSignal<String>,
     #[prop()] items: Vec<String>,
     #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
+    #[prop(optional, into)] label: String,
 ) -> impl IntoView {
     view! {
-        <div>
+        <div class="m-1.5 mt-0 mb-0">
+            <span class="font-bold">{label}</span>
             {items
                 .into_iter()
                 .map(|item| {

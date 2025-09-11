@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Data, Ident};
+use syn::{Data, Ident, parse_macro_input};
 
 /// Derives the `AsReactive` and `ReactiveCapture` traits for a struct, while also
 /// providing a new reactive struct with the same field names, but they are wrapped

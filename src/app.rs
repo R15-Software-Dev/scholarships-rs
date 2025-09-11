@@ -1,11 +1,9 @@
 use leptos::prelude::*;
-use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
-use leptos_oidc::{
-    Auth, AuthParameters, AuthSignal, Challenge, LoginLink,
-};
+use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
+use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge, LoginLink};
 use leptos_router::{
-    components::{Route, Router, Routes},
     StaticSegment,
+    components::{Route, Router, Routes},
 };
 use url::Url;
 
@@ -47,7 +45,7 @@ pub fn App() -> impl IntoView {
 
     let auth = Auth::signal();
     provide_context(auth); // allows use of this signal in lower areas of the tree without
-                           // explicitly passing it through the html tree
+    // explicitly passing it through the html tree
 
     let _ = Auth::init(parameters);
 

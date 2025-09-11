@@ -1,30 +1,35 @@
-use std::str::FromStr;
 use leptos::prelude::*;
+use std::str::FromStr;
 
 #[component]
 pub fn OutlinedTextField<T>(
-    #[prop(default = T::default(), into)] placeholder: T,
-    #[prop(default = RwSignal::new(T::default()))] value: RwSignal<T>,
-    #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
-    #[prop(default = String::from(""), into)] name: String,
-    #[prop(default = String::from(""), into)] label: String,
-    #[prop(default = String::from(""), into)] input_type: String,
+    #[prop(optional, into)] placeholder: T,
+    #[prop(optional)] value: RwSignal<T>,
+    #[prop(optional)] disabled: RwSignal<bool>,
+    #[prop(optional)] error: RwSignal<bool>,
+    #[prop(optional, into)] name: String,
+    #[prop(optional, into)] label: String,
+    #[prop(optional, into)] input_type: String,
 ) -> impl IntoView
 where
-    T: Default + 'static + FromStr + ToString + PartialEq + Send + Sync + Clone
+    T: Default + 'static + FromStr + ToString + PartialEq + Send + Sync + Clone,
 {
     // Parsing logic for non-string types which happens on each input.
     let on_input = move |e| {
         let input_value = event_target_value(&e);
-        let parsed_value = T::from_str(&input_value)
-            .unwrap_or_default();
-        value.set(parsed_value);
+        let can_parse = T::from_str(&input_value);
+        if let Ok(parsed_value) = can_parse {
+            value.set(parsed_value);
+        } else {
+            error.set(true);
+            value.set(T::default());
+        }
     };
 
     view! (
         <div class="flex flex-1">
             <label class="flex flex-col flex-1">
-                <span class="block ml-1.5 mb-0">{label}</span>
+                <span class="block ml-1.5 mb-0 font-bold">{label}</span>
                 <input
                     class="border-2 m-1.5 p-1.5 mt-0 rounded-md bg-transparent relative flex-1
                         transition-all duration-150
@@ -35,7 +40,7 @@ where
                     placeholder={placeholder.to_string()}
                     prop:name=name
                     prop:value={move || value.get().to_string()}  // Sets the initial value.
-                    on:input=on_input  // Sets the value on each input.
+                    on:input=on_input
                 />
             </label>
         </div>
