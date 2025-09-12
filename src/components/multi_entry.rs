@@ -87,14 +87,14 @@ pub fn Entry(
     #[prop()]
     info_member: Signal<MultiEntryMember>,
 ) -> impl IntoView {
-    let nameData = entry_data.data.get(&name_member.get().member_name).unwrap();
-    let infoData = entry_data.data.get(&info_member.get().member_name).unwrap();
+    let name_data = entry_data.data.get(&name_member.get().member_name).unwrap();
+    let info_data = entry_data.data.get(&info_member.get().member_name).unwrap();
 
     view! {
         // This div MUST have the same spacing CSS as the second-level header div
         <div class="flex rounded-sm transition-shadow shadow-sm hover:shadow-lg/30 p-3 m-1">
-            <span class="flex-1">{nameData.as_string()}</span>
-            <span class="flex-1">{infoData.as_string()}</span>
+            <span class="flex-1">{name_data.as_string()}</span>
+            <span class="flex-1">{info_data.as_string()}</span>
         </div>
     }
 }

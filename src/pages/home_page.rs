@@ -1,16 +1,13 @@
 // Server dependencies
 #[cfg(feature = "ssr")]
-use aws_sdk_dynamodb::{error::ProvideErrorMetadata, types::AttributeValue, Client};
+use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValue};
 
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
 use crate::common::{StudentInfo, UserClaims};
-use crate::components::{
-    ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, Row, Select,
-    RadioList
-};
+use crate::components::{ActionButton, CheckboxList, Loading, MultiEntry, MultiEntryMember, OutlinedTextField, OutlinedTextFieldPropsBuilder_Error_Repeated_field_disabled, Panel, RadioList, Row, Select};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
@@ -18,7 +15,6 @@ use traits::{AsReactive, ReactiveCapture};
 
 #[server(GetSubmission, endpoint = "/get-submission")]
 pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
-
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
     let dbclient = Client::new(&config);
 
@@ -36,11 +32,11 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
         Ok(output) => {
             if let Some(item) = output.item {
                 console_log(format!("Found item from API: {item:?}").as_str());
-                Ok(from_item(item).unwrap())
+                Ok(from_item(item)?)
             } else {
                 console_log("Couldn't find entry, returning default.");
                 let mut info = StudentInfo::default();
-                info.Email = id;  // Set the correct subject
+                info.Email = id; // Set the correct subject
                 Ok(info)
             }
         }
@@ -52,10 +48,7 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
 }
 
 #[server(CreateSampleSubmission, endpoint = "/create-sample-submission")]
-pub async fn create_sample_submission(
-    student_info: StudentInfo,
-) -> Result<(), ServerFnError> {
-
+pub async fn create_sample_submission(student_info: StudentInfo) -> Result<(), ServerFnError> {
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
     let dbclient = Client::new(&config);
 
@@ -68,19 +61,20 @@ pub async fn create_sample_submission(
         .put_item()
         .table_name("student-applications")
         .set_item(Some(item))
-        .send().await
+        .send()
+        .await
     {
         Ok(_) => {
             // The student's information was successfully created
             console_log(format!("Set up student information: {:?}", student_info).as_str());
             Ok(())
-        },
+        }
         Err(err) => {
             // There was an error while creating the student's information
             let msg = err.message().unwrap_or("An unknown error occurred.");
             console_log(format!("Error creating sample submission: {}", msg).as_str());
             Err(ServerFnError::new(msg))
-        },
+        }
     }
 }
 
@@ -103,14 +97,11 @@ pub fn HomePage() -> impl IntoView {
     let server_resource = Resource::new(
         move || user_claims.get().map(|claim| claim.claims.subject.clone()),
         async |opt_username| match opt_username {
-            Some(username) => get_submission(username)
-                .await
-                .unwrap_or_else(|e| {
-                    console_log(e.to_string().as_str());
-                    StudentInfo::default()
-                }
-            ),
-            None => StudentInfo::default()
+            Some(username) => get_submission(username).await.unwrap_or_else(|e| {
+                console_log(e.to_string().as_str());
+                StudentInfo::default()
+            }),
+            None => StudentInfo::default(),
         },
     );
     let submit_action = ServerAction::<CreateSampleSubmission>::new();
@@ -125,28 +116,38 @@ pub fn HomePage() -> impl IntoView {
                             .get()
                             .map(|submission: StudentInfo| {
                                 let reactive_info = submission.as_reactive();
-                                let select_value = RwSignal::new(String::from("Math"));
-                                let chk_select = RwSignal::new(vec!["Testing 2".into()]);
                                 let elements_disabled = RwSignal::new(false);
-                                let radio_value = RwSignal::new(String::from("Test"));
+                                let result_msg = Signal::derive(move || {
+                                    // Eventually, this function will show and hide a loading symbol
+                                    // and a success checkmark.
+                                    if submit_action.pending().get() {
+                                        elements_disabled.set(true);
+                                        "Sending request...".to_owned()
+                                    } else {
+                                        elements_disabled.set(false);
+                                        if let Some(result) = submit_action.value().get() {
+                                            match result {
+                                                Ok(_) => "Request sent successfully.".to_owned(),
+                                                Err(e) => format!("Failed to send request: {:?}", e)
+                                            }
+                                        } else {
+                                            "".to_owned()
+                                        }
+                                    }
+                                });
 
                                 view! {
-                                    <div class="flex flex-row">
+                                    <Row>
+                                        <div class="flex flex-col flex-1"/>
                                         <Panel>
                                             <Row>
-                                                <p>
-                                                    "Testing paragraph! This panel should be the same size as the other."
-                                                </p>
+                                                <h1 class="text-3xl font-bold">
+                                                    "Region 15 Scholarship Application (DEMO)"
+                                                </h1>
                                             </Row>
                                             <Row>
-                                                <p>"Current user's subject ID: "{reactive_info.Email}</p>
-                                            </Row>
-                                        </Panel>
-                                        <Panel>
-                                            <Row>
-                                                <p>
-                                                    "Current user's reported full name from the API: "
-                                                    {reactive_info.first_name}" " {reactive_info.last_name}
+                                                <p class="text-sm">
+                                                    "This is a very simple demonstration of the scholarship application written in Rust."
                                                 </p>
                                             </Row>
                                             <Row>
@@ -162,33 +163,36 @@ pub fn HomePage() -> impl IntoView {
                                                     disabled=elements_disabled
                                                     value=reactive_info.last_name
                                                 />
+                                            </Row>
+                                            <Row>
                                                 <OutlinedTextField
-                                                    label="Contact Email"
-                                                    placeholder="temp@region15.org"
+                                                    label="Contact Email:"
+                                                    placeholder="student@region15.org"
                                                     disabled=elements_disabled
                                                     value=reactive_info.contact_email
                                                 />
                                             </Row>
                                             <Row>
-                                                <Select
-                                                    value_list=vec!["Math", "English", "Science"]
-                                                        .into_iter()
-                                                        .map(|s| s.into())
-                                                        .collect()
-                                                    value=select_value
+                                                <OutlinedTextField
+                                                    label="Phone Number:"
+                                                    placeholder="123-456-7890"
                                                     disabled=elements_disabled
+                                                    value=reactive_info.phone_number
                                                 />
+                                            </Row>
+                                            <Row>
+                                                <OutlinedTextField
+                                                    label="Street Address:"
+                                                    placeholder="123 Fake Street"
+                                                    disabled=elements_disabled
+                                                    value=reactive_info.address
+                                                />
+                                            </Row>
+                                            <Row>
                                                 <RadioList
-                                                    selected=radio_value
-                                                    items=vec!["Test", "Testing 2"]
-                                                        .into_iter()
-                                                        .map(|s| s.into())
-                                                        .collect()
-                                                    disabled=elements_disabled
-                                                />
-                                                <CheckboxList
-                                                    selected=chk_select
-                                                    items=vec!["Testing 1", "Testing 2"]
+                                                    label="Town:"
+                                                    selected=reactive_info.town
+                                                    items=vec!["Southbury", "Middlebury"]
                                                         .into_iter()
                                                         .map(|s| s.into())
                                                         .collect()
@@ -196,18 +200,35 @@ pub fn HomePage() -> impl IntoView {
                                                 />
                                             </Row>
                                             <Row>
-                                                <ActionButton on:click=move |_| {
-                                                    console_log(
-                                                        format!("Found value {:?}", radio_value.get()).as_str(),
-                                                    );
-                                                    submit_action
-                                                        .dispatch(CreateSampleSubmission {
-                                                            student_info: reactive_info.capture(),
-                                                        });
-                                                }>"Submit"</ActionButton>
+                                                <Select
+                                                    label="Gender:"
+                                                    value_list=vec!["Male", "Female", "Prefer not to answer"]
+                                                        .into_iter()
+                                                        .map(|s| s.into())
+                                                        .collect()
+                                                    value=reactive_info.gender
+                                                    disabled=elements_disabled
+                                                />
+                                            </Row>
+                                            <Row>
+                                                <ActionButton
+                                                    on:click=move |_| {
+                                                        submit_action
+                                                            .dispatch(CreateSampleSubmission {
+                                                                student_info: reactive_info.capture(),
+                                                            });
+                                                    }
+                                                    disabled=elements_disabled
+                                                >"Submit"</ActionButton>
+                                            </Row>
+                                            <Row>
+                                                <p>
+                                                    {result_msg}
+                                                </p>
                                             </Row>
                                         </Panel>
-                                    </div>
+                                        <div class="flex flex-col flex-1"/>
+                                    </Row>
                                 }
                             })
                     }}
