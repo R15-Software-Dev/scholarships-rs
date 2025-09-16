@@ -37,6 +37,7 @@ pub fn ProviderEntry() -> impl IntoView {
                         entries=multi_entries
                         name_member=Signal::from(MultiEntryMember::from_str("Entry Name", "name"))
                         info_member=Signal::from(MultiEntryMember::from_str("Entry Info", "info"))
+                        schema=vec![MultiEntryMember::from_str("Entry Name", "name"), MultiEntryMember::from_str("Entry Info", "info")]
                     />
                 </div>
             </Authenticated>

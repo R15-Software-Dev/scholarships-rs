@@ -1,75 +1,27 @@
-use std::collections::HashMap;
-
-use crate::components::ActionButton;
+use std::sync::Arc;
+use leptos::either::either;
+use crate::components::{ActionButton, OutlinedTextField};
 use leptos::prelude::*;
-use macros::Reactive;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use crate::common::InputType;
+use crate::components::ValueType;
+use super::{multi_entry_data::*, multi_entry_member::*};
 
-#[derive(Clone, Serialize, Deserialize, Debug, Reactive, Default)]
-pub struct MultiEntryData {
-    pub id: Uuid,
-    pub data: HashMap<String, ValueType>,
-}
-
-impl MultiEntryData {
-    /// Creates a new MultiEntryData struct.
-    pub fn new() -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            data: HashMap::new(),
-        }
-    }
-}
-
-/// Contains all information required to display an entry in the MultiEntry component.
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct MultiEntryMember {
-    /// The name of the member, used for display only.
-    pub display_name: String,
-    /// The actual name of the member, used to get the data from an Entry struct.
-    pub member_name: String,
-}
-
-impl MultiEntryMember {
-    /// Creates a new MultiEntryMember struct.
-    pub fn _new() -> Self {
-        Self {
-            display_name: String::new(),
-            member_name: String::new(),
-        }
-    }
-
-    /// Creates a new MultiEntryMember struct with the specified information.
-    pub fn _new_with_data(display_name: String, member_name: String) -> Self {
-        Self {
-            display_name,
-            member_name,
-        }
-    }
-
-    /// Creates a new MultiEntryMember struct with the specified information. Uses string slices.
-    pub fn from_str(display_name: &str, member_name: &str) -> Self {
-        Self {
-            display_name: display_name.into(),
-            member_name: member_name.into(),
-        }
-    }
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub enum ValueType {
-    String(String),
-    Number(i32),
-}
-
-impl ValueType {
-    pub fn as_string(&self) -> String {
-        match self {
-            ValueType::String(s) => s.clone(),
-            ValueType::Number(n) => n.to_string(),
-        }
-    }
+fn render_entry_component(entry_data: MultiEntryData, member_info: MultiEntryMember, label: String) -> impl IntoView {
+    // Parse the multientry members into the correct components
+    let data = entry_data.data.get(&member_info.member_name);
+    let reactive = RwSignal::new(data.unwrap().as_string().unwrap());
+    let temp = either!(member_info.input_type,
+        InputType::Text => view! {
+            <OutlinedTextField
+                label=member_info.display_name
+                placeholder="testing"
+                value=reactive
+            />
+        },
+        _ => view! {}
+    );
+    
+    temp.into_view()
 }
 
 /// Represents a single entry in a MultiEntry component.
@@ -86,30 +38,54 @@ pub fn Entry(
     /// The secondary display member for this entry.
     #[prop()]
     info_member: Signal<MultiEntryMember>,
+    /// The schema for all inputs that should be used, and what `MultiEntryMember` info is associated
+    /// with them.
+    #[prop()]
+    schema: Arc<Vec<MultiEntryMember>>
 ) -> impl IntoView {
     let name_data = entry_data.data.get(&name_member.get().member_name).unwrap();
     let info_data = entry_data.data.get(&info_member.get().member_name).unwrap();
 
+    let schema = Arc::clone(&schema);
+    
     view! {
         // This div MUST have the same spacing CSS as the second-level header div
         <div class="flex rounded-sm transition-shadow shadow-sm hover:shadow-lg/30 p-3 m-1">
-            <span class="flex-1">{name_data.as_string()}</span>
-            <span class="flex-1">{info_data.as_string()}</span>
+            <span class="flex-1">{name_data.to_string()}</span>
+            <span class="flex-1">{info_data.to_string()}</span>
         </div>
+        {schema
+            .iter()
+            .map(|input_type| {
+                let data = entry_data.clone();
+                let input = input_type.clone();
+                view! {
+                    <div>{render_entry_component(data, input, "test".to_owned())}</div>
+                }
+            }).collect::<Vec<_>>()
+        }
     }
 }
 
+/// Allows users to enter more open-ended information, and generates a `Vec<MultiDataEntry>` filled
+/// with the user's entered information. The schema for this data must be defined by this component
+/// such that it is constructable using a series of `String` keys, where each key stores a single
+/// `ValueType` enum.
 #[component]
 pub fn MultiEntry(
     /// The list of entries to use.
     #[prop()]
     entries: RwSignal<Vec<MultiEntryData>>,
-    /// the main display member for each entry object.
+    /// The main display member for each entry object.
     #[prop()]
     name_member: Signal<MultiEntryMember>,
     /// The secondary display member for each entry object.
     #[prop()]
     info_member: Signal<MultiEntryMember>,
+    /// The schema of the components. Determines what kind of data is stored and where.
+    /// The `name_member` and `info_member` should be included in this list.
+    #[prop(optional)]
+    schema: Vec<MultiEntryMember>
 ) -> impl IntoView {
     // Creates an entry in the given entries list.
     let create_entry = move |_| {
@@ -124,6 +100,8 @@ pub fn MultiEntry(
         );
         entries.update(|entry_vec| entry_vec.push(new_entry));
     };
+    
+    let rc_schema = Arc::new(schema);
 
     view! {
         <div class="flex-auto p-2 m-5">
@@ -145,11 +123,13 @@ pub fn MultiEntry(
                     each=move || entries.get()
                     key=|entry: &MultiEntryData| entry.id
                     children=move |entry| {
+                        let schema = Arc::clone(&rc_schema);
                         view! {
                             <Entry
                                 entry_data=entry.clone()
                                 name_member=name_member
                                 info_member=info_member
+                                schema=schema
                             />
                         }
                     }

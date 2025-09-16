@@ -7,12 +7,16 @@ use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
 use crate::common::{StudentInfo, UserClaims};
-use crate::components::{ActionButton, CheckboxList, Loading, MultiEntry, MultiEntryMember, OutlinedTextField, OutlinedTextFieldPropsBuilder_Error_Repeated_field_disabled, Panel, RadioList, Row, Select};
+use crate::components::{ActionButton, Loading, OutlinedTextField, Panel, RadioList, Row, Select};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
 use traits::{AsReactive, ReactiveCapture};
 
+/// # Get Student Info
+/// Gets a student's information given their `subject`.
+/// 
+/// All information is found by using a `GetItemCommand` in the student application DynamoDB table.
 #[server(GetSubmission, endpoint = "/get-submission")]
 pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
@@ -47,6 +51,10 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
     }
 }
 
+/// # Create Sample Submission
+/// Creates a submission given a full `StudentInfo` struct.
+/// 
+/// All information is stored using a `PutItemCommand` in the student application DynamoDB table.
 #[server(CreateSampleSubmission, endpoint = "/create-sample-submission")]
 pub async fn create_sample_submission(student_info: StudentInfo) -> Result<(), ServerFnError> {
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
@@ -78,6 +86,7 @@ pub async fn create_sample_submission(student_info: StudentInfo) -> Result<(), S
     }
 }
 
+/// The main home page component. Contains a simple contact form.
 #[component]
 pub fn HomePage() -> impl IntoView {
     // Creates a reactive value to update the button
