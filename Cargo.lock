@@ -2946,6 +2946,7 @@ dependencies = [
  "leptos_oidc",
  "leptos_router",
  "macros",
+ "reactive_stores",
  "serde",
  "serde_dynamo",
  "tokio",
