@@ -9,7 +9,7 @@ use super::{multi_entry_data::*, multi_entry_member::*};
 fn render_entry_component(entry_data: MultiEntryData, member_info: MultiEntryMember, label: String) -> impl IntoView {
     // Parse the multientry members into the correct components
     let data = entry_data.data.get(&member_info.member_name);
-    let reactive = RwSignal::new(data.unwrap().as_string().unwrap());
+    let reactive = RwSignal::new(data.unwrap().clone());
     let temp = either!(member_info.input_type,
         InputType::Text => view! {
             <OutlinedTextField
@@ -60,7 +60,7 @@ pub fn Entry(
                 let data = entry_data.clone();
                 let input = input_type.clone();
                 view! {
-                    <div>{render_entry_component(data, input, "test".to_owned())}</div>
+                    // <div>{render_entry_component(data, input, "test".to_owned())}</div>
                 }
             }).collect::<Vec<_>>()
         }

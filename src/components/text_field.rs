@@ -1,32 +1,42 @@
 use leptos::prelude::*;
-use std::str::FromStr;
+use crate::components::ValueType;
 
 #[component]
-pub fn OutlinedTextField<T>(
-    #[prop(optional, into)] placeholder: T,
-    #[prop(optional)] value: RwSignal<T>,
+pub fn OutlinedTextField(
+    #[prop(optional, into)] placeholder: String,
+    // #[prop()] value: Subfield<TStore, TInner, ValueType>,
+    #[prop()] value: RwSignal<ValueType>,
     #[prop(optional)] disabled: RwSignal<bool>,
     #[prop(optional)] error: RwSignal<bool>,
     #[prop(optional, into)] name: String,
     #[prop(optional, into)] label: String,
     #[prop(optional, into)] input_type: String,
-) -> impl IntoView
-where
-    T: Default + 'static + FromStr + ToString + PartialEq + Send + Sync + Clone,
-{
-    // Parsing logic for non-string types which happens on each input.
+    #[prop(optional, into)] error_text: RwSignal<String>
+) -> impl IntoView {
+    // Check if the type is one of the supported formats. This input will only accept a string
+    // or a number value.
     let on_input = move |e| {
-        let input_value = event_target_value(&e);
-        let can_parse = T::from_str(&input_value);
-        if let Ok(parsed_value) = can_parse {
-            value.set(parsed_value);
-        } else {
-            error.set(true);
-            value.set(T::default());
+        match value.get() {
+            ValueType::String(_) => {
+                // Define string parse function.
+                value.set(ValueType::String(event_target_value(&e)));
+            },
+            ValueType::Number(_) => {
+                // Define number parse function.
+                let temp = event_target_value(&e);
+                value.set(ValueType::Number(temp.parse::<i32>().unwrap_or(0)));
+            },
+            _ => {
+                // Create some custom function that reports failure.
+                let value_type = value.get();
+                println!("Input {value_type:?} is not a valid type.");
+                error.set(true);
+                error_text.set(format!("InputType {value_type:?} is not a valid type."));
+            }
         }
     };
-
-    view! (
+    
+    view! {
         <div class="flex flex-1">
             <label class="flex flex-col flex-1">
                 <span class="block ml-1.5 mb-0 font-bold">{label}</span>
@@ -37,12 +47,17 @@ where
                         disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
                     r#type={input_type}
                     disabled={disabled}
-                    placeholder={placeholder.to_string()}
+                    placeholder={placeholder}
                     prop:name=name
                     prop:value={move || value.get().to_string()}  // Sets the initial value.
                     on:input=on_input
                 />
+                <div
+                    class="text-red-600 text-sm mr-1.5 ml-1.5"
+                    class=(["hidden"], move || !error.get())>
+                    {error_text}
+                </div>
             </label>
         </div>
-    )
+    }
 }

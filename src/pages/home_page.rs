@@ -7,10 +7,11 @@ use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
 use crate::common::{StudentInfo, UserClaims};
-use crate::components::{ActionButton, Loading, OutlinedTextField, Panel, RadioList, Row, Select};
+use crate::components::{ActionButton, Loading, OutlinedTextField, Panel, Row};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
+use reactive_stores::Store;
 use traits::{AsReactive, ReactiveCapture};
 
 /// # Get Student Info
@@ -124,6 +125,7 @@ pub fn HomePage() -> impl IntoView {
                         server_resource
                             .get()
                             .map(|submission: StudentInfo| {
+                                let store_info = Store::new(submission.clone());
                                 let reactive_info = submission.as_reactive();
                                 let elements_disabled = RwSignal::new(false);
                                 let result_msg = Signal::derive(move || {
@@ -197,34 +199,36 @@ pub fn HomePage() -> impl IntoView {
                                                     value=reactive_info.address
                                                 />
                                             </Row>
-                                            <Row>
-                                                <RadioList
-                                                    label="Town:"
-                                                    selected=reactive_info.town
-                                                    items=vec!["Southbury", "Middlebury"]
-                                                        .into_iter()
-                                                        .map(|s| s.into())
-                                                        .collect()
-                                                    disabled=elements_disabled
-                                                />
-                                            </Row>
-                                            <Row>
-                                                <Select
-                                                    label="Gender:"
-                                                    value_list=vec!["Male", "Female", "Prefer not to answer"]
-                                                        .into_iter()
-                                                        .map(|s| s.into())
-                                                        .collect()
-                                                    value=reactive_info.gender
-                                                    disabled=elements_disabled
-                                                />
-                                            </Row>
+                                            // <Row>
+                                            //     <RadioList
+                                            //         label="Town:"
+                                            //         selected=reactive_info.town
+                                            //         items=vec!["Southbury", "Middlebury"]
+                                            //             .into_iter()
+                                            //             .map(|s| s.into())
+                                            //             .collect()
+                                            //         disabled=elements_disabled
+                                            //     />
+                                            // </Row>
+                                            // <Row>
+                                            //     <Select
+                                            //         label="Gender:"
+                                            //         value_list=vec!["Male", "Female", "Prefer not to answer"]
+                                            //             .into_iter()
+                                            //             .map(|s| s.into())
+                                            //             .collect()
+                                            //         value=reactive_info.gender
+                                            //         disabled=elements_disabled
+                                            //     />
+                                            // </Row>
                                             <Row>
                                                 <ActionButton
                                                     on:click=move |_| {
+                                                        let captured = reactive_info.capture();
+                                                        console_log(format!("Found values: {captured:?}").as_str());
                                                         submit_action
                                                             .dispatch(CreateSampleSubmission {
-                                                                student_info: reactive_info.capture(),
+                                                                student_info: captured,
                                                             });
                                                     }
                                                     disabled=elements_disabled

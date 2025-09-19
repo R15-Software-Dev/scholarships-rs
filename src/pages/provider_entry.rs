@@ -1,6 +1,6 @@
 use crate::app::Unauthenticated;
 use crate::common::UserClaims;
-use crate::components::{Loading, MultiEntry, MultiEntryData, MultiEntryMember, OutlinedTextField};
+use crate::components::{Loading, MultiEntry, MultiEntryData, MultiEntryMember, OutlinedTextField, ValueType};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated, LogoutLink};
@@ -28,7 +28,7 @@ pub fn ProviderEntry() -> impl IntoView {
                         placeholder = "Testing information..."
                         name = "testing_input"
                         label = "This is a testing question."
-                        value = RwSignal::new("".to_owned())
+                        value = RwSignal::new(ValueType::String("".to_owned()))
                     />
                 </div>
                 <div>
