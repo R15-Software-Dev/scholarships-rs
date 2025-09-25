@@ -8,7 +8,7 @@ use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
 use crate::common::{ExpandableInfo, StudentInfo, UserClaims};
-use crate::components::{ActionButton, Loading, OutlinedTextField, Panel, RadioList, Row};
+use crate::components::{ActionButton, Loading, OutlinedTextField, Panel, RadioList, Row, Select};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
@@ -185,7 +185,6 @@ pub fn HomePage() -> impl IntoView {
                                                     disabled=elements_disabled
                                                     data_member = "first_name"
                                                     data_map = expandable_react.data
-                                                    value=reactive_info.first_name
                                                 />
                                                 <OutlinedTextField
                                                     label="Last Name:"
@@ -193,7 +192,6 @@ pub fn HomePage() -> impl IntoView {
                                                     disabled=elements_disabled
                                                     data_member = "last_name"
                                                     data_map = expandable_react.data
-                                                    value=reactive_info.last_name
                                                 />
                                             </Row>
                                             <Row>
@@ -203,7 +201,6 @@ pub fn HomePage() -> impl IntoView {
                                                     disabled=elements_disabled
                                                     data_member = "contact_email"
                                                     data_map = expandable_react.data
-                                                    value=reactive_info.contact_email
                                                 />
                                             </Row>
                                             <Row>
@@ -213,7 +210,6 @@ pub fn HomePage() -> impl IntoView {
                                                     disabled=elements_disabled
                                                     data_member = "phone_number"
                                                     data_map = expandable_react.data
-                                                    value=reactive_info.phone_number
                                                 />
                                             </Row>
                                             <Row>
@@ -223,7 +219,6 @@ pub fn HomePage() -> impl IntoView {
                                                     disabled=elements_disabled
                                                     data_member = "address"
                                                     data_map = expandable_react.data
-                                                    value=reactive_info.address
                                                 />
                                             </Row>
                                             <Row>
@@ -234,7 +229,6 @@ pub fn HomePage() -> impl IntoView {
                                                     data_member = "math_sat"
                                                     data_map = expandable_react.data
                                                     input_type = "number"
-                                                    value=reactive_info.math_sat
                                                 />
                                             </Row>
                                             <Row>
@@ -242,7 +236,6 @@ pub fn HomePage() -> impl IntoView {
                                                 // Radio { data_member, label, items }
                                                 <RadioList
                                                     label="Town:"
-                                                    // selected=reactive_info.town
                                                     items=vec!["Southbury", "Middlebury"]
                                                         .into_iter()
                                                         .map(|s| s.into())
@@ -252,18 +245,19 @@ pub fn HomePage() -> impl IntoView {
                                                     data_map = expandable_react.data
                                                 />
                                             </Row>
-                                            // <Row>
-                                                    // Select { data_member, label, items }
-                                            //     <Select
-                                            //         label="Gender:"
-                                            //         value_list=vec!["Male", "Female", "Prefer not to answer"]
-                                            //             .into_iter()
-                                            //             .map(|s| s.into())
-                                            //             .collect()
-                                            //         value=reactive_info.gender
-                                            //         disabled=elements_disabled
-                                            //     />
-                                            // </Row>
+                                            <Row>
+                                                // Select { data_member, label, items }
+                                                <Select
+                                                    label="Gender:"
+                                                    value_list=vec!["Male", "Female", "Prefer not to answer"]
+                                                        .into_iter()
+                                                        .map(|s| s.into())
+                                                        .collect()
+                                                    disabled=elements_disabled
+                                                    data_member="gender"
+                                                    data_map=expandable_react.data
+                                                />
+                                            </Row>
                                             <Row>
                                                 <ActionButton
                                                     on:click=move |_| {
