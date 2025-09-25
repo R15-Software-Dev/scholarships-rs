@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use crate::components::ValueType;
 
@@ -5,33 +7,66 @@ use crate::components::ValueType;
 pub fn OutlinedTextField(
     #[prop(optional, into)] placeholder: String,
     // #[prop()] value: Subfield<TStore, TInner, ValueType>,
+    #[prop(into)] data_member: String,  // should this be an RwSignal??
+    #[prop(optional)] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop()] value: RwSignal<ValueType>,
+    #[prop(default = "text".to_owned(), into)] input_type: String,
     #[prop(optional)] disabled: RwSignal<bool>,
     #[prop(optional)] error: RwSignal<bool>,
     #[prop(optional, into)] name: String,
     #[prop(optional, into)] label: String,
-    #[prop(optional, into)] input_type: String,
     #[prop(optional, into)] error_text: RwSignal<String>
 ) -> impl IntoView {
-    // Check if the type is one of the supported formats. This input will only accept a string
-    // or a number value.
-    let on_input = move |e| {
-        match value.get() {
-            ValueType::String(_) => {
-                // Define string parse function.
-                value.set(ValueType::String(event_target_value(&e)));
-            },
-            ValueType::Number(_) => {
-                // Define number parse function.
-                let temp = event_target_value(&e);
-                value.set(ValueType::Number(temp.parse::<i32>().unwrap_or(0)));
-            },
-            _ => {
-                // Create some custom function that reports failure.
-                let value_type = value.get();
-                println!("Input {value_type:?} is not a valid type.");
-                error.set(true);
-                error_text.set(format!("InputType {value_type:?} is not a valid type."));
+    // This function parses the input into the correct type. It only accepts numbers or strings as
+    // valid types, and parses them accordingly.
+    let on_input = {
+        let input_type = input_type.clone();
+        move |e| {
+            let to_parse = event_target_value(&e);
+            match input_type.as_str() {
+                "text" => {
+                    // String parse function. It will always parse, but make sure the error 
+                    // state is set properly anyway.
+                    error.set(false);
+                    value.set(ValueType::String(Some(to_parse.clone())));
+                    data_map.update(|map| {
+                        if let Some(val) = map.get_mut(&data_member) {
+                            *val = ValueType::String(Some(to_parse));
+                        } else {
+                            map.insert(data_member.clone(), ValueType::String(Some(to_parse)));
+                        }
+                    });
+                },
+                "number" => {
+                    // Define number parse function.
+                    // If the number parses, Some(num), else None, but we want to keep the value that's
+                    // in the text field at this point, just set the error.
+                    console_log(format!("Parsing {to_parse} to a number").as_str());
+                    match to_parse.parse::<i32>().map(|n| ValueType::Number(Some(n))) {
+                        Ok(value_type) => {
+                            error.set(false);
+                            value.set(value_type.clone());
+                            data_map.update(|map| {
+                                if let Some(val) = map.get_mut(&data_member) {
+                                    *val = value_type;
+                                } else {
+                                    map.insert(data_member.clone(), value_type);
+                                }
+                            });
+                        },
+                        Err(_) => {
+                            error.set(true);
+                            error_text.set("Value is not a valid number.".to_owned());
+                        }
+                    };
+                },
+                _ => {
+                    // Create some custom function that reports failure.
+                    let msg = format!("Input {input_type:?} is not a valid type.");
+                    console_log(msg.as_str());
+                    error.set(true);
+                    error_text.set(msg);
+                }
             }
         }
     };

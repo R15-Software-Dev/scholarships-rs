@@ -7,11 +7,11 @@ use std::fmt::Display;
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum ValueType {
     /// Indicates a `String` value.
-    String(String),
+    String(Option<String>),
     /// Indicates an `i32` value.
-    Number(i32),
+    Number(Option<i32>),
     /// Indicates a `Vec<T>`, where `T` can be any other `ValueType`.
-    List(Vec<ValueType>),
+    List(Option<Vec<ValueType>>),
 }
 
 impl ValueType {
@@ -21,11 +21,11 @@ impl ValueType {
     }
 
     /// Attempts to get this value as a `String` type. This is different from the `to_string` method.
-    pub fn as_string(&self) -> Option<String> {
+    pub fn as_string(&self) -> Result<Option<String>, Self> {
         if let ValueType::String(v) = self {
-            Some(v.clone())
+            Ok(v.clone())
         } else {
-            None
+            Err(self.clone())
         }
     }
 
@@ -35,11 +35,11 @@ impl ValueType {
     }
 
     /// Attempts to get this value as an `i32`.
-    pub fn as_number(&self) -> Option<&i32> {
+    pub fn as_number(&self) -> Result<Option<i32>, Self> {
         if let ValueType::Number(v) = self {
-            Some(v)
+            Ok(v.clone())
         } else {
-            None
+            Err(self.clone())
         }
     }
 
@@ -50,26 +50,26 @@ impl ValueType {
 
     /// Attempts to get this value as a `Vec<ValueType>`. Each of the values inside the list must
     /// also be converted later, as these values are any of the possible types in the `ValueType`.
-    pub fn as_list(&self) -> Option<&Vec<ValueType>> {
+    pub fn as_list(&self) -> Result<Option<Vec<ValueType>>, Self> {
         if let ValueType::List(v) = self {
-            Some(v)
+            Ok(v.clone())
         } else {
-            None
+            Err(self.clone())
         }
     }
 }
 
 impl Default for ValueType {
     fn default() -> Self {
-        ValueType::String(String::new())
+        ValueType::String(Some(String::new()))
     }
 }
 
 impl Display for ValueType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match self {
-            ValueType::String(s) => s.clone(),
-            ValueType::Number(n) => n.to_string(),
+            ValueType::String(s) => s.clone().unwrap_or("".to_owned()),
+            ValueType::Number(n) => n.unwrap_or(0).to_string(),
             ValueType::List(l) => format!("{l:?}"),
         };
         write!(f, "{}", str)

@@ -14,6 +14,7 @@ fn render_entry_component(entry_data: MultiEntryData, member_info: MultiEntryMem
         InputType::Text => view! {
             <OutlinedTextField
                 label=member_info.display_name
+                data_member=member_info.member_name
                 placeholder="testing"
                 value=reactive
             />
@@ -92,11 +93,11 @@ pub fn MultiEntry(
         let mut new_entry = MultiEntryData::new();
         new_entry.data.insert(
             name_member.get().member_name,
-            ValueType::String(String::from("Testing")),
+            ValueType::String(Some(String::from("Testing"))),
         );
         new_entry.data.insert(
             info_member.get().member_name,
-            ValueType::String(new_entry.id.to_string()),
+            ValueType::String(Some(new_entry.id.to_string())),
         );
         entries.update(|entry_vec| entry_vec.push(new_entry));
     };

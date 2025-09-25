@@ -46,5 +46,5 @@ pub struct StudentInfo {
 }
 
 fn default_number() -> ValueType {
-    ValueType::Number(0)
+    ValueType::Number(None)
 }

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 // Server dependencies
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValue};
@@ -6,7 +7,7 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
-use crate::common::{StudentInfo, UserClaims};
+use crate::common::{ExpandableInfo, StudentInfo, UserClaims};
 use crate::components::{ActionButton, Loading, OutlinedTextField, Panel, Row};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
@@ -64,7 +65,7 @@ pub async fn create_sample_submission(student_info: StudentInfo) -> Result<(), S
     // The put_item action can create or update an item in a DynamoDB table.
     // It will completely replace any existing item with the same primary key,
     // which is the desired behavior.
-    let item = to_item(student_info.clone()).unwrap();
+    let item = to_item(student_info.clone())?;
     console_log(format!("Arguments for sample submission: {:?}", item).as_str());
     match dbclient
         .put_item()
@@ -87,6 +88,16 @@ pub async fn create_sample_submission(student_info: StudentInfo) -> Result<(), S
     }
 }
 
+#[server(LogExpandableInfo, endpoint = "/log-expandable")]
+pub async fn log_expandable(info: ExpandableInfo) -> Result<(), ServerFnError> {
+    console_log(format!("Was given info: {:?}", info).as_str());
+    // Manually specify the type here since we're not able to infer the type later.
+    let item: HashMap<String, AttributeValue> = to_item(info.clone())?;
+    console_log(format!("Converted into a DynamoDB item: {:?}", item).as_str());
+    
+    Ok(())
+}
+
 /// The main home page component. Contains a simple contact form.
 #[component]
 pub fn HomePage() -> impl IntoView {
@@ -104,7 +115,7 @@ pub fn HomePage() -> impl IntoView {
     // Note that the value passed in MUST be equatable.
     // We get/unwrap the value repeatedly until we get a simple string value, then clone it so that
     // we don't lose access to it in the future, should we need it again.
-    let server_resource = Resource::new(
+    let server_resource: Resource<StudentInfo> = Resource::new(
         move || user_claims.get().map(|claim| claim.claims.subject.clone()),
         async |opt_username| match opt_username {
             Some(username) => get_submission(username).await.unwrap_or_else(|e| {
@@ -115,6 +126,7 @@ pub fn HomePage() -> impl IntoView {
         },
     );
     let submit_action = ServerAction::<CreateSampleSubmission>::new();
+    let log_action = ServerAction::<LogExpandableInfo>::new();
 
     view! {
         <AuthLoaded fallback=Loading>
@@ -124,8 +136,10 @@ pub fn HomePage() -> impl IntoView {
                     {move || {
                         server_resource
                             .get()
-                            .map(|submission: StudentInfo| {
+                            .map(|submission| {
                                 let store_info = Store::new(submission.clone());
+                                let expandable = ExpandableInfo::new("email".into());
+                                let expandable_react = expandable.as_reactive();
                                 let reactive_info = submission.as_reactive();
                                 let elements_disabled = RwSignal::new(false);
                                 let result_msg = Signal::derive(move || {
@@ -162,16 +176,23 @@ pub fn HomePage() -> impl IntoView {
                                                 </p>
                                             </Row>
                                             <Row>
+                                                // Each OutlinedTextField could be simplified later into an enum:
+                                                // Text { data_member, label, placeholder }, i.e.
+                                                // Text { "first_name", "First Name:", "John" }
                                                 <OutlinedTextField
                                                     label="First Name:"
                                                     placeholder="John"
                                                     disabled=elements_disabled
+                                                    data_member = "first_name"
+                                                    data_map = expandable_react.data
                                                     value=reactive_info.first_name
                                                 />
                                                 <OutlinedTextField
                                                     label="Last Name:"
                                                     placeholder="Smith"
                                                     disabled=elements_disabled
+                                                    data_member = "last_name"
+                                                    data_map = expandable_react.data
                                                     value=reactive_info.last_name
                                                 />
                                             </Row>
@@ -180,6 +201,8 @@ pub fn HomePage() -> impl IntoView {
                                                     label="Contact Email:"
                                                     placeholder="student@region15.org"
                                                     disabled=elements_disabled
+                                                    data_member = "contact_email"
+                                                    data_map = expandable_react.data
                                                     value=reactive_info.contact_email
                                                 />
                                             </Row>
@@ -188,6 +211,8 @@ pub fn HomePage() -> impl IntoView {
                                                     label="Phone Number:"
                                                     placeholder="123-456-7890"
                                                     disabled=elements_disabled
+                                                    data_member = "phone_number"
+                                                    data_map = expandable_react.data
                                                     value=reactive_info.phone_number
                                                 />
                                             </Row>
@@ -196,10 +221,25 @@ pub fn HomePage() -> impl IntoView {
                                                     label="Street Address:"
                                                     placeholder="123 Fake Street"
                                                     disabled=elements_disabled
+                                                    data_member = "address"
+                                                    data_map = expandable_react.data
                                                     value=reactive_info.address
                                                 />
                                             </Row>
+                                            <Row>
+                                                <OutlinedTextField
+                                                    label="Highest Math SAT Score:"
+                                                    placeholder="600"
+                                                    disabled=elements_disabled
+                                                    data_member = "math_sat"
+                                                    data_map = expandable_react.data
+                                                    input_type = "number"
+                                                    value=reactive_info.math_sat
+                                                />
+                                            </Row>
                                             // <Row>
+                                                    // Each RadioList could be simplified into an enum:
+                                                    // Radio { data_member, label, items }
                                             //     <RadioList
                                             //         label="Town:"
                                             //         selected=reactive_info.town
@@ -211,6 +251,7 @@ pub fn HomePage() -> impl IntoView {
                                             //     />
                                             // </Row>
                                             // <Row>
+                                                    // Select { data_member, label, items }
                                             //     <Select
                                             //         label="Gender:"
                                             //         value_list=vec!["Male", "Female", "Prefer not to answer"]
@@ -225,11 +266,17 @@ pub fn HomePage() -> impl IntoView {
                                                 <ActionButton
                                                     on:click=move |_| {
                                                         let captured = reactive_info.capture();
+                                                        let captured_map = expandable_react.capture();
                                                         console_log(format!("Found values: {captured:?}").as_str());
-                                                        submit_action
-                                                            .dispatch(CreateSampleSubmission {
-                                                                student_info: captured,
+                                                        console_log(format!("Map values: {captured_map:?}").as_str());
+                                                        log_action
+                                                            .dispatch(LogExpandableInfo {
+                                                                info: captured_map
                                                             });
+                                                        // submit_action
+                                                        //     .dispatch(CreateSampleSubmission {
+                                                        //         student_info: captured,
+                                                        //     });
                                                     }
                                                     disabled=elements_disabled
                                                 >"Submit"</ActionButton>

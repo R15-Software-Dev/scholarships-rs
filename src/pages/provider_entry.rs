@@ -28,7 +28,8 @@ pub fn ProviderEntry() -> impl IntoView {
                         placeholder = "Testing information..."
                         name = "testing_input"
                         label = "This is a testing question."
-                        value = RwSignal::new(ValueType::String("".to_owned()))
+                        data_member = "testing"
+                        value = RwSignal::new(ValueType::String(None))
                     />
                 </div>
                 <div>
