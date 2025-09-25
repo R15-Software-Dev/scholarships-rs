@@ -1,4 +1,6 @@
+use std::collections::HashMap;
 use leptos::prelude::*;
+use crate::components::ValueType;
 
 #[component]
 pub fn Radio(
@@ -42,7 +44,9 @@ pub fn Radio(
 
 #[component]
 pub fn RadioList(
-    #[prop(default = RwSignal::new(String::new()))] selected: RwSignal<String>,
+    // #[prop(default = RwSignal::new(String::new()))] selected: RwSignal<ValueType>,
+    #[prop(into)] data_member: String,
+    #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop()] items: Vec<String>,
     #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
     #[prop(optional, into)] label: String,
@@ -53,20 +57,43 @@ pub fn RadioList(
             {items
                 .into_iter()
                 .map(|item| {
-                    let is_checked = {
+                    let checked_signal = Signal::derive({
                         let item_name = item.clone();
-                        move || { selected.get() == item_name }
+                        let data_member = data_member.clone();
+                        move || {
+                            // Check if the value is contained in the data map's fields
+                            let map = data_map.get();
+                            let value = map.get(&data_member);
+                            let mut result = false;
+                            if let Some(val) = value {
+                                if val.is_string() {
+                                    result = val.as_string().unwrap().unwrap() == item_name
+                                }
+                            }
+
+                            result
+                        }
+                    });
+
+                    let on_change = {
+                        let item_name = item.clone();
+                        let data_member = data_member.clone();
+                        move || {
+                            // Update the hash map
+                            data_map.update(|map| {
+                                if let Some(val) = map.get_mut(&data_member) {
+                                    *val = ValueType::String(Some(item_name.clone()));
+                                } else {
+                                    map.insert(data_member.clone(), ValueType::String(Some(item_name.clone())));
+                                }
+                            });
+                        }
                     };
-                    let checked_signal = Signal::derive(is_checked);
-                    // Check if this checkbox should be selected
 
                     view! {
                         <Radio
                             checked=checked_signal
-                            on_change={
-                                let item_name = item.clone();
-                                move || selected.set(item_name.clone())
-                            }
+                            on_change=on_change
                             // The actual selected values are tracked by this element, not by the checkboxes themselves.
                             value=item.clone()
                             disabled=disabled

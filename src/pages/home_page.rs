@@ -8,7 +8,7 @@ use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
 use crate::common::{ExpandableInfo, StudentInfo, UserClaims};
-use crate::components::{ActionButton, Loading, OutlinedTextField, Panel, Row};
+use crate::components::{ActionButton, Loading, OutlinedTextField, Panel, RadioList, Row};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
@@ -237,19 +237,21 @@ pub fn HomePage() -> impl IntoView {
                                                     value=reactive_info.math_sat
                                                 />
                                             </Row>
-                                            // <Row>
-                                                    // Each RadioList could be simplified into an enum:
-                                                    // Radio { data_member, label, items }
-                                            //     <RadioList
-                                            //         label="Town:"
-                                            //         selected=reactive_info.town
-                                            //         items=vec!["Southbury", "Middlebury"]
-                                            //             .into_iter()
-                                            //             .map(|s| s.into())
-                                            //             .collect()
-                                            //         disabled=elements_disabled
-                                            //     />
-                                            // </Row>
+                                            <Row>
+                                                // Each RadioList could be simplified into an enum:
+                                                // Radio { data_member, label, items }
+                                                <RadioList
+                                                    label="Town:"
+                                                    // selected=reactive_info.town
+                                                    items=vec!["Southbury", "Middlebury"]
+                                                        .into_iter()
+                                                        .map(|s| s.into())
+                                                        .collect()
+                                                    disabled=elements_disabled
+                                                    data_member="town"
+                                                    data_map = expandable_react.data
+                                                />
+                                            </Row>
                                             // <Row>
                                                     // Select { data_member, label, items }
                                             //     <Select
