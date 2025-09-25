@@ -10,14 +10,13 @@ use crate::components::ValueType;
 /// by the `value` prop of the component.
 #[component]
 pub fn Select(
-    #[prop(default = vec!["Test Value".into()])] value_list: Vec<String>,
-    #[prop(default = RwSignal::new("".into()))] value: RwSignal<String>,
+    #[prop()] value_list: Vec<String>,
+    #[prop(optional)] value: RwSignal<String>,
     #[prop(into)] data_member: String,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop(optional, into)] label: String,
     #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
 ) -> impl IntoView {
-    
     let on_change = {
         let data_member = data_member.clone();
         move |e: Targeted<Event, HtmlSelectElement>| {

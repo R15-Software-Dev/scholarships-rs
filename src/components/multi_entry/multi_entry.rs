@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 use leptos::either::either;
 use crate::components::{ActionButton, OutlinedTextField};
@@ -15,6 +16,7 @@ fn render_entry_component(entry_data: MultiEntryData, member_info: MultiEntryMem
             <OutlinedTextField
                 label=member_info.display_name
                 data_member=member_info.member_name
+                data_map=RwSignal::new(HashMap::default())
                 placeholder="testing"
                 value=reactive
             />

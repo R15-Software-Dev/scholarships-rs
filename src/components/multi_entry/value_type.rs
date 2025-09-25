@@ -4,7 +4,7 @@ use std::fmt::Display;
 /// Defines a set of possible input types. They allow for the type and value of every data member
 /// to be stored within a single `HashMap` or `Vec`. This means that even though all the data is
 /// created as a single type, the values are still able to be type safe.
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub enum ValueType {
     /// Indicates a `String` value.
     String(Option<String>),

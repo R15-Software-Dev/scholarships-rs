@@ -8,7 +8,7 @@ use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
 use crate::common::{ExpandableInfo, StudentInfo, UserClaims};
-use crate::components::{ActionButton, Loading, OutlinedTextField, Panel, RadioList, Row, Select, ValueType};
+use crate::components::{ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, RadioList, Row, Select, ValueType};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
@@ -92,7 +92,7 @@ pub async fn create_sample_submission(student_info: StudentInfo) -> Result<(), S
 pub async fn log_expandable(info: ExpandableInfo) -> Result<(), ServerFnError> {
     console_log(format!("Was given info: {:?}", info).as_str());
     // Manually specify the type here since we're not able to infer the type later.
-    let item: HashMap<String, AttributeValue> = to_item(info.clone())?;
+    let item: HashMap<String, AttributeValue> = to_item(&info)?;
     console_log(format!("Converted into a DynamoDB item: {:?}", item).as_str());
     
     Ok(())
@@ -181,9 +181,7 @@ pub fn HomePage() -> impl IntoView {
                                                 </p>
                                             </Row>
                                             <Row>
-                                                // Each OutlinedTextField could be simplified later into an enum:
-                                                // Text { data_member, label, placeholder }, i.e.
-                                                // Text { "first_name", "First Name:", "John" }
+                                                // Text { data_member, label, placeholder }
                                                 <OutlinedTextField
                                                     label="First Name:"
                                                     placeholder="John"
@@ -237,7 +235,6 @@ pub fn HomePage() -> impl IntoView {
                                                 />
                                             </Row>
                                             <Row>
-                                                // Each RadioList could be simplified into an enum:
                                                 // Radio { data_member, label, items }
                                                 <RadioList
                                                     label="Town:"
@@ -248,6 +245,18 @@ pub fn HomePage() -> impl IntoView {
                                                     disabled=elements_disabled
                                                     data_member="town"
                                                     data_map = expandable_react.data
+                                                />
+                                            </Row>
+                                            <Row>
+                                                <CheckboxList
+                                                    label="Favorite Candies:"
+                                                    items=vec!["Twizzlers", "Reese's", "Starburst"]
+                                                        .into_iter()
+                                                        .map(|s| s.into())
+                                                        .collect()
+                                                    disabled=elements_disabled
+                                                    data_member="favorite_candies"
+                                                    data_map=expandable_react.data
                                                 />
                                             </Row>
                                             <Row>

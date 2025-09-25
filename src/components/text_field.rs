@@ -8,7 +8,7 @@ pub fn OutlinedTextField(
     #[prop(optional, into)] placeholder: String,
     // #[prop()] value: Subfield<TStore, TInner, ValueType>,
     #[prop(into)] data_member: String,  // should this be an RwSignal??
-    #[prop(optional)] data_map: RwSignal<HashMap<String, ValueType>>,
+    #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop(optional)] value: RwSignal<ValueType>,
     #[prop(default = "text".to_owned(), into)] input_type: String,
     #[prop(optional)] disabled: RwSignal<bool>,
@@ -86,13 +86,11 @@ pub fn OutlinedTextField(
                     disabled={disabled}
                     placeholder={placeholder}
                     prop:name=name
-                    prop:value={
-                        data_map
-                            .get()  // HashMap
-                            .get(&data_member)  // Option<ValueType>
-                            .unwrap_or(&ValueType::String(None))  // ValueType
-                            .to_string()
-                    }
+                    prop:value=move || data_map
+                        .get()  // HashMap
+                        .get(&data_member)  // Option<ValueType>
+                        .unwrap_or(&ValueType::String(None))  // ValueType
+                        .to_string()
                     on:input=on_input
                 />
                 <div

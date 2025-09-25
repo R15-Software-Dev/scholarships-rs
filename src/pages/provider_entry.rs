@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::app::Unauthenticated;
 use crate::common::UserClaims;
 use crate::components::{Loading, MultiEntry, MultiEntryData, MultiEntryMember, OutlinedTextField, ValueType};
@@ -24,11 +25,13 @@ pub fn ProviderEntry() -> impl IntoView {
                 <h1>This is the provider entry page</h1>
                 <h2>It would usually have a series of questions that we ask the providers</h2>
                 <div>
+                    // Much of this is just a placeholder.
                     <OutlinedTextField
                         placeholder = "Testing information..."
                         name = "testing_input"
                         label = "This is a testing question."
                         data_member = "testing"
+                        data_map = RwSignal::new(HashMap::new())
                         value = RwSignal::new(ValueType::String(None))
                     />
                 </div>
