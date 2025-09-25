@@ -77,29 +77,28 @@ pub fn CheckboxList(
                         move || {
                             let result = ValueType::String(Some(item_name.clone()));
                             data_map.update(|map| {
-                                if let Some(value_type) = map.get_mut(&data_member) {
-                                    // Get the list from the enum
-                                    if let Some(mut list) = value_type.as_list().unwrap_or(None) {
-                                        // Check if the value exists in the list or not. Both of these branches
-                                        // directly update the value within the hash map, otherwise the change
-                                        // isn't reactive.
-                                        if let Some(index) = list.iter().position(|val| *val == result) {
-                                            // Value is already selected, deselect it.
-                                            list.remove(index);
-                                        } else {
-                                            // Value is not selected, so select it.
-                                            list.push(result);
-                                        }
-                                        *value_type = ValueType::List(Some(list));
-                                    } else {
-                                        // Update the value at the current data_member
-                                        let temp = map.get_mut(&data_member.clone()).unwrap();
-                                        *temp = ValueType::List(Some(vec![result]));
-                                    }
-                                } else {
-                                    // Insert a new list into the hash map
-                                    map.insert(data_member.clone(), ValueType::List(Some(vec![result])));
-                                }
+                                // Attempt to get the value type from the hash map.
+                                match map.get_mut(&data_member) {
+                                    Some(value_type) => {
+                                        // Attempt to get the value as a list.
+                                        match value_type.as_list().unwrap_or(None) {
+                                            Some(mut list) => {
+                                                // Attempt to find the selected value in the selected list.
+                                                // If it's present, remove it, or vice versa.
+                                                match list.iter().position(|val| *val == result) {
+                                                    Some(index) => { list.remove(index); },
+                                                    None => { list.push(result); }
+                                                };
+                                                // Update the existing value_type entry in the hash map.
+                                                *value_type = ValueType::List(Some(list));
+                                            },
+                                            // Insert a new value_type entry.
+                                            None => { *value_type = ValueType::List(Some(vec![result])); }
+                                        };
+                                    },
+                                    // Insert a new value_type entry.
+                                    None => { map.insert(data_member.clone(), ValueType::List(Some(vec![result]))); }
+                                };
                             });
                         }
                     };

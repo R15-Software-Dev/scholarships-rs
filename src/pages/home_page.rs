@@ -25,7 +25,7 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
     let dbclient = Client::new(&config);
 
     console_log(format!("Getting values from API using username {}", id).as_str());
-
+    
     // Gets the item from the database. It only returns an error if the database
     // experiences an error - not if the item is not found.
     match dbclient
@@ -58,7 +58,7 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
 /// 
 /// All information is stored using a `PutItemCommand` in the student application DynamoDB table.
 #[server(CreateSampleSubmission, endpoint = "/create-sample-submission")]
-pub async fn create_sample_submission(student_info: StudentInfo) -> Result<(), ServerFnError> {
+pub async fn create_sample_submission(student_info: ExpandableInfo) -> Result<(), ServerFnError> {
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
     let dbclient = Client::new(&config);
 
@@ -137,7 +137,6 @@ pub fn HomePage() -> impl IntoView {
                         server_resource
                             .get()
                             .map(|submission| {
-                                let store_info = Store::new(submission.clone());
                                 let expandable = ExpandableInfo::new("email".into());
                                 let expandable_react = expandable.as_reactive();
                                 expandable_react.data.update(|map| {
@@ -145,7 +144,6 @@ pub fn HomePage() -> impl IntoView {
                                     map.insert("phone_number".into(), ValueType::String(Some("123456789-10".into())));
                                     map.insert("math_sat".into(), ValueType::Number(Some(1234)));
                                 });
-                                let reactive_info = submission.as_reactive();
                                 let elements_disabled = RwSignal::new(false);
                                 let result_msg = Signal::derive(move || {
                                     // Eventually, this function will show and hide a loading symbol
@@ -275,18 +273,12 @@ pub fn HomePage() -> impl IntoView {
                                             <Row>
                                                 <ActionButton
                                                     on:click=move |_| {
-                                                        let captured = reactive_info.capture();
                                                         let captured_map = expandable_react.capture();
-                                                        console_log(format!("Found values: {captured:?}").as_str());
-                                                        console_log(format!("Map values: {captured_map:?}").as_str());
-                                                        log_action
-                                                            .dispatch(LogExpandableInfo {
-                                                                info: captured_map
+                                                        console_log(format!("Map values: {:?}", captured_map).as_str());
+                                                        submit_action
+                                                            .dispatch(CreateSampleSubmission {
+                                                                student_info: captured_map,
                                                             });
-                                                        // submit_action
-                                                        //     .dispatch(CreateSampleSubmission {
-                                                        //         student_info: captured,
-                                                        //     });
                                                     }
                                                     disabled=elements_disabled
                                                 >"Submit"</ActionButton>
