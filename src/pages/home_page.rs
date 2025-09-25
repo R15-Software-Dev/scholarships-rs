@@ -8,7 +8,7 @@ use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
 use crate::common::{ExpandableInfo, StudentInfo, UserClaims};
-use crate::components::{ActionButton, Loading, OutlinedTextField, Panel, RadioList, Row, Select};
+use crate::components::{ActionButton, Loading, OutlinedTextField, Panel, RadioList, Row, Select, ValueType};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
@@ -140,6 +140,11 @@ pub fn HomePage() -> impl IntoView {
                                 let store_info = Store::new(submission.clone());
                                 let expandable = ExpandableInfo::new("email".into());
                                 let expandable_react = expandable.as_reactive();
+                                expandable_react.data.update(|map| {
+                                    map.insert("email".into(), ValueType::String(Some("test@region15.org".into())));
+                                    map.insert("phone_number".into(), ValueType::String(Some("123456789-10".into())));
+                                    map.insert("math_sat".into(), ValueType::Number(Some(1234)));
+                                });
                                 let reactive_info = submission.as_reactive();
                                 let elements_disabled = RwSignal::new(false);
                                 let result_msg = Signal::derive(move || {

@@ -9,7 +9,7 @@ pub fn OutlinedTextField(
     // #[prop()] value: Subfield<TStore, TInner, ValueType>,
     #[prop(into)] data_member: String,  // should this be an RwSignal??
     #[prop(optional)] data_map: RwSignal<HashMap<String, ValueType>>,
-    #[prop()] value: RwSignal<ValueType>,
+    #[prop(optional)] value: RwSignal<ValueType>,
     #[prop(default = "text".to_owned(), into)] input_type: String,
     #[prop(optional)] disabled: RwSignal<bool>,
     #[prop(optional)] error: RwSignal<bool>,
@@ -21,6 +21,7 @@ pub fn OutlinedTextField(
     // valid types, and parses them accordingly.
     let on_input = {
         let input_type = input_type.clone();
+        let data_member = data_member.clone();
         move |e| {
             let to_parse = event_target_value(&e);
             match input_type.as_str() {
@@ -31,6 +32,7 @@ pub fn OutlinedTextField(
                     value.set(ValueType::String(Some(to_parse.clone())));
                     data_map.update(|map| {
                         if let Some(val) = map.get_mut(&data_member) {
+                            
                             *val = ValueType::String(Some(to_parse));
                         } else {
                             map.insert(data_member.clone(), ValueType::String(Some(to_parse)));
@@ -84,7 +86,13 @@ pub fn OutlinedTextField(
                     disabled={disabled}
                     placeholder={placeholder}
                     prop:name=name
-                    prop:value={move || value.get().to_string()}  // Sets the initial value.
+                    prop:value={
+                        data_map
+                            .get()  // HashMap
+                            .get(&data_member)  // Option<ValueType>
+                            .unwrap_or(&ValueType::String(None))  // ValueType
+                            .to_string()
+                    }
                     on:input=on_input
                 />
                 <div
