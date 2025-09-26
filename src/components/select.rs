@@ -1,4 +1,8 @@
+use std::collections::HashMap;
+use leptos::ev::{Event, Targeted};
 use leptos::prelude::*;
+use leptos::web_sys::HtmlSelectElement;
+use crate::components::ValueType;
 
 /// A custom-styled select input.
 ///
@@ -6,11 +10,27 @@ use leptos::prelude::*;
 /// by the `value` prop of the component.
 #[component]
 pub fn Select(
-    #[prop(default = vec!["Test Value".into()])] value_list: Vec<String>,
-    #[prop(default = RwSignal::new("".into()))] value: RwSignal<String>,
+    #[prop()] value_list: Vec<String>,
+    #[prop(optional)] value: RwSignal<String>,
+    #[prop(into)] data_member: String,
+    #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop(optional, into)] label: String,
     #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
 ) -> impl IntoView {
+    let on_change = {
+        let data_member = data_member.clone();
+        move |e: Targeted<Event, HtmlSelectElement>| {
+            let target_value = e.target().value();
+            data_map.update(|map| {
+                if let Some(val) = map.get_mut(&data_member) {
+                    *val = ValueType::String(Some(target_value));
+                } else {
+                    map.insert(data_member.clone(), ValueType::String(Some(target_value)));
+                }
+            });
+        }
+    };
+    
     view! {
         <div class="flex flex-1">
             <label class="flex flex-col flex-1">
@@ -20,9 +40,7 @@ pub fn Select(
                         transition-border duration-150
                         border-red-700 bg-transparent
                         disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
-                    on:change:target=move |e| {
-                        value.set(e.target().value());
-                    }
+                    on:change:target=on_change
                     disabled = disabled >
                     // This closure handles the display of the options.
                     {move || {

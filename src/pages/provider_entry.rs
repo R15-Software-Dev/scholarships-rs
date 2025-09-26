@@ -1,6 +1,7 @@
+use std::collections::HashMap;
 use crate::app::Unauthenticated;
 use crate::common::UserClaims;
-use crate::components::{Loading, MultiEntry, MultiEntryData, MultiEntryMember, OutlinedTextField};
+use crate::components::{Loading, MultiEntry, MultiEntryData, MultiEntryMember, OutlinedTextField, ValueType};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated, LogoutLink};
@@ -24,11 +25,14 @@ pub fn ProviderEntry() -> impl IntoView {
                 <h1>This is the provider entry page</h1>
                 <h2>It would usually have a series of questions that we ask the providers</h2>
                 <div>
+                    // Much of this is just a placeholder.
                     <OutlinedTextField
                         placeholder = "Testing information..."
                         name = "testing_input"
                         label = "This is a testing question."
-                        value = RwSignal::new("".to_owned())
+                        data_member = "testing"
+                        data_map = RwSignal::new(HashMap::new())
+                        value = RwSignal::new(ValueType::String(None))
                     />
                 </div>
                 <div>
@@ -37,6 +41,7 @@ pub fn ProviderEntry() -> impl IntoView {
                         entries=multi_entries
                         name_member=Signal::from(MultiEntryMember::from_str("Entry Name", "name"))
                         info_member=Signal::from(MultiEntryMember::from_str("Entry Info", "info"))
+                        schema=vec![MultiEntryMember::from_str("Entry Name", "name"), MultiEntryMember::from_str("Entry Info", "info")]
                     />
                 </div>
             </Authenticated>

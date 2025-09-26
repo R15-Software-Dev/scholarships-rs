@@ -1,4 +1,6 @@
+use std::collections::HashMap;
 use leptos::prelude::*;
+use crate::components::ValueType;
 
 #[component]
 pub fn Checkbox(
@@ -42,7 +44,9 @@ pub fn Checkbox(
 
 #[component]
 pub fn CheckboxList(
-    #[prop(default = RwSignal::new(vec![]))] selected: RwSignal<Vec<String>>,
+    #[prop(optional)] selected: RwSignal<Vec<String>>,
+    #[prop(into)] data_member: String,
+    #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop()] items: Vec<String>,
     #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
     #[prop(optional, into)] label: String,
@@ -53,32 +57,56 @@ pub fn CheckboxList(
             {items
                 .into_iter()
                 .map(|item| {
-                    let is_checked = {
+                    let checked_signal = Signal::derive({
                         let item_name = item.clone();
-                        move || { selected.get().contains(&item_name) }
+                        let data_member = data_member.clone();
+                        move || {
+                            data_map.get()  // HashMap
+                                .get(&data_member)  // Option<ValueType>
+                                .unwrap_or(&ValueType::List(None))  // ValueType
+                                .as_list()  // Result<Option<Vec<ValueType>>, ValueType>
+                                .unwrap_or(Some(vec!()))  // Option<Vec<ValueType>>
+                                .unwrap_or(vec!())  // Vec<ValueType>
+                                .contains(&ValueType::String(Some(item_name.clone())))  // bool
+                        }
+                    });
+                
+                    let on_change = {
+                        let item_name = item.clone();
+                        let data_member = data_member.clone();
+                        move || {
+                            let result = ValueType::String(Some(item_name.clone()));
+                            data_map.update(|map| {
+                                // Attempt to get the value type from the hash map.
+                                match map.get_mut(&data_member) {
+                                    Some(value_type) => {
+                                        // Attempt to get the value as a list.
+                                        match value_type.as_list().unwrap_or(None) {
+                                            Some(mut list) => {
+                                                // Attempt to find the selected value in the selected list.
+                                                // If it's present, remove it, or vice versa.
+                                                match list.iter().position(|val| *val == result) {
+                                                    Some(index) => { list.remove(index); },
+                                                    None => { list.push(result); }
+                                                };
+                                                // Update the existing value_type entry in the hash map.
+                                                *value_type = ValueType::List(Some(list));
+                                            },
+                                            // Insert a new value_type entry.
+                                            None => { *value_type = ValueType::List(Some(vec![result])); }
+                                        };
+                                    },
+                                    // Insert a new value_type entry.
+                                    None => { map.insert(data_member.clone(), ValueType::List(Some(vec![result]))); }
+                                };
+                            });
+                        }
                     };
-                    let checked_signal = Signal::derive(is_checked);
-                    // Check if this checkbox should be selected
-
+                
                     view! {
                         <Checkbox
                             checked=checked_signal
-                            on_change={
-                                let item_name = item.clone();
-                                move || {
-                                    selected
-                                        .update(|list| {
-                                            if let Some(index) = list
-                                                .iter()
-                                                .position(|val| *val == item_name)
-                                            {
-                                                list.remove(index);
-                                            } else {
-                                                list.push(item_name.clone());
-                                            }
-                                        });
-                                }
-                            }
+                            on_change=on_change
                             // The actual selected values are tracked by this element, not by the checkboxes themselves.
                             value=item.clone()
                             disabled=disabled
