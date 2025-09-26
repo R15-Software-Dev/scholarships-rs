@@ -44,7 +44,7 @@ pub fn OutlinedTextField(
                     // If the number parses, Some(num), else None, but we want to keep the value that's
                     // in the text field at this point, just set the error.
                     console_log(format!("Parsing {to_parse} to a number").as_str());
-                    match to_parse.parse::<i32>().map(|n| ValueType::Number(Some(n))) {
+                    match to_parse.parse::<i32>().map(|n| ValueType::Number(Some(n.to_string()))) {
                         Ok(value_type) => {
                             error.set(false);
                             value.set(value_type.clone());

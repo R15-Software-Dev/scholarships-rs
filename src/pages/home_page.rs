@@ -7,12 +7,11 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
-use crate::common::{ExpandableInfo, StudentInfo, UserClaims};
-use crate::components::{ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, RadioList, Row, Select, ValueType};
+use crate::common::{ExpandableInfo, UserClaims};
+use crate::components::{ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, RadioList, Row, Select};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
-use reactive_stores::Store;
 use traits::{AsReactive, ReactiveCapture};
 
 /// # Get Student Info
@@ -20,18 +19,18 @@ use traits::{AsReactive, ReactiveCapture};
 /// 
 /// All information is found by using a `GetItemCommand` in the student application DynamoDB table.
 #[server(GetSubmission, endpoint = "/get-submission")]
-pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
+pub async fn get_submission(subject: String) -> Result<ExpandableInfo, ServerFnError> {
     let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
     let dbclient = Client::new(&config);
 
-    console_log(format!("Getting values from API using username {}", id).as_str());
+    console_log(format!("Getting values from API using subject {}", subject).as_str());
     
     // Gets the item from the database. It only returns an error if the database
     // experiences an error - not if the item is not found.
     match dbclient
         .get_item()
-        .table_name("student-applications")
-        .key("Email", AttributeValue::S(id.clone()))
+        .table_name("leptos-test")
+        .key("subject", AttributeValue::S(subject.clone()))
         .send()
         .await
     {
@@ -41,8 +40,7 @@ pub async fn get_submission(id: String) -> Result<StudentInfo, ServerFnError> {
                 Ok(from_item(item)?)
             } else {
                 console_log("Couldn't find entry, returning default.");
-                let mut info = StudentInfo::default();
-                info.Email = id; // Set the correct subject
+                let info = ExpandableInfo::new(subject);
                 Ok(info)
             }
         }
@@ -69,7 +67,7 @@ pub async fn create_sample_submission(student_info: ExpandableInfo) -> Result<()
     console_log(format!("Arguments for sample submission: {:?}", item).as_str());
     match dbclient
         .put_item()
-        .table_name("student-applications")
+        .table_name("leptos-test")
         .set_item(Some(item))
         .send()
         .await
@@ -92,7 +90,7 @@ pub async fn create_sample_submission(student_info: ExpandableInfo) -> Result<()
 pub async fn log_expandable(info: ExpandableInfo) -> Result<(), ServerFnError> {
     console_log(format!("Was given info: {:?}", info).as_str());
     // Manually specify the type here since we're not able to infer the type later.
-    let item: HashMap<String, AttributeValue> = to_item(&info)?;
+    let item: HashMap<String, AttributeValue> = to_item(info)?;
     console_log(format!("Converted into a DynamoDB item: {:?}", item).as_str());
     
     Ok(())
@@ -115,14 +113,14 @@ pub fn HomePage() -> impl IntoView {
     // Note that the value passed in MUST be equatable.
     // We get/unwrap the value repeatedly until we get a simple string value, then clone it so that
     // we don't lose access to it in the future, should we need it again.
-    let server_resource: Resource<StudentInfo> = Resource::new(
+    let server_resource: Resource<ExpandableInfo> = Resource::new(
         move || user_claims.get().map(|claim| claim.claims.subject.clone()),
         async |opt_username| match opt_username {
-            Some(username) => get_submission(username).await.unwrap_or_else(|e| {
+            Some(subject) => get_submission(subject.clone()).await.unwrap_or_else(|e| {
                 console_log(e.to_string().as_str());
-                StudentInfo::default()
+                ExpandableInfo::new(subject)
             }),
-            None => StudentInfo::default(),
+            None => ExpandableInfo::new("".to_owned()),
         },
     );
     let submit_action = ServerAction::<CreateSampleSubmission>::new();
@@ -137,13 +135,7 @@ pub fn HomePage() -> impl IntoView {
                         server_resource
                             .get()
                             .map(|submission| {
-                                let expandable = ExpandableInfo::new("email".into());
-                                let expandable_react = expandable.as_reactive();
-                                expandable_react.data.update(|map| {
-                                    map.insert("email".into(), ValueType::String(Some("test@region15.org".into())));
-                                    map.insert("phone_number".into(), ValueType::String(Some("123456789-10".into())));
-                                    map.insert("math_sat".into(), ValueType::Number(Some(1234)));
-                                });
+                                let expandable_react = submission.as_reactive();
                                 let elements_disabled = RwSignal::new(false);
                                 let result_msg = Signal::derive(move || {
                                     // Eventually, this function will show and hide a loading symbol
@@ -246,6 +238,7 @@ pub fn HomePage() -> impl IntoView {
                                                 />
                                             </Row>
                                             <Row>
+                                                // Checkbox { data_member, label, items }
                                                 <CheckboxList
                                                     label="Favorite Candies:"
                                                     items=vec!["Twizzlers", "Reese's", "Starburst"]
@@ -263,7 +256,7 @@ pub fn HomePage() -> impl IntoView {
                                                     label="Gender:"
                                                     value_list=vec!["Male", "Female", "Prefer not to answer"]
                                                         .into_iter()
-                                                        .map(|s| s.into())
+                                                        .map(|s| s.to_owned())
                                                         .collect()
                                                     disabled=elements_disabled
                                                     data_member="gender"
@@ -275,10 +268,9 @@ pub fn HomePage() -> impl IntoView {
                                                     on:click=move |_| {
                                                         let captured_map = expandable_react.capture();
                                                         console_log(format!("Map values: {:?}", captured_map).as_str());
-                                                        submit_action
-                                                            .dispatch(CreateSampleSubmission {
-                                                                student_info: captured_map,
-                                                            });
+                                                        submit_action.dispatch(CreateSampleSubmission {
+                                                            student_info: captured_map,
+                                                        });
                                                     }
                                                     disabled=elements_disabled
                                                 >"Submit"</ActionButton>

@@ -15,19 +15,19 @@ use crate::components::ValueType;
 /// now, the table will simply create a single massive `Map` field that contains all the stored
 /// information in the `HashMap`. We'd prefer to be able to get single values if possible,
 /// especially for interoperability with other applications, should they be created.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, Reactive)]
+#[derive(Debug, Clone, Serialize, Deserialize, Reactive)]
 pub struct ExpandableInfo {
     /// The main key member. Required and used to get/put the information in a database.
-    key_member: String,
+    pub subject: String,
     /// The main data store. Contains all information that this struct needs to hold.
-    #[serde(default)]
-    data: HashMap<String, ValueType>,
+    #[serde(default, flatten)]
+    pub data: HashMap<String, ValueType>,
 }
 
 impl ExpandableInfo {
     pub fn new(key: String) -> Self {
         Self {
-            key_member: key,
+            subject: key,
             data: HashMap::new(),
         }
     }

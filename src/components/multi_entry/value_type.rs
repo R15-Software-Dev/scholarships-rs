@@ -9,7 +9,7 @@ pub enum ValueType {
     /// Indicates a `String` value.
     String(Option<String>),
     /// Indicates an `i32` value.
-    Number(Option<i32>),
+    Number(Option<String>),
     /// Indicates a `Vec<T>`, where `T` can be any other `ValueType`.
     List(Option<Vec<ValueType>>),
 }
@@ -35,7 +35,7 @@ impl ValueType {
     }
 
     /// Attempts to get this value as an `i32`.
-    pub fn as_number(&self) -> Result<Option<i32>, Self> {
+    pub fn as_number(&self) -> Result<Option<String>, Self> {
         if let ValueType::Number(v) = self {
             Ok(v.clone())
         } else {
@@ -69,7 +69,7 @@ impl Display for ValueType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match self {
             ValueType::String(s) => s.clone().unwrap_or("".to_owned()),
-            ValueType::Number(n) => n.unwrap_or(0).to_string(),
+            ValueType::Number(n) => n.clone().unwrap_or("".to_owned()),
             ValueType::List(l) => format!("{l:?}"),
         };
         write!(f, "{}", str)
