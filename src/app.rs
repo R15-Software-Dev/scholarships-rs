@@ -76,14 +76,6 @@ pub fn App() -> impl IntoView {
 }
 
 #[component]
-pub fn Unauthenticated() -> impl IntoView {
-    view! {
-        <p>"Error 401: Unauthorized"</p>
-        <LoginLink class="text-login">"Sign in"</LoginLink>
-    }
-}
-
-#[component]
 pub fn AuthErrorView() -> impl IntoView {
     let auth = use_context::<AuthSignal>().expect("AuthError: RwSignal<AuthStore> was not found");
 
