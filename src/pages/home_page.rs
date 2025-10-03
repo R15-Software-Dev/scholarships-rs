@@ -6,9 +6,9 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
 
-use crate::app::Unauthenticated;
 use crate::common::{ExpandableInfo, UserClaims};
 use crate::components::{ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, RadioList, Row, Select};
+use crate::pages::{UnauthenticatedPage};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
@@ -128,7 +128,7 @@ pub fn HomePage() -> impl IntoView {
 
     view! {
         <AuthLoaded fallback=Loading>
-            <Authenticated unauthenticated=Unauthenticated>
+            <Authenticated unauthenticated=UnauthenticatedPage>
                 // Replace this fallback with a real loading screen.
                 <Suspense fallback=Loading>
                     {move || {

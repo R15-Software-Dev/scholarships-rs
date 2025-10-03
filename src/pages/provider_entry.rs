@@ -1,7 +1,7 @@
 use std::collections::HashMap;
-use crate::app::Unauthenticated;
 use crate::common::UserClaims;
 use crate::components::{Loading, MultiEntry, MultiEntryData, MultiEntryMember, OutlinedTextField, ValueType};
+use crate::pages::{UnauthenticatedPage};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated, LogoutLink};
@@ -20,7 +20,7 @@ pub fn ProviderEntry() -> impl IntoView {
 
     view! (
         <AuthLoaded fallback=Loading>
-            <Authenticated unauthenticated=Unauthenticated>
+            <Authenticated unauthenticated=UnauthenticatedPage>
                 <LogoutLink class="text-logout">"Sign out"</LogoutLink>
                 <h1>This is the provider entry page</h1>
                 <h2>It would usually have a series of questions that we ask the providers</h2>
