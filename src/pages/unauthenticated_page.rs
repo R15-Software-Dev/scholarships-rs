@@ -1,7 +1,6 @@
-use leptos::leptos_dom::logging::console_log;
-use leptos::prelude::*;
-use leptos_oidc::{AuthSignal};
 use crate::components::ActionButton;
+use leptos::prelude::*;
+use leptos_oidc::AuthSignal;
 
 #[component]
 pub fn UnauthenticatedPage() -> impl IntoView {
