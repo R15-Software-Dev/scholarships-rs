@@ -5,8 +5,8 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
 
-use crate::app::Unauthenticated;
 use crate::common::{ExpandableInfo, UserClaims};
+use crate::pages::UnauthenticatedPage;
 use crate::components::{
     ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
     Select,
@@ -132,7 +132,7 @@ pub fn HomePage() -> impl IntoView {
 
     view! {
         <AuthLoaded fallback=Loading>
-            <Authenticated unauthenticated=Unauthenticated>
+            <Authenticated unauthenticated=UnauthenticatedPage>
                 // Replace this fallback with a real loading screen.
                 <Suspense fallback=Loading>
                     {move || {
