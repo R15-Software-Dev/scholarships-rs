@@ -7,17 +7,20 @@ use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
 use crate::common::{ExpandableInfo, UserClaims};
-use crate::components::{ActionButton, CheckboxList, Loading, MultiEntryRewrite, OutlinedTextField, Panel, RadioList, Row, Select};
+use crate::components::{
+    ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
+    Select,
+};
+use crate::input;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
-use traits::{AsReactive, ReactiveCapture};
-use crate::input;
 use std::collections::HashMap;
+use traits::{AsReactive, ReactiveCapture};
 
 /// # Get Student Info
 /// Gets a student's information given their `subject`.
-/// 
+///
 /// All information is found by using a `GetItemCommand` in the student application DynamoDB table.
 #[server(GetSubmission, endpoint = "/get-submission")]
 pub async fn get_submission(subject: String) -> Result<ExpandableInfo, ServerFnError> {
@@ -25,7 +28,7 @@ pub async fn get_submission(subject: String) -> Result<ExpandableInfo, ServerFnE
     let dbclient = Client::new(&config);
 
     console_log(format!("Getting values from API using subject {}", subject).as_str());
-    
+
     // Gets the item from the database. It only returns an error if the database
     // experiences an error - not if the item is not found.
     match dbclient
@@ -54,7 +57,7 @@ pub async fn get_submission(subject: String) -> Result<ExpandableInfo, ServerFnE
 
 /// # Create Sample Submission
 /// Creates a submission given a full `StudentInfo` struct.
-/// 
+///
 /// All information is stored using a `PutItemCommand` in the student application DynamoDB table.
 #[server(CreateSampleSubmission, endpoint = "/create-sample-submission")]
 pub async fn create_sample_submission(student_info: ExpandableInfo) -> Result<(), ServerFnError> {
@@ -93,7 +96,7 @@ pub async fn log_expandable(info: ExpandableInfo) -> Result<(), ServerFnError> {
     // Manually specify the type here since we're not able to infer the type later.
     let item: HashMap<String, AttributeValue> = to_item(info)?;
     console_log(format!("Converted into a DynamoDB item: {:?}", item).as_str());
-    
+
     Ok(())
 }
 
@@ -265,7 +268,7 @@ pub fn HomePage() -> impl IntoView {
                                                 />
                                             </Row>
                                             <Row>
-                                                <MultiEntryRewrite
+                                                <MultiEntry
                                                     data_map = expandable_react.data
                                                     data_member = "test"
                                                     name_member = "first_name"

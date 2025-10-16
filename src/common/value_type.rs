@@ -1,11 +1,11 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
 use std::fmt::Display;
 
 /// Defines a set of possible input types. They allow for the type and value of every data member
 /// to be stored within a single `HashMap` or `Vec`. This means that even though all the data is
 /// created as a single type, the values are still able to be type safe.
-/// 
+///
 /// A note: other structs cannot be stored in this enum, however it was designed to work with
 /// a `HashMap` of more `ValueType` enums. There are numerous ways to convert a struct into a
 /// `HashMap`, specifically storing all the struct's fields as `String` keys in the map.
@@ -24,7 +24,11 @@ pub enum ValueType {
 impl ValueType {
     /// Returns true if this is a `String`, otherwise false.
     pub fn is_string(&self) -> bool {
-        if let ValueType::String(_) = self { true } else { false }
+        if let ValueType::String(_) = self {
+            true
+        } else {
+            false
+        }
     }
 
     /// Attempts to get this value as a `String` type. This is different from the `to_string` method.
@@ -38,7 +42,11 @@ impl ValueType {
 
     /// Returns true if this is a `Number`, otherwise false.
     pub fn is_number(&self) -> bool {
-        if let ValueType::Number(_) = self { true } else { false }
+        if let ValueType::Number(_) = self {
+            true
+        } else {
+            false
+        }
     }
 
     /// Attempts to get this value as an `i32`.
@@ -52,7 +60,11 @@ impl ValueType {
 
     /// Returns true if this is a `List`, otherwise false.
     pub fn is_list(&self) -> bool {
-        if let ValueType::List(_) = self { true } else { false }
+        if let ValueType::List(_) = self {
+            true
+        } else {
+            false
+        }
     }
 
     /// Attempts to get this value as a `Vec<ValueType>`. Each of the values inside the list must
@@ -64,12 +76,16 @@ impl ValueType {
             Err(self.clone())
         }
     }
-    
+
     /// Returns true if this is a `Map`, otherwise false.
-    pub fn is_map(&self) -> bool { 
-        if let ValueType::Map(_) = self { true } else { false }
+    pub fn is_map(&self) -> bool {
+        if let ValueType::Map(_) = self {
+            true
+        } else {
+            false
+        }
     }
-    
+
     /// Attempts to get this value as a `HashMap<String, ValueType>`.
     pub fn as_map(&self) -> Result<Option<HashMap<String, ValueType>>, Self> {
         if let ValueType::Map(v) = self {

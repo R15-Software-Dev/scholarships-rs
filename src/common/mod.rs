@@ -1,7 +1,6 @@
-mod student_info;
-mod user;
-mod form_schema;
 mod expandable_info;
+mod form_schema;
+mod user;
 pub mod value_type;
 
-pub use self::{expandable_info::*, form_schema::*, student_info::*, user::*};
+pub use self::{expandable_info::*, form_schema::*, user::*, value_type::*};

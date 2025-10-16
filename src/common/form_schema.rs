@@ -1,13 +1,14 @@
-use std::collections::HashMap;
-use leptos::{view, IntoView};
+use crate::common::ValueType;
+use crate::components::{CheckboxList, OutlinedTextField, RadioList, Row, Select};
 use leptos::either::EitherOf5;
 use leptos::prelude::RwSignal;
-use serde::{Serialize, Deserialize};
-use crate::components::{CheckboxList, OutlinedTextField, RadioList, Row, Select, ValueType};
+use leptos::{IntoView, view};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Defines a series of options that allow a user to define a form.
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum InputType{
+pub enum InputType {
     /// Represents a text input. Requires a `String` key, `String` label, and `String` placeholder.
     /// The entered value will be returned as a single `String` value.
     Text(String, String, String),
@@ -23,7 +24,7 @@ pub enum InputType{
     Checkbox(String, String, Vec<String>),
     /// Represents a dropdown input. Requires a `String` key, `String` label, and a series
     /// of `String` options. The selected value will be returned as a `String`.
-    Select(String, String, Vec<String>)
+    Select(String, String, Vec<String>),
 }
 
 impl InputType {
@@ -80,7 +81,7 @@ impl InputType {
             }}
         }
     }
-    
+
     pub fn into_view_rows(self, data_map: RwSignal<HashMap<String, ValueType>>) -> impl IntoView {
         view! {
             <Row>
@@ -91,12 +92,12 @@ impl InputType {
 }
 
 /// Shorthand macro for creating `InputType` enums.
-/// 
+///
 /// Example usage:
 /// ```
 /// // To create an InputType::Text
 /// let text_input = input!(Text, "member", "label", "placeholder");
-/// 
+///
 /// // To create an InputType::Select
 /// let select_input = input!(Select, "member", "label", ["option1", "option2"]);
 /// ```
@@ -109,7 +110,7 @@ macro_rules! input {
             vec![$($option.to_string()), *]
         )
     };
-    
+
     ($variant:ident, $key:expr, $label:expr, $placeholder:expr) => {
         $crate::common::InputType::$variant(
             $key.to_string(),
