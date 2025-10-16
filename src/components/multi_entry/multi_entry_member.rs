@@ -21,7 +21,7 @@ impl MultiEntryMember {
         Self {
             display_name: String::new(),
             member_name: String::new(),
-            input_type: InputType::Text,
+            input_type: InputType::Text("".to_string(), "".to_string(), "".to_string()),
         }
     }
 
@@ -39,7 +39,7 @@ impl MultiEntryMember {
         Self {
             display_name: display_name.into(),
             member_name: member_name.into(),
-            input_type: InputType::Text
+            input_type: InputType::Text("".to_string(), "".to_string(), "".to_string())
         }
     }
 }

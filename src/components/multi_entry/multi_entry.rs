@@ -12,7 +12,7 @@ fn render_entry_component(entry_data: MultiEntryData, member_info: MultiEntryMem
     let data = entry_data.data.get(&member_info.member_name);
     let reactive = RwSignal::new(data.unwrap().clone());
     let temp = either!(member_info.input_type,
-        InputType::Text => view! {
+        InputType::Text(_, _, _) => view! {
             <OutlinedTextField
                 label=member_info.display_name
                 data_member=member_info.member_name
@@ -65,7 +65,7 @@ pub fn Entry(
                 view! {
                     // <div>{render_entry_component(data, input, "test".to_owned())}</div>
                 }
-            }).collect::<Vec<_>>()
+            }).collect_view()
         }
     }
 }

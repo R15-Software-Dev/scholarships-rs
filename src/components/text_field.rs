@@ -31,12 +31,7 @@ pub fn OutlinedTextField(
                     error.set(false);
                     value.set(ValueType::String(Some(to_parse.clone())));
                     data_map.update(|map| {
-                        if let Some(val) = map.get_mut(&data_member) {
-                            
-                            *val = ValueType::String(Some(to_parse));
-                        } else {
-                            map.insert(data_member.clone(), ValueType::String(Some(to_parse)));
-                        }
+                        map.insert(data_member.clone(), ValueType::String(Some(to_parse)));
                     });
                 },
                 "number" => {
@@ -49,11 +44,7 @@ pub fn OutlinedTextField(
                             error.set(false);
                             value.set(value_type.clone());
                             data_map.update(|map| {
-                                if let Some(val) = map.get_mut(&data_member) {
-                                    *val = value_type;
-                                } else {
-                                    map.insert(data_member.clone(), value_type);
-                                }
+                                map.insert(data_member.clone(), value_type);
                             });
                         },
                         Err(_) => {

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 // Server dependencies
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValue};
@@ -8,11 +7,13 @@ use serde_dynamo::{from_item, to_item};
 
 use crate::app::Unauthenticated;
 use crate::common::{ExpandableInfo, UserClaims};
-use crate::components::{ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, RadioList, Row, Select};
+use crate::components::{ActionButton, CheckboxList, Loading, MultiEntryRewrite, OutlinedTextField, Panel, RadioList, Row, Select};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
 use traits::{AsReactive, ReactiveCapture};
+use crate::input;
+use std::collections::HashMap;
 
 /// # Get Student Info
 /// Gets a student's information given their `subject`.
@@ -261,6 +262,19 @@ pub fn HomePage() -> impl IntoView {
                                                     disabled=elements_disabled
                                                     data_member="gender"
                                                     data_map=expandable_react.data
+                                                />
+                                            </Row>
+                                            <Row>
+                                                <MultiEntryRewrite
+                                                    data_map = expandable_react.data
+                                                    data_member = "test"
+                                                    name_member = "first_name"
+                                                    schema = vec![
+                                                        input!(Text, "first_name", "First Name:", "John"),
+                                                        input!(Text, "last_name", "Last Name:", "Smith"),
+                                                        input!(Select, "gender", "Gender:", ["Male", "Female"]),
+                                                        input!(Checkbox, "candy", "Favorite Candy:", ["Twizzlers", "Starburst"])
+                                                    ]
                                                 />
                                             </Row>
                                             <Row>
