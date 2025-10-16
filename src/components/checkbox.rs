@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use crate::common::ValueType;
 use leptos::prelude::*;
-use crate::components::ValueType;
+use std::collections::HashMap;
 
 #[component]
 pub fn Checkbox(
@@ -70,7 +70,7 @@ pub fn CheckboxList(
                                 .contains(&ValueType::String(Some(item_name.clone())))  // bool
                         }
                     });
-                
+
                     let on_change = {
                         let item_name = item.clone();
                         let data_member = data_member.clone();
@@ -102,7 +102,7 @@ pub fn CheckboxList(
                             });
                         }
                     };
-                
+
                     view! {
                         <Checkbox
                             checked=checked_signal

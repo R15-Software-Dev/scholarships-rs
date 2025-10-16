@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use crate::common::ValueType;
 use leptos::prelude::*;
-use crate::components::ValueType;
+use std::collections::HashMap;
 
 #[component]
 pub fn Radio(

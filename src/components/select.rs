@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use crate::common::ValueType;
 use leptos::ev::{Event, Targeted};
 use leptos::prelude::*;
 use leptos::web_sys::HtmlSelectElement;
-use crate::components::ValueType;
+use std::collections::HashMap;
 
 /// A custom-styled select input.
 ///
@@ -30,7 +30,7 @@ pub fn Select(
             });
         }
     };
-    
+
     view! {
         <div class="flex flex-1">
             <label class="flex flex-col flex-1">
