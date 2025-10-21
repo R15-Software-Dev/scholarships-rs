@@ -7,7 +7,7 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 use serde_dynamo::{from_item, to_item};
 
 use crate::common::{ExpandableInfo, UserClaims};
-use crate::components::{ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, RadioList, Row, Select};
+use crate::components::{ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, RadioList, Row, Select, Chip, ChipsList};
 use crate::pages::{UnauthenticatedPage};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
@@ -261,6 +261,28 @@ pub fn HomePage() -> impl IntoView {
                                                     disabled=elements_disabled
                                                     data_member="gender"
                                                     data_map=expandable_react.data
+                                                />
+                                            </Row>
+                                            <Row>
+                                                <ChipsList
+                                                    data_member="athletic_requirements"
+                                                    data_map=expandable_react.data
+                                                    items=vec!("Football", "Disc Golf", "Water Polo", "Testing")
+                                                        .into_iter().map(|s| s.to_owned())
+                                                        .collect()
+                                                    disabled=elements_disabled
+                                                    label="Athletics Requirements"
+                                                />
+                                            </Row>
+                                            <Row>
+                                                <ChipsList
+                                                    data_member="community_involvement"
+                                                    data_map=expandable_react.data
+                                                    items=vec!("Testing", "Again")
+                                                        .into_iter().map(|s| s.to_owned())
+                                                        .collect()
+                                                    disabled=elements_disabled
+                                                    label="Required Community Involvement"
                                                 />
                                             </Row>
                                             <Row>
