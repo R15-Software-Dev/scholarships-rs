@@ -78,7 +78,7 @@ pub fn ChipsList(
     view! {
         <div class="m-1.5 mt-0 mb-0">
             <span class="font-bold">{label}</span>
-            <div class="flex flex-row gap-2 mt-1">
+            <div class="flex flex-row flex-wrap gap-2 mt-1">
                 {items
                     .into_iter()
                     .map(|item| {
