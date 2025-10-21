@@ -46,7 +46,7 @@ pub fn Chip(
                 on:change=move |_| on_change.run(())
                 disabled=disabled />
             <div class="rounded-full p-2.5
-                font-bold cursor-pointer
+                cursor-pointer text-base
                 bg-transparent border-1 border-gray-300 
                 shadow-md/50 hover:shadow-md/70
                 peer-checked:bg-red-700 peer-checked:border-red-700 peer-checked:text-white
