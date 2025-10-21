@@ -53,7 +53,7 @@ pub fn Chip(
                 peer-disabled:peer-checked:bg-gray-700
                 peer-disabled:peer-checked:border-gray-700
                 peer-disabled:cursor-default
-                transition-all duration-100">
+                transition-all duration-150">
                 <span>{value.clone()}</span>
             </div>
         </label>
