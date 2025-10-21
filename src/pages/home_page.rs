@@ -7,7 +7,7 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 use serde_dynamo::{from_item, to_item};
 
 use crate::common::{ExpandableInfo, UserClaims};
-use crate::components::{ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, RadioList, Row, Select, Chip, ChipsList};
+use crate::components::{ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, RadioList, Row, Select, ChipsList};
 use crate::pages::{UnauthenticatedPage};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
@@ -267,18 +267,26 @@ pub fn HomePage() -> impl IntoView {
                                                 <ChipsList
                                                     data_member="athletic_requirements"
                                                     data_map=expandable_react.data
-                                                    items=vec!("Football", "Disc Golf", "Water Polo", "Testing")
+                                                    items=vec!(
+                                                            "Football", "Soccer", "Cross Country", "Cheerleading",
+                                                            "Swimming", "Wrestling", "Ski", "Basketball",
+                                                            "Lacrosse", "Softball", "Indoor/Outdoor Track",
+                                                            "Golf", "Tennis", "Volleyball"
+                                                        )
                                                         .into_iter().map(|s| s.to_owned())
                                                         .collect()
                                                     disabled=elements_disabled
-                                                    label="Athletics Requirements"
+                                                    label="Sports/Athletic Requirements"
                                                 />
                                             </Row>
                                             <Row>
                                                 <ChipsList
                                                     data_member="community_involvement"
                                                     data_map=expandable_react.data
-                                                    items=vec!("Testing", "Again")
+                                                    items=vec!(
+                                                            "Lion's Club", "Knights of Columbus",
+                                                            "Community Service > 20hrs"
+                                                        )
                                                         .into_iter().map(|s| s.to_owned())
                                                         .collect()
                                                     disabled=elements_disabled
