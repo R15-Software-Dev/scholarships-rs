@@ -28,13 +28,20 @@ pub fn Chip(
     #[prop()] checked: Signal<bool>,
     #[prop(optional)] disabled: RwSignal<bool>,
 ) -> impl IntoView {
+    // Generate a unique id - ensure that the value doesn't contain spaces.
+    // Without this id, checkbox/radio inputs can interfere with each other.
+    let value_no_spaces = value.clone().chars()
+        .filter(|c| !c.is_whitespace())
+        .collect::<String>();
+    let id = format!("{}-{}", name.clone(), value_no_spaces);
+    
     view! {
-        <label for=value>
-            <input 
+        <label for=id>
+            <input
                 type="checkbox" 
                 class="relative peer shrink-0 hidden"
                 name=name.clone()
-                id=value.clone()
+                id=id.clone()
                 prop:checked=checked
                 on:change=move |_| on_change.run(())
                 disabled=disabled />
