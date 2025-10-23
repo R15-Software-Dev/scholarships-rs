@@ -18,11 +18,9 @@ use crate::input;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
-use std::collections::HashMap;
 use base64::Engine;
 use leptos::task::spawn_local;
 use leptos::web_sys::HtmlAnchorElement;
-use leptos_router::hooks::use_navigate;
 use leptos::wasm_bindgen::JsCast;
 use traits::{AsReactive, ReactiveCapture};
 
@@ -98,16 +96,6 @@ pub async fn create_sample_submission(student_info: ExpandableInfo) -> Result<()
     }
 }
 
-#[server(LogExpandableInfo, endpoint = "/log-expandable")]
-pub async fn log_expandable(info: ExpandableInfo) -> Result<(), ServerFnError> {
-    console_log(format!("Was given info: {:?}", info).as_str());
-    // Manually specify the type here since we're not able to infer the type later.
-    let item: HashMap<String, AttributeValue> = to_item(info)?;
-    console_log(format!("Converted into a DynamoDB item: {:?}", item).as_str());
-
-    Ok(())
-}
-
 #[server(CreateExamplePdf, endpoint = "/example-pdf")]
 pub async fn create_example_pdf() -> Result<Vec<u8>, ServerFnError> {
     // Create typst template. This will be replaced with getting the template from S3 in the future.
@@ -178,10 +166,6 @@ pub fn HomePage() -> impl IntoView {
         },
     );
     let submit_action = ServerAction::<CreateSampleSubmission>::new();
-    let log_action = ServerAction::<LogExpandableInfo>::new();
-    let pdf_action = ServerAction::<CreateExamplePdf>::new();
-    
-    let navigate = use_navigate();
 
     view! {
         <AuthLoaded fallback=Loading>
