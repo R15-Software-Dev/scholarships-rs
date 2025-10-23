@@ -1,9 +1,12 @@
 // Server dependencies
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValue};
-
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
+#[cfg(feature = "ssr")]
+use std::process::{Command, Stdio};
+#[cfg(feature = "ssr")]
+use std::io::Write;
 
 use crate::common::{ExpandableInfo, UserClaims};
 use crate::pages::UnauthenticatedPage;
@@ -16,6 +19,11 @@ use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
 use std::collections::HashMap;
+use base64::Engine;
+use leptos::task::spawn_local;
+use leptos::web_sys::HtmlAnchorElement;
+use leptos_router::hooks::use_navigate;
+use leptos::wasm_bindgen::JsCast;
 use traits::{AsReactive, ReactiveCapture};
 
 /// # Get Student Info
@@ -100,6 +108,48 @@ pub async fn log_expandable(info: ExpandableInfo) -> Result<(), ServerFnError> {
     Ok(())
 }
 
+#[server(CreateExamplePdf, endpoint = "/example-pdf")]
+pub async fn create_example_pdf() -> Result<Vec<u8>, ServerFnError> {
+    // Create typst template. This will be replaced with getting the template from S3 in the future.
+    let template = r#"
+    = Testing Typst
+    This form will create a new student application. The PDF that's generated (like this one)
+    is a template that will be used later. We want to preprocess these templates to insert the
+    correct values from the API later on.
+    
+    = Second Header
+    This area is going to do some math because I think that's fun. We'll typeset a simple sum:
+    $ sum_(i=0)^(10)
+        (n_i) $
+    
+    = Third Test
+    This is just going to create a bulleted list inside a numbered list:
+     + Numbers
+     + Number again
+       - Not a number.
+    "#;
+    
+    // Create and run the typst command.
+    let mut command = Command::new("typst");
+    command
+        .arg("compile")
+        .arg("-")  // Use stdin as input
+        .arg("-")  // Write output to stdout
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped());
+
+    let mut process = command.spawn()?;
+
+    process.stdin
+        .take().unwrap()
+        .write(template.as_bytes())?;
+
+    let output = process.wait_with_output()?;
+    let pdf_bytes = output.stdout;
+    
+    Ok(pdf_bytes)
+}
+
 /// The main home page component. Contains a simple contact form.
 #[component]
 pub fn HomePage() -> impl IntoView {
@@ -129,6 +179,9 @@ pub fn HomePage() -> impl IntoView {
     );
     let submit_action = ServerAction::<CreateSampleSubmission>::new();
     let log_action = ServerAction::<LogExpandableInfo>::new();
+    let pdf_action = ServerAction::<CreateExamplePdf>::new();
+    
+    let navigate = use_navigate();
 
     view! {
         <AuthLoaded fallback=Loading>
@@ -321,6 +374,29 @@ pub fn HomePage() -> impl IntoView {
                                                     }
                                                     disabled=elements_disabled
                                                 >"Submit"</ActionButton>
+                                            </Row>
+                                            <Row>
+                                                <ActionButton
+                                                    on:click=move |_| {
+                                                        console_log("Attempting to get PDF from server endpoint");
+                                                        spawn_local(async move {
+                                                            let result = create_example_pdf().await;
+                                                            if let Ok(bytes) = result {
+                                                                let base64 = base64::engine::general_purpose::STANDARD.encode(bytes);
+                                                                let data_url = format!("data:application/pdf;base64,{}", base64);
+                                                                
+                                                                console_log("Found document, opening in new tab...");
+                                                                
+                                                                let link = document().create_element("a")
+                                                                    .unwrap().dyn_into::<HtmlAnchorElement>()
+                                                                    .unwrap();
+                                                                link.set_href(&*data_url);
+                                                                link.set_target("_blank");
+                                                                link.click();
+                                                            }
+                                                        });
+                                                    }
+                                                >"Get PDF"</ActionButton>
                                             </Row>
                                             <Row>
                                                 <p>
