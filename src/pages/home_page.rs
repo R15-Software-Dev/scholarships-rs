@@ -9,9 +9,8 @@ use crate::common::{ExpandableInfo, UserClaims};
 use crate::pages::UnauthenticatedPage;
 use crate::components::{
     ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
-    Select,
+    Select, ChipsList
 };
-use crate::input;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
@@ -266,6 +265,35 @@ pub fn HomePage() -> impl IntoView {
                                                     data_member="gender"
                                                     data_map=expandable_react.data
                                                 />
+                                            </Row>
+                                            <Row>
+                                                <ChipsList
+                                                    data_member="athletic_requirements"
+                                                    data_map=expandable_react.data
+                                                    items=vec!(
+                                                            "Football", "Soccer", "Cross Country", "Cheerleading",
+                                                            "Swimming", "Wrestling", "Ski", "Basketball",
+                                                            "Lacrosse", "Softball", "Indoor/Outdoor Track",
+                                                            "Golf", "Tennis", "Volleyball"
+                                                        )
+                                                        .into_iter().map(|s| s.to_owned())
+                                                        .collect()
+                                                    disabled=elements_disabled
+                                                    label="Sports/Athletic Requirements"
+                                                />
+                                            </Row>
+                                            <Row>
+                                                <ChipsList
+                                                    data_member="community_involvement"
+                                                    data_map=expandable_react.data
+                                                    items=vec!(
+                                                            "Lion's Club", "Knights of Columbus",
+                                                            "Community Service > 20hrs"
+                                                        )
+                                                        .into_iter().map(|s| s.to_owned())
+                                                        .collect()
+                                                    disabled=elements_disabled
+                                                    label="Required Community Involvement"
                                             </Row>
                                             <Row>
                                                 <MultiEntry
