@@ -1,13 +1,13 @@
-use std::collections::HashMap;
+use crate::common::ValueType;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
-use crate::components::ValueType;
+use std::collections::HashMap;
 
 #[component]
 pub fn OutlinedTextField(
     #[prop(optional, into)] placeholder: String,
     // #[prop()] value: Subfield<TStore, TInner, ValueType>,
-    #[prop(into)] data_member: String,  // should this be an RwSignal??
+    #[prop(into)] data_member: String, // should this be an RwSignal??
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop(optional)] value: RwSignal<ValueType>,
     #[prop(default = "text".to_owned(), into)] input_type: String,
@@ -15,7 +15,7 @@ pub fn OutlinedTextField(
     #[prop(optional)] error: RwSignal<bool>,
     #[prop(optional, into)] name: String,
     #[prop(optional, into)] label: String,
-    #[prop(optional, into)] error_text: RwSignal<String>
+    #[prop(optional, into)] error_text: RwSignal<String>,
 ) -> impl IntoView {
     // This function parses the input into the correct type. It only accepts numbers or strings as
     // valid types, and parses them accordingly.
@@ -26,42 +26,36 @@ pub fn OutlinedTextField(
             let to_parse = event_target_value(&e);
             match input_type.as_str() {
                 "text" => {
-                    // String parse function. It will always parse, but make sure the error 
+                    // String parse function. It will always parse, but make sure the error
                     // state is set properly anyway.
                     error.set(false);
                     value.set(ValueType::String(Some(to_parse.clone())));
                     data_map.update(|map| {
-                        if let Some(val) = map.get_mut(&data_member) {
-                            
-                            *val = ValueType::String(Some(to_parse));
-                        } else {
-                            map.insert(data_member.clone(), ValueType::String(Some(to_parse)));
-                        }
+                        map.insert(data_member.clone(), ValueType::String(Some(to_parse)));
                     });
-                },
+                }
                 "number" => {
                     // Define number parse function.
                     // If the number parses, Some(num), else None, but we want to keep the value that's
                     // in the text field at this point, just set the error.
                     console_log(format!("Parsing {to_parse} to a number").as_str());
-                    match to_parse.parse::<i32>().map(|n| ValueType::Number(Some(n.to_string()))) {
+                    match to_parse
+                        .parse::<i32>()
+                        .map(|n| ValueType::Number(Some(n.to_string())))
+                    {
                         Ok(value_type) => {
                             error.set(false);
                             value.set(value_type.clone());
                             data_map.update(|map| {
-                                if let Some(val) = map.get_mut(&data_member) {
-                                    *val = value_type;
-                                } else {
-                                    map.insert(data_member.clone(), value_type);
-                                }
+                                map.insert(data_member.clone(), value_type);
                             });
-                        },
+                        }
                         Err(_) => {
                             error.set(true);
                             error_text.set("Value is not a valid number.".to_owned());
                         }
                     };
-                },
+                }
                 _ => {
                     // Create some custom function that reports failure.
                     let msg = format!("Input {input_type:?} is not a valid type.");
@@ -72,7 +66,7 @@ pub fn OutlinedTextField(
             }
         }
     };
-    
+
     view! {
         <div class="flex flex-1">
             <label class="flex flex-col flex-1">

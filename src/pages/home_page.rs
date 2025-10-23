@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 // Server dependencies
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValue};
@@ -7,16 +6,20 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 use serde_dynamo::{from_item, to_item};
 
 use crate::common::{ExpandableInfo, UserClaims};
-use crate::components::{ActionButton, CheckboxList, Loading, OutlinedTextField, Panel, RadioList, Row, Select, ChipsList};
-use crate::pages::{UnauthenticatedPage};
+use crate::pages::UnauthenticatedPage;
+use crate::components::{
+    ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
+    Select, ChipsList
+};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
+use std::collections::HashMap;
 use traits::{AsReactive, ReactiveCapture};
 
 /// # Get Student Info
 /// Gets a student's information given their `subject`.
-/// 
+///
 /// All information is found by using a `GetItemCommand` in the student application DynamoDB table.
 #[server(GetSubmission, endpoint = "/get-submission")]
 pub async fn get_submission(subject: String) -> Result<ExpandableInfo, ServerFnError> {
@@ -24,7 +27,7 @@ pub async fn get_submission(subject: String) -> Result<ExpandableInfo, ServerFnE
     let dbclient = Client::new(&config);
 
     console_log(format!("Getting values from API using subject {}", subject).as_str());
-    
+
     // Gets the item from the database. It only returns an error if the database
     // experiences an error - not if the item is not found.
     match dbclient
@@ -53,7 +56,7 @@ pub async fn get_submission(subject: String) -> Result<ExpandableInfo, ServerFnE
 
 /// # Create Sample Submission
 /// Creates a submission given a full `StudentInfo` struct.
-/// 
+///
 /// All information is stored using a `PutItemCommand` in the student application DynamoDB table.
 #[server(CreateSampleSubmission, endpoint = "/create-sample-submission")]
 pub async fn create_sample_submission(student_info: ExpandableInfo) -> Result<(), ServerFnError> {
@@ -92,7 +95,7 @@ pub async fn log_expandable(info: ExpandableInfo) -> Result<(), ServerFnError> {
     // Manually specify the type here since we're not able to infer the type later.
     let item: HashMap<String, AttributeValue> = to_item(info)?;
     console_log(format!("Converted into a DynamoDB item: {:?}", item).as_str());
-    
+
     Ok(())
 }
 
@@ -291,6 +294,18 @@ pub fn HomePage() -> impl IntoView {
                                                         .collect()
                                                     disabled=elements_disabled
                                                     label="Required Community Involvement"
+                                            </Row>
+                                            <Row>
+                                                <MultiEntry
+                                                    data_map = expandable_react.data
+                                                    data_member = "test"
+                                                    name_member = "first_name"
+                                                    schema = vec![
+                                                        input!(Text, "first_name", "First Name:", "John"),
+                                                        input!(Text, "last_name", "Last Name:", "Smith"),
+                                                        input!(Select, "gender", "Gender:", ["Male", "Female"]),
+                                                        input!(Checkbox, "candy", "Favorite Candy:", ["Twizzlers", "Starburst"])
+                                                    ]
                                                 />
                                             </Row>
                                             <Row>

@@ -25,7 +25,7 @@ use leptos::prelude::*;
 #[component]
 pub fn Panel(
     #[prop(optional, default = false)] hidden: bool,
-    #[prop(optional)] children: Option<Children>
+    #[prop(optional)] children: Option<Children>,
 ) -> impl IntoView {
     view! {
         <div
