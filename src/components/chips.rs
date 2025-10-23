@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use leptos::prelude::*;
-use crate::components::ValueType;
+use crate::common::ValueType;
 
 /// # Chip Component
 /// 

@@ -11,6 +11,7 @@ use crate::components::{
     ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
     Select, ChipsList
 };
+use crate::input;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
@@ -294,6 +295,7 @@ pub fn HomePage() -> impl IntoView {
                                                         .collect()
                                                     disabled=elements_disabled
                                                     label="Required Community Involvement"
+                                                />
                                             </Row>
                                             <Row>
                                                 <MultiEntry
