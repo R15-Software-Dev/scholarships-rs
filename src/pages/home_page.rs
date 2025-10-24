@@ -99,6 +99,9 @@ pub async fn create_sample_submission(student_info: ExpandableInfo) -> Result<()
 #[server(CreateExamplePdf, endpoint = "/example-pdf")]
 pub async fn create_example_pdf() -> Result<Vec<u8>, ServerFnError> {
     // Create typst template. This will be replaced with getting the template from S3 in the future.
+    // The path I'm thinking, for now, is that we generate a series of "members" from the available
+    // keys that a student contains, prefixed with "student_". This means that to get the member
+    // "unweighted_gpa" we'll use the preprocess variable "student_unweighted_gpa".
     let template = r#"
     = Testing Typst
     This form will create a new student application. The PDF that's generated (like this one)
