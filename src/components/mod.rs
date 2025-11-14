@@ -1,5 +1,6 @@
 mod action_button;
 mod checkbox;
+mod file_upload;
 mod loading;
 mod multi_entry;
 mod panel;
