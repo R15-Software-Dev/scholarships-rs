@@ -7,7 +7,7 @@ use leptos_router::{
 };
 use url::Url;
 
-use crate::pages::{AboutPage, HomePage, ProviderEntry};
+use crate::pages::{AboutPage, HomePage, UnauthenticatedPage};
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -67,18 +67,9 @@ pub fn App() -> impl IntoView {
                 <Routes fallback=|| "Page not found.".into_view()>
                     <Route path=StaticSegment("") view=HomePage/>
                     <Route path=StaticSegment("about") view=AboutPage/>
-                    <Route path=StaticSegment("providers") view=ProviderEntry/>
                 </Routes>
             </main>
         </Router>
-    }
-}
-
-#[component]
-pub fn Unauthenticated() -> impl IntoView {
-    view! {
-        <p>"Error 401: Unauthorized"</p>
-        <LoginLink class="text-login">"Sign in"</LoginLink>
     }
 }
 
