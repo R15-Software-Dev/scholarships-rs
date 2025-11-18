@@ -27,6 +27,11 @@ macros = { path = "./macros" }
 traits = { path = "./traits" }
 chrono = { version = "0.4.42", features = ["serde"] }
 reactive_stores = "0.2.5"
+web-sys = { version = "0.3.77", features = ["DataTransfer", "FileList", "File", "BlobPropertyBag"] }
+console = "0.16.1"
+base64 = "0.22.1"
+wasm-bindgen-futures = "0.4.50"
+js-sys = "0.3.77"
 
 [features]
 hydrate = [
