@@ -1,27 +1,27 @@
 use leptos::prelude::*;
-use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
-use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge, LoginLink};
+use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
+use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge};
 use leptos_router::{
-    StaticSegment,
     components::{Route, Router, Routes},
+    StaticSegment,
 };
 use url::Url;
 
-use crate::pages::{AboutPage, HomePage, UnauthenticatedPage};
+use crate::pages::{AboutPage, ComparisonTestPage, HomePage};
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
         <!DOCTYPE html>
         <html lang="en">
             <head>
-                <meta charset="utf-8"/>
-                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <AutoReload options=options.clone() />
-                <HydrationScripts options/>
-                <MetaTags/>
+                <HydrationScripts options />
+                <MetaTags />
             </head>
             <body>
-                <App/>
+                <App />
             </body>
         </html>
     }
@@ -45,28 +45,29 @@ pub fn App() -> impl IntoView {
 
     let auth = Auth::signal();
     provide_context(auth); // allows use of this signal in lower areas of the tree without
-    // explicitly passing it through the html tree
+                           // explicitly passing it through the html tree
 
     let _ = Auth::init(parameters);
 
     view! {
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet
-        <Stylesheet id="leptos" href="/pkg/scholarships-rs-wasm.css"/>
+        <Stylesheet id="leptos" href="/pkg/scholarships-rs-wasm.css" />
 
         // <AuthLoading><p>"Authentication is loading"</p></AuthLoading>
         // <AuthErrorContext><AuthErrorView/></AuthErrorContext>
 
         // sets the document title
-        <Title text="R15 Scholarship App DEV"/>
+        <Title text="R15 Scholarship App DEV" />
 
         // content for this welcome page
         <Router>
             <main>
                 // TODO Create a 404 page
                 <Routes fallback=|| "Page not found.".into_view()>
-                    <Route path=StaticSegment("") view=HomePage/>
-                    <Route path=StaticSegment("about") view=AboutPage/>
+                    <Route path=StaticSegment("") view=HomePage />
+                    <Route path=StaticSegment("about") view=AboutPage />
+                    <Route path=StaticSegment("comparison") view=ComparisonTestPage />
                 </Routes>
             </main>
         </Router>

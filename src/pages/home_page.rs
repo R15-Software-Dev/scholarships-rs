@@ -107,19 +107,19 @@ pub async fn create_example_pdf() -> Result<Vec<u8>, ServerFnError> {
     This form will create a new student application. The PDF that's generated (like this one)
     is a template that will be used later. We want to preprocess these templates to insert the
     correct values from the API later on.
-    
+
     = Second Header
     This area is going to do some math because I think that's fun. We'll typeset a simple sum:
     $ sum_(i=0)^(10)
         (n_i) $
-    
+
     = Third Test
     This is just going to create a bulleted list inside a numbered list:
      + Numbers
      + Number again
        - Not a number.
     "#;
-    
+
     // Create and run the typst command.
     let mut command = Command::new("typst");
     command
@@ -137,7 +137,7 @@ pub async fn create_example_pdf() -> Result<Vec<u8>, ServerFnError> {
 
     let output = process.wait_with_output()?;
     let pdf_bytes = output.stdout;
-    
+
     Ok(pdf_bytes)
 }
 
@@ -182,8 +182,6 @@ pub fn HomePage() -> impl IntoView {
                                 let expandable_react = submission.as_reactive();
                                 let elements_disabled = RwSignal::new(false);
                                 let result_msg = Signal::derive(move || {
-                                    // Eventually, this function will show and hide a loading symbol
-                                    // and a success checkmark.
                                     if submit_action.pending().get() {
                                         elements_disabled.set(true);
                                         "Sending request...".to_owned()
@@ -192,17 +190,16 @@ pub fn HomePage() -> impl IntoView {
                                         if let Some(result) = submit_action.value().get() {
                                             match result {
                                                 Ok(_) => "Request sent successfully.".to_owned(),
-                                                Err(e) => format!("Failed to send request: {:?}", e)
+                                                Err(e) => format!("Failed to send request: {:?}", e),
                                             }
                                         } else {
                                             "".to_owned()
                                         }
                                     }
                                 });
-
                                 view! {
                                     <Row>
-                                        <div class="flex flex-col flex-1"/>
+                                        <div class="flex flex-col flex-1" />
                                         <Panel>
                                             <Row>
                                                 <h1 class="text-3xl font-bold">
@@ -220,15 +217,15 @@ pub fn HomePage() -> impl IntoView {
                                                     label="First Name:"
                                                     placeholder="John"
                                                     disabled=elements_disabled
-                                                    data_member = "first_name"
-                                                    data_map = expandable_react.data
+                                                    data_member="first_name"
+                                                    data_map=expandable_react.data
                                                 />
                                                 <OutlinedTextField
                                                     label="Last Name:"
                                                     placeholder="Smith"
                                                     disabled=elements_disabled
-                                                    data_member = "last_name"
-                                                    data_map = expandable_react.data
+                                                    data_member="last_name"
+                                                    data_map=expandable_react.data
                                                 />
                                             </Row>
                                             <Row>
@@ -236,8 +233,8 @@ pub fn HomePage() -> impl IntoView {
                                                     label="Contact Email:"
                                                     placeholder="student@region15.org"
                                                     disabled=elements_disabled
-                                                    data_member = "contact_email"
-                                                    data_map = expandable_react.data
+                                                    data_member="contact_email"
+                                                    data_map=expandable_react.data
                                                 />
                                             </Row>
                                             <Row>
@@ -245,8 +242,8 @@ pub fn HomePage() -> impl IntoView {
                                                     label="Phone Number:"
                                                     placeholder="123-456-7890"
                                                     disabled=elements_disabled
-                                                    data_member = "phone_number"
-                                                    data_map = expandable_react.data
+                                                    data_member="phone_number"
+                                                    data_map=expandable_react.data
                                                 />
                                             </Row>
                                             <Row>
@@ -254,8 +251,8 @@ pub fn HomePage() -> impl IntoView {
                                                     label="Street Address:"
                                                     placeholder="123 Fake Street"
                                                     disabled=elements_disabled
-                                                    data_member = "address"
-                                                    data_map = expandable_react.data
+                                                    data_member="address"
+                                                    data_map=expandable_react.data
                                                 />
                                             </Row>
                                             <Row>
@@ -263,9 +260,9 @@ pub fn HomePage() -> impl IntoView {
                                                     label="Highest Math SAT Score:"
                                                     placeholder="600"
                                                     disabled=elements_disabled
-                                                    data_member = "math_sat"
-                                                    data_map = expandable_react.data
-                                                    input_type = "number"
+                                                    data_member="math_sat"
+                                                    data_map=expandable_react.data
+                                                    input_type="number"
                                                 />
                                             </Row>
                                             <Row>
@@ -278,7 +275,7 @@ pub fn HomePage() -> impl IntoView {
                                                         .collect()
                                                     disabled=elements_disabled
                                                     data_member="town"
-                                                    data_map = expandable_react.data
+                                                    data_map=expandable_react.data
                                                 />
                                             </Row>
                                             <Row>
@@ -311,13 +308,24 @@ pub fn HomePage() -> impl IntoView {
                                                 <ChipsList
                                                     data_member="athletic_requirements"
                                                     data_map=expandable_react.data
-                                                    items=vec!(
-                                                            "Football", "Soccer", "Cross Country", "Cheerleading",
-                                                            "Swimming", "Wrestling", "Ski", "Basketball",
-                                                            "Lacrosse", "Softball", "Indoor/Outdoor Track",
-                                                            "Golf", "Tennis", "Volleyball"
-                                                        )
-                                                        .into_iter().map(|s| s.to_owned())
+                                                    items=vec![
+                                                        "Football",
+                                                        "Soccer",
+                                                        "Cross Country",
+                                                        "Cheerleading",
+                                                        "Swimming",
+                                                        "Wrestling",
+                                                        "Ski",
+                                                        "Basketball",
+                                                        "Lacrosse",
+                                                        "Softball",
+                                                        "Indoor/Outdoor Track",
+                                                        "Golf",
+                                                        "Tennis",
+                                                        "Volleyball",
+                                                    ]
+                                                        .into_iter()
+                                                        .map(|s| s.to_owned())
                                                         .collect()
                                                     disabled=elements_disabled
                                                     label="Sports/Athletic Requirements"
@@ -327,11 +335,13 @@ pub fn HomePage() -> impl IntoView {
                                                 <ChipsList
                                                     data_member="community_involvement"
                                                     data_map=expandable_react.data
-                                                    items=vec!(
-                                                            "Lion's Club", "Knights of Columbus",
-                                                            "Community Service > 20hrs"
-                                                        )
-                                                        .into_iter().map(|s| s.to_owned())
+                                                    items=vec![
+                                                        "Lion's Club",
+                                                        "Knights of Columbus",
+                                                        "Community Service > 20hrs",
+                                                    ]
+                                                        .into_iter()
+                                                        .map(|s| s.to_owned())
                                                         .collect()
                                                     disabled=elements_disabled
                                                     label="Required Community Involvement"
@@ -339,14 +349,16 @@ pub fn HomePage() -> impl IntoView {
                                             </Row>
                                             <Row>
                                                 <MultiEntry
-                                                    data_map = expandable_react.data
-                                                    data_member = "test"
-                                                    name_member = "first_name"
-                                                    schema = vec![
+                                                    data_map=expandable_react.data
+                                                    data_member="test"
+                                                    name_member="first_name"
+                                                    schema=vec![
                                                         input!(Text, "first_name", "First Name:", "John"),
                                                         input!(Text, "last_name", "Last Name:", "Smith"),
                                                         input!(Select, "gender", "Gender:", ["Male", "Female"]),
-                                                        input!(Checkbox, "candy", "Favorite Candy:", ["Twizzlers", "Starburst"])
+                                                        input!(
+                                                            Checkbox, "candy", "Favorite Candy:", ["Twizzlers", "Starburst"]
+                                                        ),
                                                     ]
                                                 />
                                             </Row>
@@ -354,44 +366,49 @@ pub fn HomePage() -> impl IntoView {
                                                 <ActionButton
                                                     on:click=move |_| {
                                                         let captured_map = expandable_react.capture();
-                                                        console_log(format!("Map values: {:?}", captured_map).as_str());
-                                                        submit_action.dispatch(CreateSampleSubmission {
-                                                            student_info: captured_map,
-                                                        });
+                                                        console_log(
+                                                            format!("Map values: {:?}", captured_map).as_str(),
+                                                        );
+                                                        submit_action
+                                                            .dispatch(CreateSampleSubmission {
+                                                                student_info: captured_map,
+                                                            });
                                                     }
                                                     disabled=elements_disabled
-                                                >"Submit"</ActionButton>
+                                                >
+                                                    "Submit"
+                                                </ActionButton>
                                             </Row>
                                             <Row>
-                                                <ActionButton
-                                                    on:click=move |_| {
-                                                        console_log("Attempting to get PDF from server endpoint");
-                                                        spawn_local(async move {
-                                                            let result = create_example_pdf().await;
-                                                            if let Ok(bytes) = result {
-                                                                let base64 = base64::engine::general_purpose::STANDARD.encode(bytes);
-                                                                let data_url = format!("data:application/pdf;base64,{}", base64);
-                                                                
-                                                                console_log("Found document, opening in new tab...");
-                                                                
-                                                                let link = document().create_element("a")
-                                                                    .unwrap().dyn_into::<HtmlAnchorElement>()
-                                                                    .unwrap();
-                                                                link.set_href(&*data_url);
-                                                                link.set_target("_blank");
-                                                                link.click();
-                                                            }
-                                                        });
-                                                    }
-                                                >"Get PDF"</ActionButton>
+                                                <ActionButton on:click=move |_| {
+                                                    console_log("Attempting to get PDF from server endpoint");
+                                                    spawn_local(async move {
+                                                        let result = create_example_pdf().await;
+                                                        if let Ok(bytes) = result {
+                                                            let base64 = base64::engine::general_purpose::STANDARD
+                                                                .encode(bytes);
+                                                            let data_url = format!(
+                                                                "data:application/pdf;base64,{}",
+                                                                base64,
+                                                            );
+                                                            console_log("Found document, opening in new tab...");
+                                                            let link = document()
+                                                                .create_element("a")
+                                                                .unwrap()
+                                                                .dyn_into::<HtmlAnchorElement>()
+                                                                .unwrap();
+                                                            link.set_href(&*data_url);
+                                                            link.set_target("_blank");
+                                                            link.click();
+                                                        }
+                                                    });
+                                                }>"Get PDF"</ActionButton>
                                             </Row>
                                             <Row>
-                                                <p>
-                                                    {result_msg}
-                                                </p>
+                                                <p>{result_msg}</p>
                                             </Row>
                                         </Panel>
-                                        <div class="flex flex-col flex-1"/>
+                                        <div class="flex flex-col flex-1" />
                                     </Row>
                                 }
                             })

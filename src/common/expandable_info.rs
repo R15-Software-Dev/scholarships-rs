@@ -25,9 +25,9 @@ pub struct ExpandableInfo {
 }
 
 impl ExpandableInfo {
-    pub fn new(key: String) -> Self {
+    pub fn new(key: impl Into<String>) -> Self {
         Self {
-            subject: key,
+            subject: key.into(),
             data: HashMap::new(),
         }
     }
