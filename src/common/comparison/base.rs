@@ -5,7 +5,7 @@ use super::{
 use crate::common::{ExpandableInfo, ValueType};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ComparisonData {
     /// Each comparison will have a unique ID.
     pub id: String,
@@ -23,13 +23,31 @@ pub struct ComparisonData {
 }
 
 impl ComparisonData {
+    pub fn new(
+        id: impl Into<String>,
+        member: impl Into<String>,
+        comparison: ComparisonType,
+        target_value: ValueType,
+        category: impl Into<String>,
+        display_text: impl Into<String>,
+    ) -> Self {
+        Self {
+            id: id.into(),
+            member: member.into(),
+            comparison,
+            target_value,
+            category: category.into(),
+            display_text: display_text.into(),
+        }
+    }
+    
     pub fn compare(&self, student_data: &ExpandableInfo) -> Result<bool, String> {
         let value = student_data.data.get(&self.member).unwrap();
         self.comparison.evaluate(value, &self.target_value)
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ComparisonType {
     Number(NumberComparison),
     Text(TextComparison),
