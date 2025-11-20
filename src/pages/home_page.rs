@@ -1,6 +1,7 @@
 // Server dependencies
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValue};
+
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
 #[cfg(feature = "ssr")]
@@ -275,7 +276,7 @@ pub fn HomePage() -> impl IntoView {
                                                         .collect()
                                                     disabled=elements_disabled
                                                     data_member="town"
-                                                    data_map=expandable_react.data
+                                                    data_map = expandable_react.data
                                                 />
                                             </Row>
                                             <Row>
@@ -308,24 +309,21 @@ pub fn HomePage() -> impl IntoView {
                                                 <ChipsList
                                                     data_member="athletic_requirements"
                                                     data_map=expandable_react.data
-                                                    items=vec![
-                                                        "Football",
-                                                        "Soccer",
-                                                        "Cross Country",
-                                                        "Cheerleading",
-                                                        "Swimming",
-                                                        "Wrestling",
-                                                        "Ski",
-                                                        "Basketball",
-                                                        "Lacrosse",
-                                                        "Softball",
-                                                        "Indoor/Outdoor Track",
-                                                        "Golf",
-                                                        "Tennis",
-                                                        "Volleyball",
-                                                    ]
-                                                        .into_iter()
-                                                        .map(|s| s.to_owned())
+                                                    displayed_text=vec!(
+                                                            "Football", "Soccer", "Cross Country", "Cheerleading",
+                                                            "Swimming", "Wrestling", "Ski", "Basketball",
+                                                            "Lacrosse", "Softball", "Indoor/Outdoor Track",
+                                                            "Golf", "Tennis", "Volleyball"
+                                                        )
+                                                        .into_iter().map(|s| s.to_owned())
+                                                        .collect()
+                                                    values=vec!(
+                                                            "football", "soccer", "cross_country", "cheerleading",
+                                                            "swimming", "wrestling", "ski", "basketball",
+                                                            "lacrosse", "softball", "track",
+                                                            "golf", "tennis", "volleyball"
+                                                        )
+                                                        .into_iter().map(|s| s.to_owned())
                                                         .collect()
                                                     disabled=elements_disabled
                                                     label="Sports/Athletic Requirements"
@@ -335,13 +333,16 @@ pub fn HomePage() -> impl IntoView {
                                                 <ChipsList
                                                     data_member="community_involvement"
                                                     data_map=expandable_react.data
-                                                    items=vec![
-                                                        "Lion's Club",
-                                                        "Knights of Columbus",
-                                                        "Community Service > 20hrs",
-                                                    ]
-                                                        .into_iter()
-                                                        .map(|s| s.to_owned())
+                                                    displayed_text=vec!(
+                                                            "Lion's Club", "Knights of Columbus",
+                                                            "Community Service > 20hrs"
+                                                        )
+                                                        .into_iter().map(|s| s.to_owned())
+                                                        .collect()
+                                                    values=vec!(
+                                                            "lions_club", "koc", "serv_20h"
+                                                        )
+                                                        .into_iter().map(|s| s.to_owned())
                                                         .collect()
                                                     disabled=elements_disabled
                                                     label="Required Community Involvement"
