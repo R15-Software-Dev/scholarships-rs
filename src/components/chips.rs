@@ -22,6 +22,7 @@ use crate::common::ValueType;
 /// ```
 #[component]
 pub fn Chip(
+    #[prop(into)] display_text: String,
     #[prop(into)] value: String,
     #[prop(into)] name: String,
     #[prop(into)] on_change: Callback<(), ()>,
@@ -38,7 +39,7 @@ pub fn Chip(
     view! {
         <label for=id>
             <input
-                type="checkbox" 
+                r#type="checkbox"
                 class="relative peer shrink-0 hidden"
                 name=name.clone()
                 id=id.clone()
@@ -54,7 +55,7 @@ pub fn Chip(
                 peer-disabled:peer-checked:border-gray-700
                 peer-disabled:cursor-default
                 transition-all duration-150">
-                <span>{value.clone()}</span>
+                <span>{display_text.clone()}</span>
             </div>
         </label>
     }
@@ -71,7 +72,8 @@ pub fn Chip(
 pub fn ChipsList(
     #[prop(into)] data_member: String,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
-    #[prop()] items: Vec<String>,
+    #[prop()] displayed_text: Vec<String>,
+    #[prop()] values: Vec<String>,
     #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
     #[prop(optional, into)] label: String,
 ) -> impl IntoView {
@@ -79,11 +81,11 @@ pub fn ChipsList(
         <div class="m-1.5 mt-0 mb-0">
             <span class="font-bold">{label}</span>
             <div class="flex flex-row flex-wrap gap-2 mt-1">
-                {items
+                {displayed_text.into_iter().zip(values)
                     .into_iter()
-                    .map(|item| {
+                    .map(|(text, value)| {
                         let checked_signal = Signal::derive({
-                            let item_name = item.clone();
+                            let item_name = value.clone();
                             let data_member = data_member.clone();
                             move || {
                                 data_map.get()
@@ -97,7 +99,7 @@ pub fn ChipsList(
                         });
                     
                         let on_change = {
-                            let item_name = item.clone();
+                            let item_name = value.clone();
                             let data_member = data_member.clone();
                             move || {
                                 let result = ValueType::String(Some(item_name.clone()));
@@ -133,7 +135,8 @@ pub fn ChipsList(
                                 checked=checked_signal
                                 name=data_member.clone()
                                 on_change=on_change
-                                value=item.clone()
+                                value=value.clone()
+                                display_text=text.clone()
                                 disabled=disabled
                             />
                         }

@@ -271,11 +271,19 @@ pub fn HomePage() -> impl IntoView {
                                                 <ChipsList
                                                     data_member="athletic_requirements"
                                                     data_map=expandable_react.data
-                                                    items=vec!(
+                                                    displayed_text=vec!(
                                                             "Football", "Soccer", "Cross Country", "Cheerleading",
                                                             "Swimming", "Wrestling", "Ski", "Basketball",
                                                             "Lacrosse", "Softball", "Indoor/Outdoor Track",
                                                             "Golf", "Tennis", "Volleyball"
+                                                        )
+                                                        .into_iter().map(|s| s.to_owned())
+                                                        .collect()
+                                                    values=vec!(
+                                                            "football", "soccer", "cross_country", "cheerleading",
+                                                            "swimming", "wrestling", "ski", "basketball",
+                                                            "lacrosse", "softball", "track",
+                                                            "golf", "tennis", "volleyball"
                                                         )
                                                         .into_iter().map(|s| s.to_owned())
                                                         .collect()
@@ -287,9 +295,14 @@ pub fn HomePage() -> impl IntoView {
                                                 <ChipsList
                                                     data_member="community_involvement"
                                                     data_map=expandable_react.data
-                                                    items=vec!(
+                                                    displayed_text=vec!(
                                                             "Lion's Club", "Knights of Columbus",
                                                             "Community Service > 20hrs"
+                                                        )
+                                                        .into_iter().map(|s| s.to_owned())
+                                                        .collect()
+                                                    values=vec!(
+                                                            "lions_club", "koc", "serv_20h"
                                                         )
                                                         .into_iter().map(|s| s.to_owned())
                                                         .collect()
