@@ -2,7 +2,7 @@ use super::Comparison;
 use crate::common::ValueType;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum NumberComparison {
     GreaterThan,
     LessThan,

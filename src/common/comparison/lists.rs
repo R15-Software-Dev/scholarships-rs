@@ -2,7 +2,7 @@ use super::{Comparison, NumberComparison};
 use crate::common::ValueType;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum NumberListComparison {
     /// Sums the values in the list and checks them using the given [`NumberComparison`].
     /// Requires the list to contain only numbers.
@@ -65,7 +65,7 @@ impl Comparison for NumberListComparison {
 /// 
 /// For example, using `TextListComparison::Contains` checks if a specific value is contained
 /// in the list.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum TextListComparison {
     /// Checks if the list contains the target value.
     Contains,
@@ -156,7 +156,7 @@ impl Comparison for TextListComparison {
 /// 
 /// This will flatten a nested list into a single list of `ValueType::String` enums and then
 /// will check if the list contains the indicated target value.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum NestedListComparison {
     /// Flattens a nested list into a single text list, then performs the given comparison.
     FlattenToTextList(Box<TextListComparison>),
@@ -210,7 +210,7 @@ impl Comparison for NestedListComparison {
 /// ```
 /// MapListComparison::FlattenToTextList("name".to_owned(), Box::new(TextListComparison::Equal));
 /// ```
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum MapListComparison {
     /// Flattens the map list to a text list and then performs the given comparison.
     FlattenToTextList(String, Box<TextListComparison>),
