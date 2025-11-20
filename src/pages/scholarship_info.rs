@@ -262,9 +262,15 @@ fn ScholarshipForm(
                     label="Scholarship Requirements"
                     data_member="requirements"
                     data_map=reactive_info.data
-                    items=comparison_list
-                        .into_iter()
+                    values=comparison_list
+                        .iter()
+                        .cloned()
                         .map(|comp| comp.id)
+                        .collect()
+                    displayed_text=comparison_list
+                        .iter()
+                        .cloned()
+                        .map(|comp| comp.display_text)
                         .collect()
                 />
             </Row>
