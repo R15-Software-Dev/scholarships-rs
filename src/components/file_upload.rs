@@ -1,8 +1,10 @@
+use base64::Engine;
 use leptos::ev::{DragEvent, Event};
 use leptos::logging;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use web_sys::{Blob, BlobPropertyBag, File, HtmlInputElement, Url, window};
+use leptos::wasm_bindgen::JsCast;
+use web_sys::{Blob, BlobPropertyBag, File, HtmlAnchorElement, HtmlInputElement, Url, window};
 
 /// File metadata passed upward to the parent.
 #[derive(Debug, Clone, PartialEq)]
@@ -225,7 +227,7 @@ pub fn FileUpload(
                         class="text-sm underline text-blue-700 hover:text-blue-900"
                         on:click=move |_| {
                             if let Some(bytes) = file_data.get() {
-                                open_in_new_tab(bytes, "application/octet-stream");
+                                open_in_new_tab(bytes, "application/pdf");
                             }
                         }
                     >
@@ -238,23 +240,17 @@ pub fn FileUpload(
 }
 
 /// Open the uploaded file in a new browser tab.
-/// Uses Blob + object URL.
+
 pub fn open_in_new_tab(bytes: Vec<u8>, mime: &str) {
-    let uint8 = js_sys::Uint8Array::from(bytes.as_slice());
+    let base64 = base64::engine::general_purpose::STANDARD.encode(bytes);
+    let data_url = format!("data:{};base64,{}", mime, base64);
 
-    // Build Blob
-    let mut bag = BlobPropertyBag::new();
-    bag.set_type(mime);
-
-    let blob =
-        Blob::new_with_u8_array_sequence_and_options(&js_sys::Array::of1(&uint8), &bag).unwrap();
-
-    // Convert Blob → temporary object URL
-    let url = Url::create_object_url_with_blob(&blob).unwrap();
-
-    // Open in new tab
-    window()
+    let link = document()
+        .create_element("a")
         .unwrap()
-        .open_with_url_and_target(&url, "_blank")
+        .dyn_into::<HtmlAnchorElement>()
         .unwrap();
+    link.set_href(&*data_url);
+    link.set_target("_blank");
+    link.click();
 }
