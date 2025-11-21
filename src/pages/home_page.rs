@@ -6,13 +6,14 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 use serde_dynamo::{from_item, to_item};
 
 use crate::common::{ExpandableInfo, UserClaims};
-use crate::pages::UnauthenticatedPage;
 use crate::components::{
-    ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
-    Select, ChipsList
+    ActionButton, CheckboxList, ChipsList, FileInfo, FileUpload, Loading, MultiEntry,
+    OutlinedTextField, Panel, RadioList, Row, Select,
 };
 use crate::input;
+use crate::pages::UnauthenticatedPage;
 use leptos::leptos_dom::logging::console_log;
+use leptos::logging;
 use leptos::prelude::*;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
 use std::collections::HashMap;
@@ -129,6 +130,15 @@ pub fn HomePage() -> impl IntoView {
     );
     let submit_action = ServerAction::<CreateSampleSubmission>::new();
     let log_action = ServerAction::<LogExpandableInfo>::new();
+
+    // Store all files that come from FileUpload
+    let files = RwSignal::new(Vec::<FileInfo>::new());
+
+    // Callback MUST be wrapped in Callback::new
+    let handle_file = Callback::new(move |file: FileInfo| {
+        logging::log!("Received file: {:?}", file);
+        files.update(|v| v.push(file));
+    });
 
     view! {
         <AuthLoaded fallback=Loading>
@@ -266,6 +276,14 @@ pub fn HomePage() -> impl IntoView {
                                                     data_member="gender"
                                                     data_map=expandable_react.data
                                                 />
+                                            </Row>
+                                            <Row>
+                                            <FileUpload
+                                                file_types=Some(vec![
+                                                    ".pdf".to_string()
+                                                ])
+                                                on_change=handle_file
+                                            />
                                             </Row>
                                             <Row>
                                                 <ChipsList
