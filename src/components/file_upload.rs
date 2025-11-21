@@ -4,8 +4,7 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 use web_sys::{Blob, BlobPropertyBag, File, HtmlInputElement, Url, window};
 
-/// Represents metadata about an uploaded file.
-/// Sent upward to the parent via `on_change`.
+/// File metadata passed upward to the parent.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FileInfo {
     pub id: String,
@@ -17,7 +16,7 @@ pub struct FileInfo {
     pub error_message: Option<String>,
 }
 
-/// Status of a file during the upload lifecycle.
+/// Current upload status of a file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum FileStatus {
     #[default]
@@ -28,7 +27,7 @@ pub enum FileStatus {
     Cancelled,
 }
 
-/// Represents upload progress (for future expansion).
+/// Upload progress (reserved for future use).
 #[derive(Debug, Clone, PartialEq)]
 pub struct UploadProgress {
     pub file_id: String,
@@ -38,15 +37,15 @@ pub struct UploadProgress {
 }
 
 ///
-/// Process a file selected either via:
-///  - drag & drop, OR
-///  - selecting with the "Browse" button
+/// A shared function for handling both:
+///  - drag & drop files
+///  - file input selection
 ///
-/// This centralizes:
-///  - extension whitelisting
-///  - updating the displayed file name
-///  - reading bytes (for the "Open in New Tab" button)
-///  - notifying the parent component
+/// Performs:
+///  - extension filtering (.pdf, .docx, etc.)
+///  - updating displayed filename
+///  - reading file bytes for preview
+///  - notifying parent component via callback
 ///
 fn process_file(
     file: File,
@@ -59,22 +58,21 @@ fn process_file(
     let mime = file.type_();
     let size = file.size() as u64;
 
-    // 🔒 Enforce extension restrictions (.pdf, .docx, etc.)
+    // 🔒 Enforce extension whitelist (if provided)
     if let Some(allowed_types) = allowed {
         let ok = allowed_types.iter().any(|ext| name.ends_with(ext));
         if !ok {
-            logging::log!("Rejected file: {}", name);
+            logging::log!("Rejected file due to extension mismatch: {}", name);
             file_data.set(None);
             file_name.set(None);
             return;
         }
     }
 
-    // Save the filename so UI can display it.
+    // Store filename for display in the UI
     file_name.set(Some(name.clone()));
 
-    // Read file into bytes for the "Open in New Tab" functionality.
-    // Must be async because FileReader/arrayBuffer() is async.
+    // Read file into memory asynchronously for previewing
     let fut = async move {
         let array_buf = wasm_bindgen_futures::JsFuture::from(file.array_buffer())
             .await
@@ -84,13 +82,13 @@ fn process_file(
         Some(bytes)
     };
 
-    // Spawn Leptos async task to load the file contents.
+    // Run async file-reading in a Leptos task
     spawn_local(async move {
         let bytes = fut.await;
         file_data.set(bytes);
     });
 
-    // Construct FileInfo and notify the parent
+    // Notify parent with a FileInfo struct
     let info = FileInfo {
         id: uuid::Uuid::new_v4().to_string(),
         name,
@@ -103,47 +101,45 @@ fn process_file(
 
     logging::log!("Accepted file: {:?}", info);
 
-    // Trigger parent callback
     on_change.run(info);
 }
 
 ///
-/// Main FileUpload component.
+/// A fully restyled file upload component:
 ///
-/// Provides:
-///  - drag & drop file selection
-///  - hidden native file input
-///  - custom styled "Browse" button
-///  - filename display that updates for BOTH browse & drag/drop
-///  - "Open in New Tab" button
+///  Entire dashed box is clickable
+///  Accepts drag & drop inside the box
+///  Hover transitions to darker background
+///  Filename displayed inside the box
+///  Hidden native file input
+///  Optional "Open in New Tab" link
 ///
 #[component]
 pub fn FileUpload(
-    #[prop()] file_types: Option<Vec<String>>, // List of allowed extensions (e.g., .pdf, .docx)
-    #[prop(into)] on_change: Callback<FileInfo>, // Callback to parent component
+    #[prop()] file_types: Option<Vec<String>>, // Allowed extensions (.pdf, .docx)
+    #[prop(into)] on_change: Callback<FileInfo>, // Callback for parent
+    #[prop(optional, into)] label: String,
 ) -> impl IntoView {
-    // Stores file contents (used for `Open in New Tab`)
+    // File contents stored for preview
     let file_data = RwSignal::new(None::<Vec<u8>>);
 
-    // Stores the file's display name (replaces browser's "No file selected")
+    // Currently selected filename
     let file_name = RwSignal::new(None::<String>);
 
-    // Turn allowed extensions into a string for <input accept="">
+    // Convert Vec<String> → ".pdf, .docx" for <input accept="">
     let accept_value = file_types.clone().map(|v| v.join(",")).unwrap_or_default();
 
-    // Prevent browser from opening the file on dragover
+    // Prevent browser from opening the file when dragging over the box
     let drag_over = move |ev: DragEvent| ev.prevent_default();
 
-    // Function that determines what filename text should display.
-    // Replaces the native "No file selected" text entirely.
+    // Label text inside the dashed box
     let file_label = move || {
         file_name
             .get()
-            .unwrap_or_else(|| "No file selected".to_string())
+            .unwrap_or_else(|| "Click or drag a file to upload".to_string())
     };
 
-    // Handle drag & drop files.
-    // Calls process_file() for each dropped file.
+    // Handle drag & drop uploads
     let drop = {
         let file_types = file_types.clone();
         let on_change = on_change.clone();
@@ -155,7 +151,7 @@ pub fn FileUpload(
 
             if let Some(dt) = ev.data_transfer() {
                 if let Some(list) = dt.files() {
-                    // Loop through each dragged file
+                    // Support dropping multiple files
                     for i in 0..list.length() {
                         if let Some(file) = list.get(i) {
                             process_file(file, &file_types, &on_change, file_data, file_name);
@@ -166,8 +162,7 @@ pub fn FileUpload(
         }
     };
 
-    // Handle file input selection ("Browse" button).
-    // Same logic as drag & drop — both paths call process_file().
+    // Handle file selection via clicking the box
     let on_change_input = {
         let file_types = file_types.clone();
         let on_change = on_change.clone();
@@ -177,50 +172,57 @@ pub fn FileUpload(
         move |ev: Event| {
             let input: HtmlInputElement = event_target(&ev);
 
-            // Only one file allowed (input.files().get(0))
+            // Only process the first selected file
             if let Some(file) = input.files().and_then(|fs| fs.get(0)) {
                 process_file(file, &file_types, &on_change, file_data, file_name);
             }
         }
     };
 
-    // Component UI
+    // Component View
     view! {
-        <div
-            class="file-upload"
-            on:dragover=drag_over
-            on:drop=drop
-        >
-            <label class="file-upload-label"
-                style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;"
+        <div class="file-upload flex flex-col flex-1">
+        <span class="block ml-1.5 mb-0 font-bold">{label}</span>
+            // Entire dashed box acts as upload area AND button
+            <label
+                class="file-upload-area block m-1.5 p-1.5 mt-0
+                       border-2 border-dashed border-red-700 rounded-md
+                       py-2 px-4 text-center cursor-pointer
+                       transition-colors duration-150
+                       bg-white hover:bg-gray-100"
+                on:dragover=drag_over
+                on:drop=drop
             >
-                // Custom "Browse" button (styled, not native)
-                <span class="file-upload-browse"
-                    style="padding: 0.25rem 0.75rem; border: 1px solid #ccc; border-radius: 4px;"
-                >
-                    "Browse"
-                </span>
-
-                // Display the current selected filename
-                <span class="file-upload-filename"
-                    style="font-size: 0.875rem; color: #555;"
-                >
-                    {file_label}
-                </span>
-
-                // Hidden actual file input (browser UI hidden)
+                // Hidden file input triggered by clicking the label
                 <input
                     type="file"
                     on:change=on_change_input
                     prop:accept=accept_value
                     style="display: none;"
                 />
+
+                // Centered text inside the upload box
+                <div class="flex flex-col items-center justify-center gap-1">
+                    <span class="text-sm font-medium">
+                        {file_label}
+                    </span>
+
+                    <span class="text-xs text-gray-500">
+                        "Supported types: "
+                        {move || file_types
+                            .clone()
+                            .map(|v| v.join(", "))
+                            .unwrap_or_else(|| "any".to_string())
+                        }
+                    </span>
+                </div>
             </label>
 
-            // Show "Open in New Tab" only if file_data is loaded
+            // Show preview button only when file bytes exist
             <Show when=move || file_data.get().is_some()>
                 <div class="mt-2">
                     <button
+                        class="text-sm underline text-blue-700 hover:text-blue-900"
                         on:click=move |_| {
                             if let Some(bytes) = file_data.get() {
                                 open_in_new_tab(bytes, "application/octet-stream");
@@ -235,22 +237,22 @@ pub fn FileUpload(
     }
 }
 
-/// Open a file in a new browser tab using Blob + URL.createObjectURL.
+/// Open the uploaded file in a new browser tab.
+/// Uses Blob + object URL.
 pub fn open_in_new_tab(bytes: Vec<u8>, mime: &str) {
-    // Convert Rust Vec<u8> → JS Uint8Array
     let uint8 = js_sys::Uint8Array::from(bytes.as_slice());
 
-    // Create JS Blob with MIME type
+    // Build Blob
     let mut bag = BlobPropertyBag::new();
     bag.set_type(mime);
 
     let blob =
         Blob::new_with_u8_array_sequence_and_options(&js_sys::Array::of1(&uint8), &bag).unwrap();
 
-    // Create a temporary object URL for browser to open
+    // Convert Blob → temporary object URL
     let url = Url::create_object_url_with_blob(&blob).unwrap();
 
-    // Open new tab
+    // Open in new tab
     window()
         .unwrap()
         .open_with_url_and_target(&url, "_blank")

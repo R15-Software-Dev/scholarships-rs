@@ -279,6 +279,7 @@ pub fn HomePage() -> impl IntoView {
                                             </Row>
                                             <Row>
                                             <FileUpload
+                                                label="Upload"
                                                 file_types=Some(vec![
                                                     ".pdf".to_string()
                                                 ])
