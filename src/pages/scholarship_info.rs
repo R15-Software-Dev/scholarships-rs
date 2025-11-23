@@ -1,144 +1,13 @@
-#[cfg(feature = "ssr")]
-use super::utils::server_utils::create_dynamo_client;
-
-#[cfg(feature = "ssr")]
-use aws_sdk_dynamodb::{
-    error::ProvideErrorMetadata,
-    types::AttributeValue,
-};
-
 use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
-use crate::common::{ComparisonType, ExpandableInfo, NumberComparison, ValueType};
-use crate::components::{ActionButton, ChipsList, Loading, OutlinedTextField, Panel, Row};
+use crate::common::ExpandableInfo;
+use crate::components::{ActionButton, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row};
 use super::UnauthenticatedPage;
 use traits::{AsReactive, ReactiveCapture};
 use crate::common::ComparisonData;
+use super::api::{get_comparison_info, get_scholarship_info, CreateScholarshipInfo, CreateTestComparisons};
 
-#[server(GetScholarshipInfo, endpoint = "/scholarship/info/get")]
-pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFnError> {    
-    let client = create_dynamo_client().await;
-    
-    // Perform the operation - we just want to return all data that's contained in this entry,
-    // or just return an empty ExpandableInfo struct.
-    log!("Getting scholarship info using id {:?}", id);
-    match client
-        .get_item()
-        .table_name("leptos-scholarship-test")
-        .key("subject", AttributeValue::S(id.clone()))
-        .send()
-        .await 
-    {
-        Ok(output) => {
-            if let Some(item) = output.item {
-                log!("Found output from API: {:?}", item);
-                Ok(serde_dynamo::from_item(item)?)
-            } else {
-                log!("Couldn't find any values, returning default struct.");
-                Ok(ExpandableInfo::new(id.clone()))
-            }
-        }
-        Err(err) => {
-            let msg = err.message().unwrap_or("An unknown error occurred");
-            Err(ServerFnError::new(msg))
-        }
-    }
-}
-
-#[server(CreateScholarshipInfo, endpoint = "/scholarship/info/create")]
-pub async fn create_scholarship_info(info: ExpandableInfo) -> Result<(), ServerFnError> {
-    use super::utils::server_utils::create_dynamo_client;
-    use aws_sdk_dynamodb::error::ProvideErrorMetadata;
-    
-    let client = create_dynamo_client().await;
-    
-    log!("Creating or updating scholarship with ID {:?}", info.subject);
-    
-    match client
-        .put_item()
-        .table_name("leptos-scholarship-test")
-        .set_item(Some(serde_dynamo::to_item(&info)?))
-        .send()
-        .await
-    {
-        Ok(_) => Ok(()),
-        Err(err) => {
-            let msg = err.message().unwrap_or("An unknown error occurred");
-            Err(ServerFnError::new(msg))
-        }
-    }
-}
-
-#[server]
-async fn get_comparison_info() -> Result<Vec<ComparisonData>, ServerFnError> {
-    let client = create_dynamo_client().await;
-    
-    log!("Getting all comparisons from the database");
-    
-    // Query the database for all comparisons. The client is only going to use the
-    // id and display text, but we'll return the whole thing.
-    match client
-        .scan()
-        .table_name("leptos-comparison-test")
-        .send()
-        .await
-    {
-        Ok(output) => {
-            if let Some(items) = output.items {
-                log!("Found comparisons from API: {:?}", items);
-                Ok(serde_dynamo::from_items(items)?)
-            } else {
-                Ok(vec![])
-            }
-        },
-        Err(err) => {
-            let msg = err.message().unwrap_or("An unknown error occurred");
-            Err(ServerFnError::new(msg))
-        }
-    }
-}
-
-#[server(CreateTestComparisons, endpoint = "/comparisons/create-test")]
-async fn create_test_comparisons() -> Result<(), ServerFnError> {
-    let client = create_dynamo_client().await;
-    
-    log!("Creating test comparisons");
-    
-    let test_comp = ComparisonData::new(
-        "comp1",
-        "unweighted_gpa",
-        ComparisonType::Number(NumberComparison::GreaterThanOrEqual),
-        ValueType::Number(Some(3.2.to_string())),
-        "Testing",
-        "GPA > 3.2"
-    );
-    
-    let _comp_list = vec![
-        ComparisonData::new(
-            "comp1",
-            "unweighted_gpa",
-            ComparisonType::Number(NumberComparison::GreaterThanOrEqual),
-            ValueType::Number(Some(3.2.to_string())),
-            "Testing",
-            "GPA > 3.2"
-        )
-    ];
-    
-    match client
-        .put_item()
-        .table_name("leptos-comparison-test")
-        .set_item(Some(serde_dynamo::to_item(&test_comp)?))
-        .send()
-        .await
-    {
-        Ok(_) => Ok(()),
-        Err(err) => {
-            let msg = err.message().unwrap_or("An unknown error occurred");
-            Err(ServerFnError::new(msg))
-        }
-    }
-}
 
 /// # Scholarship Info Page
 /// This page will handle creating or editing scholarship information given a specific 
@@ -150,18 +19,18 @@ async fn create_test_comparisons() -> Result<(), ServerFnError> {
 /// changed before a full release.
 #[component]
 pub fn ScholarshipInfoPage() -> impl IntoView {
-    let scholarship_id = String::from("test-scholarship-id");
+    let scholarship_id = String::from("test-scholarship-id2");
     
     let get_scholarship_action: Resource<ExpandableInfo> = Resource::new(
         move || scholarship_id.clone(),
         async |id| {
-            get_scholarship_info(id).await
+            get_scholarship_info(id.clone()).await
                 // Note that this really should notify us of an error and then redirect or ask
                 // the user to try again.
                 .unwrap_or_else(|e| {
                     log!("Failed to get scholarship info: {:?}", e);
                     log!("Using default ExpandableInfo");
-                    ExpandableInfo::new("test-scholarship-id")
+                    ExpandableInfo::new(id)
                 })
         }
     );
@@ -186,27 +55,33 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
         <AuthLoaded fallback=Loading>
             <Authenticated unauthenticated=UnauthenticatedPage>
                 <Suspense fallback=Loading>
-                    {move || Suspend::new(async move {
-                        let response = get_scholarship_action.get();
-                        let comparisons = get_comparison_info.get();
-                        
-                        response
-                            .zip(comparisons)
-                            .map(|(response, comparison_list)| view! {
-                                <ScholarshipForm 
-                                    response=response
-                                    comparison_list=comparison_list
-                                    submit_action=create_scholarship_action
-                                />
-                            })
-                            .collect_view()
-                    })}
                     <Row>
-                        <ActionButton
-                            on:click=move |_| {
-                                create_test_comps.dispatch(CreateTestComparisons {});
-                            }
-                        >"Create test comparisons"</ActionButton>
+                        <div class="flex flex-col flex-1" />
+                        {move || Suspend::new(async move {
+                            let response = get_scholarship_action.get();
+                            let comparisons = get_comparison_info.get();
+                            
+                            response
+                                .zip(comparisons)
+                                .map(|(response, comparison_list)| view! {
+                                    <ScholarshipForm 
+                                        response=response
+                                        comparison_list=comparison_list
+                                        submit_action=create_scholarship_action
+                                    />
+                                })
+                                .collect_view()
+                        })}
+                        <div class="hidden">
+                            <Row>
+                                <ActionButton
+                                    on:click=move |_| {
+                                        create_test_comps.dispatch(CreateTestComparisons {});
+                                    }
+                                >"Create test comparisons"</ActionButton>
+                            </Row>
+                        </div>
+                        <div class="flex flex-col flex-1" />
                     </Row>
                 </Suspense>
             </Authenticated>
@@ -241,6 +116,10 @@ fn ScholarshipForm(
         }
     });
 
+    // We'll collect the scholarship's name, num_awards, amount_per_award, total_awards,
+    // fafsa_required, award_to, transcript_required, recipient_selection, essay_requirement (and prompt)
+    // award_night_remarks
+    
     view! {
         <Panel>
             <Row>
@@ -255,6 +134,81 @@ fn ScholarshipForm(
                     disabled=elements_disabled
                     data_member="name"
                     data_map=reactive_info.data
+                />
+            </Row>
+            <Row>
+                <OutlinedTextField
+                    label="Amount per award: (if multiple, enter the highest value)"
+                    placeholder="Enter an amount..."
+                    disabled=elements_disabled
+                    data_member="amount_per_award"
+                    data_map=reactive_info.data
+                    input_type="number"
+                />
+            </Row>
+            <Row>
+                <OutlinedTextField
+                    label="Total number of awards:"
+                    placeholder="Enter an amount..."
+                    disabled=elements_disabled
+                    data_member="num_awards"
+                    data_map=reactive_info.data
+                    input_type="number"
+                />
+            </Row>
+            <Row>
+                <OutlinedTextField
+                    label="Total amount of all awards:"
+                    placeholder="Enter an amount..."
+                    disabled=elements_disabled
+                    data_member="total_awards"
+                    data_map=reactive_info.data
+                    input_type="number"
+                />
+            </Row>
+            <Row>
+                <RadioList
+                    data_member="fafsa_required"
+                    data_map=reactive_info.data
+                    items=vec!["Yes".to_string(), "No".to_string()]
+                    disabled=elements_disabled
+                    label="Do you require student financial information?"
+                />
+            </Row>
+            <Row>
+                <RadioList
+                    data_member="transcript_required"
+                    data_map=reactive_info.data
+                    items=vec!["Yes".to_string(), "No".to_string()]
+                    disabled=elements_disabled
+                    label="Do you require a student transcript?"
+                />
+            </Row>
+            <Row>
+                <RadioList
+                    data_member="award_to"
+                    data_map=reactive_info.data
+                    items=vec!["School".to_string(), "Student".to_string()]
+                    disabled=elements_disabled
+                    label="Will the award be made to the school or the student?"
+                />
+            </Row>
+            <Row>
+                <RadioList
+                    data_member="essay_required"
+                    data_map=reactive_info.data
+                    items=vec!["Yes".to_string(), "No".to_string()]
+                    disabled=elements_disabled
+                    label="Do you require a student essay?"
+                />
+            </Row>
+            <Row>
+                <RadioList
+                    data_member="essay_prompt"
+                    data_map=reactive_info.data
+                    items=vec!["Test 1", "Test 2", "Test 3"].iter().map(|s| s.to_string()).collect()
+                    disabled=elements_disabled
+                    label="If so, select a prompt from the list below."
                 />
             </Row>
             <Row>

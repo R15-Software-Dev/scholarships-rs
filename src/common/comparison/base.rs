@@ -42,7 +42,8 @@ impl ComparisonData {
     }
     
     pub fn compare(&self, student_data: &ExpandableInfo) -> Result<bool, String> {
-        let value = student_data.data.get(&self.member).unwrap();
+        let value = student_data.data.get(&self.member)
+            .expect(format!("Couldn't find member {:?}, current student data: {:?}", self.member, student_data).as_str());
         self.comparison.evaluate(value, &self.target_value)
     }
 }

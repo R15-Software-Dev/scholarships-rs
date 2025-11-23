@@ -4,5 +4,6 @@ mod home_page;
 mod unauthenticated_page;
 mod scholarship_info;
 mod utils;
+mod api;
 
 pub use self::{about_page::*, comparison_test::*, home_page::*, unauthenticated_page::*, scholarship_info::*};
