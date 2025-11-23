@@ -1,9 +1,9 @@
-use crate::components::dashboard_button::DashboardButton;
+use crate::components::DashboardButton;
 use leptos::prelude::*;
 #[component]
 pub fn TestPage() -> impl IntoView {
     view! {
-        <div class="p-6 space-y-4">
+        <div class="p-6 space-y-4 max-w-1/3">
             <DashboardButton
                 title="Home Page"
                 description="Navigate to Home Page"
