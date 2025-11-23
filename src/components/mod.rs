@@ -8,6 +8,7 @@ mod row;
 mod select;
 mod text_field;
 mod chips;
+mod utils;
 
 pub use self::{
     action_button::*, checkbox::*, loading::*, multi_entry::*, panel::*, radio::*, row::*,
