@@ -1,7 +1,8 @@
 use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
-use crate::common::ExpandableInfo;
+use leptos_router::hooks::use_params;
+use crate::common::{ExpandableInfo, ScholarshipFormParams};
 use crate::components::{ActionButton, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row};
 use super::UnauthenticatedPage;
 use traits::{AsReactive, ReactiveCapture};
@@ -19,10 +20,18 @@ use super::api::{get_comparison_info, get_scholarship_info, CreateScholarshipInf
 /// changed before a full release.
 #[component]
 pub fn ScholarshipInfoPage() -> impl IntoView {
-    let scholarship_id = String::from("test-scholarship-id2");
+    // let scholarship_id = String::from("test-scholarship-id2");
+    let url_params = use_params::<ScholarshipFormParams>();
+    let scholarship_id = move || {
+        url_params.read()
+            .as_ref()
+            .ok()
+            .and_then(|params| params.id.clone())
+            .unwrap_or_default()
+    };
     
     let get_scholarship_action: Resource<ExpandableInfo> = Resource::new(
-        move || scholarship_id.clone(),
+        move || scholarship_id().clone(),
         async |id| {
             get_scholarship_info(id.clone()).await
                 // Note that this really should notify us of an error and then redirect or ask

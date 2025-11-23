@@ -1,10 +1,7 @@
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
 use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge};
-use leptos_router::{
-    components::{Route, Router, Routes},
-    StaticSegment,
-};
+use leptos_router::{components::{Route, Router, Routes}, path};
 use url::Url;
 
 use crate::pages::{AboutPage, ComparisonTestPage, HomePage, ScholarshipInfoPage};
@@ -65,10 +62,10 @@ pub fn App() -> impl IntoView {
             <main>
                 // TODO Create a 404 page
                 <Routes fallback=|| "Page not found.".into_view()>
-                    <Route path=StaticSegment("") view=HomePage />
-                    <Route path=StaticSegment("about") view=AboutPage />
-                    <Route path=StaticSegment("comparison") view=ComparisonTestPage />
-                    <Route path=StaticSegment("scholarship") view=ScholarshipInfoPage />
+                    <Route path=path!("") view=HomePage />
+                    <Route path=path!("about") view=AboutPage />
+                    <Route path=path!("comparison") view=ComparisonTestPage />
+                    <Route path=path!("scholarship/:id") view=ScholarshipInfoPage />
                 </Routes>
             </main>
         </Router>
