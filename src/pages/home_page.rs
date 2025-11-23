@@ -242,6 +242,19 @@ pub fn HomePage() -> impl IntoView {
                                                 />
                                             </Row>
                                             <Row>
+                                                // Radio { data_member, label, items }
+                                                <RadioList
+                                                    label="Town:"
+                                                    items=vec!["Southbury", "Middlebury"]
+                                                        .into_iter()
+                                                        .map(|s| s.into())
+                                                        .collect()
+                                                    disabled=elements_disabled
+                                                    data_member="town_too"
+                                                    data_map = expandable_react.data
+                                                />
+                                            </Row>
+                                            <Row>
                                                 // Checkbox { data_member, label, items }
                                                 <CheckboxList
                                                     label="Favorite Candies:"

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use leptos::prelude::*;
 use crate::common::ValueType;
+use crate::components::utils::create_unique_id;
 
 /// # Chip Component
 /// 
@@ -31,10 +32,7 @@ pub fn Chip(
 ) -> impl IntoView {
     // Generate a unique id - ensure that the value doesn't contain spaces.
     // Without this id, checkbox/radio inputs can interfere with each other.
-    let value_no_spaces = value.clone().chars()
-        .filter(|c| !c.is_whitespace())
-        .collect::<String>();
-    let id = format!("{}-{}", name.clone(), value_no_spaces);
+    let id = create_unique_id(&name, &value);
     
     view! {
         <label for=id>
