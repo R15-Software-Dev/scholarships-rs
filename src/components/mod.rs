@@ -1,7 +1,7 @@
 mod action_button;
 mod checkbox;
 mod chips;
-mod dashboard_button;
+pub(crate) mod dashboard_button;
 mod loading;
 mod multi_entry;
 mod panel;
