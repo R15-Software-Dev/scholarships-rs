@@ -4,7 +4,7 @@ use leptos::logging;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos::wasm_bindgen::JsCast;
-use web_sys::{Blob, BlobPropertyBag, File, HtmlAnchorElement, HtmlInputElement, Url, window};
+use web_sys::{File, HtmlAnchorElement, HtmlInputElement};
 
 /// File metadata passed upward to the parent.
 #[derive(Debug, Clone, PartialEq)]
@@ -39,15 +39,9 @@ pub struct UploadProgress {
 }
 
 ///
-/// A shared function for handling both:
+/// Shared handler for both:
 ///  - drag & drop files
 ///  - file input selection
-///
-/// Performs:
-///  - extension filtering (.pdf, .docx, etc.)
-///  - updating displayed filename
-///  - reading file bytes for preview
-///  - notifying parent component via callback
 ///
 fn process_file(
     file: File,
@@ -55,21 +49,34 @@ fn process_file(
     on_change: &Callback<FileInfo>,
     file_data: RwSignal<Option<Vec<u8>>>,
     file_name: RwSignal<Option<String>>,
+    error_message: RwSignal<Option<String>>,
 ) {
     let name = file.name();
     let mime = file.type_();
     let size = file.size() as u64;
 
-    // 🔒 Enforce extension whitelist (if provided)
+    // Enforce extension whitelist (if provided)
     if let Some(allowed_types) = allowed {
         let ok = allowed_types.iter().any(|ext| name.ends_with(ext));
         if !ok {
+            let allowed_str = allowed_types.join(", ");
             logging::log!("Rejected file due to extension mismatch: {}", name);
+
+            // Clear any previous good file
             file_data.set(None);
             file_name.set(None);
+
+            // Set visible error message
+            error_message.set(Some(format!(
+                "File \"{}\" was rejected. This field only accepts: {}",
+                name, allowed_str
+            )));
             return;
         }
     }
+
+    // clear any previous error if this file is valid
+    error_message.set(None);
 
     // Store filename for display in the UI
     file_name.set(Some(name.clone()));
@@ -102,20 +109,9 @@ fn process_file(
     };
 
     logging::log!("Accepted file: {:?}", info);
-
     on_change.run(info);
 }
 
-///
-/// A fully restyled file upload component:
-///
-///  Entire dashed box is clickable
-///  Accepts drag & drop inside the box
-///  Hover transitions to darker background
-///  Filename displayed inside the box
-///  Hidden native file input
-///  Optional "Open in New Tab" link
-///
 #[component]
 pub fn FileUpload(
     #[prop()] file_types: Option<Vec<String>>, // Allowed extensions (.pdf, .docx)
@@ -127,6 +123,9 @@ pub fn FileUpload(
 
     // Currently selected filename
     let file_name = RwSignal::new(None::<String>);
+
+    // Error message to show under the box
+    let error_message = RwSignal::new(None::<String>);
 
     // Convert Vec<String> → ".pdf, .docx" for <input accept="">
     let accept_value = file_types.clone().map(|v| v.join(",")).unwrap_or_default();
@@ -147,6 +146,7 @@ pub fn FileUpload(
         let on_change = on_change.clone();
         let file_data = file_data;
         let file_name = file_name;
+        let error_message = error_message;
 
         move |ev: DragEvent| {
             ev.prevent_default();
@@ -156,7 +156,14 @@ pub fn FileUpload(
                     // Support dropping multiple files
                     for i in 0..list.length() {
                         if let Some(file) = list.get(i) {
-                            process_file(file, &file_types, &on_change, file_data, file_name);
+                            process_file(
+                                file,
+                                &file_types,
+                                &on_change,
+                                file_data,
+                                file_name,
+                                error_message, // NEW
+                            );
                         }
                     }
                 }
@@ -170,13 +177,20 @@ pub fn FileUpload(
         let on_change = on_change.clone();
         let file_data = file_data;
         let file_name = file_name;
+        let error_message = error_message;
 
         move |ev: Event| {
             let input: HtmlInputElement = event_target(&ev);
 
-            // Only process the first selected file
             if let Some(file) = input.files().and_then(|fs| fs.get(0)) {
-                process_file(file, &file_types, &on_change, file_data, file_name);
+                process_file(
+                    file,
+                    &file_types,
+                    &on_change,
+                    file_data,
+                    file_name,
+                    error_message,
+                );
             }
         }
     };
@@ -184,8 +198,9 @@ pub fn FileUpload(
     // Component View
     view! {
         <div class="file-upload flex flex-col flex-1">
-        <span class="block ml-1.5 mb-0 font-bold">{label}</span>
-            // Entire dashed box acts as upload area AND button
+            <span class="block ml-1.5 mb-0 font-bold">{label}</span>
+
+            // Entire dashed box acts as upload area
             <label
                 class="file-upload-area block m-1.5 p-1.5 mt-0
                        border-2 border-dashed border-red-700 rounded-md
@@ -220,6 +235,13 @@ pub fn FileUpload(
                 </div>
             </label>
 
+            // Error message shown directly below the upload box
+            <Show when=move || error_message.get().is_some()>
+                <p class="mt-1 ml-1.5 text-sm text-red-600">
+                    {move || error_message.get().unwrap_or_default()}
+                </p>
+            </Show>
+
             // Show preview button only when file bytes exist
             <Show when=move || file_data.get().is_some()>
                 <div class="mt-2">
@@ -240,7 +262,6 @@ pub fn FileUpload(
 }
 
 /// Open the uploaded file in a new browser tab.
-
 pub fn open_in_new_tab(bytes: Vec<u8>, mime: &str) {
     let base64 = base64::engine::general_purpose::STANDARD.encode(bytes);
     let data_url = format!("data:{};base64,{}", mime, base64);
