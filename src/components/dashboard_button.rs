@@ -14,18 +14,18 @@ pub fn DashboardButton(
     view! {
         <button
             type="button"
-            class="dashboard-button flex items-start gap-3 rounded-lg border p-4
-                   hover:bg-gray-100 transition cursor-pointer w-full text-left"
-            on:click=on_click
-        >
-            {icon.as_ref().map(|src| view! {
-                <img src={src.clone()} class="h-8 w-8" alt="icon"/>
-            })}
+            class="dashboard-button flex items-start gap-3 rounded-lg border-grey-300 p-6
+                   hover:bg-gray-100 transition cursor-pointer w-full text-left
+                   shadow-[inset_0_0_6px_rgba(0,0,0,0.12)]"
+            on:click=on_click>
 
             <div class="flex flex-col">
+                {icon.as_ref().map(|src| view! {
+                <img src={src.clone()} class="h-8 w-8" alt="icon"/>
+                })}
                 <h3 class="font-semibold text-base">{title.clone()}</h3>
                 {description.as_ref().map(|d| view! {
-                    <p class="text-sm text-gray-600">{d.clone()}</p>
+                    <p class="text-sm text-gray-600 pt-6">{d.clone()}</p>
                 })}
             </div>
         </button>

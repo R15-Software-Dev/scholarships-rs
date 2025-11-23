@@ -1,7 +1,7 @@
 mod action_button;
 mod checkbox;
 mod chips;
-pub(crate) mod dashboard_button;
+mod dashboard_button;
 mod loading;
 mod multi_entry;
 mod panel;
@@ -11,6 +11,6 @@ mod select;
 mod text_field;
 
 pub use self::{
-    action_button::*, checkbox::*, chips::*, loading::*, multi_entry::*, panel::*, radio::*,
-    row::*, select::*, text_field::*,
+    action_button::*, checkbox::*, chips::*, dashboard_button::*, loading::*, multi_entry::*,
+    panel::*, radio::*, row::*, select::*, text_field::*,
 };
