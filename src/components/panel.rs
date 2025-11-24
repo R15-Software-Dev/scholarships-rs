@@ -29,7 +29,7 @@ pub fn Panel(
 ) -> impl IntoView {
     view! {
         <div
-            class="flex flex-col gap-2 p-2 m-4 flex-1
+            class="flex flex-col gap-2 p-2 m-4 flex-2
                 border-1 border-gray-600/10
                 rounded-md shadow-[0_0_6px_rgba(0,0,0,0.50)]"
             class=(["hidden"], hidden) >
