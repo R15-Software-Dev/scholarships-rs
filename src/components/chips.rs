@@ -1,13 +1,14 @@
-use std::collections::HashMap;
-use leptos::prelude::*;
 use crate::common::ValueType;
+use crate::components::utils::create_unique_id;
+use leptos::prelude::*;
+use std::collections::HashMap;
 
 /// # Chip Component
-/// 
+///
 /// This component defines a single chip for use in the `ChipsList` component. It functions almost
 /// identically to the `Checkbox` component. It should only be created from within its parent
 /// `CheckboxList` component.
-/// 
+///
 /// Example usage:
 /// ```
 /// view! {
@@ -31,11 +32,8 @@ pub fn Chip(
 ) -> impl IntoView {
     // Generate a unique id - ensure that the value doesn't contain spaces.
     // Without this id, checkbox/radio inputs can interfere with each other.
-    let value_no_spaces = value.clone().chars()
-        .filter(|c| !c.is_whitespace())
-        .collect::<String>();
-    let id = format!("{}-{}", name.clone(), value_no_spaces);
-    
+    let id = create_unique_id(&name, &value);
+
     view! {
         <label for=id>
             <input
@@ -62,10 +60,10 @@ pub fn Chip(
 }
 
 /// # Chips List Component
-/// 
+///
 /// This defines a list of `Chip` components. The list of values is created based on the data from the
 /// `data_map` prop, which is found using the given `data_member`.
-/// 
+///
 /// Any values selected from the list are stored within the `data_map` immediately as part of a callback
 /// passed to the `on_change` prop for each individual `Chip` component.
 #[component]
@@ -97,7 +95,7 @@ pub fn ChipsList(
                                     .contains(&ValueType::String(Some(item_name.clone())))
                             }
                         });
-                    
+
                         let on_change = {
                             let item_name = value.clone();
                             let data_member = data_member.clone();
@@ -129,7 +127,7 @@ pub fn ChipsList(
                                 });
                             }
                         };
-                    
+
                         view! {
                             <Chip
                                 checked=checked_signal

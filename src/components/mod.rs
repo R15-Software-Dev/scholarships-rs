@@ -9,6 +9,7 @@ mod radio;
 mod row;
 mod select;
 mod text_field;
+mod utils;
 
 pub use self::{
     action_button::*, checkbox::*, chips::*, dashboard_button::*, loading::*, multi_entry::*,
