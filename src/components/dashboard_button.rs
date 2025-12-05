@@ -1,11 +1,11 @@
 use leptos::prelude::*;
 use leptos_router::hooks::use_navigate;
 
-/// #Dashboard Button Component
+/// # Dashboard Button Component
 ///
 /// This component displays a large panel-like button that redirects a user to a specified page.
 /// It's best used on a user dashboard, where multiple instances of the button are present.
-/// It has a title, description, and icon
+/// It has a title, a description, and icon
 ///
 /// Example usage:
 /// ```
@@ -20,10 +20,18 @@ use leptos_router::hooks::use_navigate;
 /// ```
 #[component]
 pub fn DashboardButton(
-    #[prop(into)] title: String,
-    #[prop(into)] description: String,
-    #[prop(into)] icon: String,
-    #[prop(into)] path: String,
+    /// The main label displayed on the button.
+    #[prop(into)]
+    title: String,
+    /// A brief explanatory text that describes the destination page.
+    #[prop(into)]
+    description: String,
+    /// The file path or URL of the icon displayed at the top of the button.
+    #[prop(into)]
+    icon: String,
+    /// The route that the user is navigated to when clicking the button.
+    #[prop(into)]
+    path: String,
 ) -> impl IntoView {
     let navigate = use_navigate();
 
