@@ -11,19 +11,19 @@ pub fn TestPage() -> impl IntoView {
                         <DashboardButton
                             title="Profile"
                             description="Edit user profile"
-                            icon="Person_Black.png"
+                            icon="/Person_Black.png"
                             path="/"
                             />
                         <DashboardButton
                             title="Create Scholarship"
                             description="Navigate to Scholarship Creation Page"
-                            icon="Create_Black.png"
+                            icon="/Create_Black.png"
                             path="/"
                             />
                         <DashboardButton
                             title="Applicants"
                             description="View Scholarship Applicants"
-                            icon="Form_Black.png"
+                            icon="/Form_Black.png"
                             path="/"
                             />
                     </section>
@@ -39,24 +39,27 @@ pub fn TestPage() -> impl IntoView {
                                         title="Form opens"
                                         date="November 15, 2025"
                                         description="Edit user profile"
-                                        icon="Check_Style2.png"
+                                        icon="/Check_Style2.png"
+                                        status="Open"
                                     />
                                     <Date
                                         title="Form closes"
                                         date="November 15, 2025"
                                         description="Edit user profile"
-                                        icon="Warning_Style2.png"
+                                        icon="/Warning_Style2.png"
+                                        status="Deadline"
+
                                     />
                                     <Date
                                         title="Students apply"
                                         date="November 15, 2025"
                                         description="Edit user profile"
-                                        icon="Calendar.png"
+                                        icon="/Calendar.png"
+                                        status="Upcoming"
                                     />
                                 </div>
                             </div>
                         </div>
-
                     </section>
                 </div>
             </div>
