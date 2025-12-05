@@ -1,10 +1,28 @@
 use leptos::prelude::*;
 use leptos_router::hooks::use_navigate;
+
+/// #Dashboard Button Component
+///
+/// This component displays a large panel-like button that redirects a user to a specified page.
+/// It's best used on a user dashboard, where multiple instances of the button are present.
+/// It has a title, description, and icon
+///
+/// Example usage:
+/// ```
+///     <div class="p-6 space-y-4 max-w-1/3">
+///         <DashboardButton
+///             title="Home Page"
+///             description="Navigate to Home Page"
+///             icon="square-user.svg"
+///             path="/"
+///         />
+///     </div>
+/// ```
 #[component]
 pub fn DashboardButton(
     #[prop(into)] title: String,
-    #[prop(into, optional)] description: Option<String>,
-    #[prop(into, optional)] icon: Option<String>,
+    #[prop(into)] description: String,
+    #[prop(into)] icon: String,
     #[prop(into)] path: String,
 ) -> impl IntoView {
     let navigate = use_navigate();
@@ -20,13 +38,15 @@ pub fn DashboardButton(
             on:click=on_click>
 
             <div class="flex flex-col">
-                {icon.as_ref().map(|src| view! {
-                <img src={src.clone()} class="h-8 w-8" alt="icon"/>
-                })}
-                <h3 class="font-semibold text-base">{title.clone()}</h3>
-                {description.as_ref().map(|d| view! {
-                    <p class="text-sm text-gray-600 pt-6">{d.clone()}</p>
-                })}
+                <img src={icon.clone()} class="h-8 w-8" alt="icon"/>
+                <h3 class="font-semibold text-base">
+                    {title.clone()}
+                </h3>
+
+                <p class="text-sm text-gray-600 pt-6">
+                    {description.clone()}
+                </p>
+
             </div>
         </button>
     }
