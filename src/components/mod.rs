@@ -1,4 +1,5 @@
 mod action_button;
+mod banner;
 mod checkbox;
 mod chips;
 mod dashboard_button;
@@ -12,6 +13,6 @@ mod text_field;
 mod utils;
 
 pub use self::{
-    action_button::*, checkbox::*, chips::*, dashboard_button::*, loading::*, multi_entry::*,
-    panel::*, radio::*, row::*, select::*, text_field::*,
+    action_button::*, banner::*, checkbox::*, chips::*, dashboard_button::*, loading::*,
+    multi_entry::*, panel::*, radio::*, row::*, select::*, text_field::*,
 };
