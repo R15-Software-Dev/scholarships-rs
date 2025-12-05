@@ -1,7 +1,7 @@
 use crate::common::ValueType;
+use crate::components::utils::create_unique_id;
 use leptos::prelude::*;
 use std::collections::HashMap;
-use crate::components::utils::create_unique_id;
 
 #[component]
 pub fn Checkbox(
@@ -12,7 +12,7 @@ pub fn Checkbox(
     #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
 ) -> impl IntoView {
     let id = create_unique_id(&name, &value);
-    
+
     view! {
         <label for=id class="flex items-center">
             <input
