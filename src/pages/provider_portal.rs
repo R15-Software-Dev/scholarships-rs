@@ -16,19 +16,19 @@ pub fn ProviderPortal() -> impl IntoView {
                         <DashboardButton
                             title="Profile"
                             description="Edit user profile"
-                            icon="Person_Black.png"
+                            icon="/Person_Black.png"
                             path="/"
                             />
                         <DashboardButton
                             title="Create Scholarship"
                             description="Navigate to Scholarship Creation Page"
-                            icon="Create_Black.png"
+                            icon="/Create_Black.png"
                             path="/"
                             />
                         <DashboardButton
                             title="Applicants"
                             description="View Scholarship Applicants"
-                            icon="Form_Black.png"
+                            icon="/Form_Black.png"
                             path="/"
                             />
                     </section>
