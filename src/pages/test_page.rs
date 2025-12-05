@@ -1,28 +1,65 @@
-use crate::components::DashboardButton;
+use crate::components::{DashboardButton, Date};
 use leptos::prelude::*;
 
 #[component]
 pub fn TestPage() -> impl IntoView {
     view! {
-        <div class="p-6 space-y-4 max-w-1/3">
-            <DashboardButton
-                title="Home Page"
-                description="Navigate to Home Page"
-                icon="Book.png"
-                path="/"
-            />
-        <DashboardButton
-                title="Home Page"
-                description="Navigate to Home Page"
-                icon="Calendar.png"
-                path="/"
-            />
-        <DashboardButton
-                title="Home Page"
-                description="Navigate to Home Page"
-                icon="Edit.png"
-                path="/"
-            />
+        <div class="mx-auto px-6">
+            <div class="container mx-auto px-6 py-8 space-y-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <section class="space-y-4">
+                        <DashboardButton
+                            title="Profile"
+                            description="Edit user profile"
+                            icon="Person_Black.png"
+                            path="/"
+                            />
+                        <DashboardButton
+                            title="Create Scholarship"
+                            description="Navigate to Scholarship Creation Page"
+                            icon="Create_Black.png"
+                            path="/"
+                            />
+                        <DashboardButton
+                            title="Applicants"
+                            description="View Scholarship Applicants"
+                            icon="Form_Black.png"
+                            path="/"
+                            />
+                    </section>
+                    <section class="space-y-2">
+                        <div class="rounded-lg shadow-lg overflow-hidden">
+                            <div class="bg-red-900 text-white px-4 py-3 shadow-lg \
+                                        shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.3)">
+                                <h3 class="text-white font-bold">Calendar</h3>
+                            </div>
+                            <div class="p-6 space-y-6">
+                                <div class="bg-white rounded-md p-3 space-y-2">
+                                    <Date
+                                        title="Form opens"
+                                        date="November 15, 2025"
+                                        description="Edit user profile"
+                                        icon="Check_Style2.png"
+                                    />
+                                    <Date
+                                        title="Form closes"
+                                        date="November 15, 2025"
+                                        description="Edit user profile"
+                                        icon="Warning_Style2.png"
+                                    />
+                                    <Date
+                                        title="Students apply"
+                                        date="November 15, 2025"
+                                        description="Edit user profile"
+                                        icon="Calendar.png"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                    </section>
+                </div>
+            </div>
         </div>
     }
 }
