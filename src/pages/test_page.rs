@@ -1,5 +1,6 @@
 use crate::components::DashboardButton;
 use leptos::prelude::*;
+
 #[component]
 pub fn TestPage() -> impl IntoView {
     view! {
@@ -7,7 +8,19 @@ pub fn TestPage() -> impl IntoView {
             <DashboardButton
                 title="Home Page"
                 description="Navigate to Home Page"
-                icon="/public/square-user.svg"
+                icon="Book.png"
+                path="/"
+            />
+        <DashboardButton
+                title="Home Page"
+                description="Navigate to Home Page"
+                icon="Calendar.png"
+                path="/"
+            />
+        <DashboardButton
+                title="Home Page"
+                description="Navigate to Home Page"
+                icon="Edit.png"
                 path="/"
             />
         </div>
