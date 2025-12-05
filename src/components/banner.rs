@@ -23,7 +23,7 @@ pub fn Banner(
     #[prop(into)]
     logo: String,
     /// The route that the navigates user to a page (home page).
-    #[prop(into)]
+    #[prop(into, default = String::from("/"))]
     path: String,
 ) -> impl IntoView {
     let navigate = use_navigate();
