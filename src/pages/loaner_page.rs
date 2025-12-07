@@ -1,40 +1,35 @@
-﻿use chrono::{DateTime, Utc};
-use leptos::prelude::*;
-use serde::{Deserialize, Serialize};
-use leptos::logging::log;
-
-#[cfg(feature = "ssr")]
-use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValue};
+﻿#[cfg(feature = "ssr")]
+use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata};
 
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct LoanerReturnOutput {
-    /// The first name of the student that is borrowing.
-    name: String,
-    /// The last name of the student that is borrowing.
-    last_name: String,
-    /// The type of loan that was given to the student.
-    loan: String,
-    /// The date that the student borrowed the loaner.
-    date: DateTime<Utc>,
+use chrono::{DateTime, Utc};
+use leptos::either::EitherOf3;
+use leptos::prelude::*;
+use serde::{Deserialize, Serialize};
+use leptos::logging::log;
+use leptos_router::params::Params;
+use leptos_router::hooks::{use_navigate, use_params, use_query};
+use leptos::Params;
+use traits::{AsReactive, ReactiveCapture};
+use crate::common::{ExpandableInfo, ValueType};
+use crate::components::{ActionButton, Banner, DashboardButton, OutlinedTextField, Panel, Row, Select};
+use std::collections::HashMap;
+
+#[derive(Params, PartialEq)]
+struct LoanerParams {
+    form_name: Option<String>
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct LoanerBorrowInput {
+struct LoanerReturnOutput {
+    /// The subject ID of the student entry.
+    subject: String,
     /// The first name of the student that is borrowing.
     first_name: String,
     /// The last name of the student that is borrowing.
     last_name: String,
-    /// The email address of the student that is borrowing.
-    email: String,
-    /// The collateral that the student is leaving. Usually a phone, earbuds, etc.
-    collateral: String,
-    /// The type of loan that was given to the student. May be a Chromebook, headphones, etc.
-    loan: String,
-    /// The date that the loaner was borrowed.
-    date: DateTime<Utc>,
 }
 
 #[server]
@@ -48,17 +43,25 @@ async fn get_loaners_return_list() -> Result<Vec<LoanerReturnOutput>, ServerFnEr
     match dbclient
         .scan()
         .table_name("loaner-info")
-        .projection_expression("name, date")
+        .projection_expression("subject, first_name, last_name")
         .send()
         .await {
         Ok(output) => {
             if let Some(items) = output.items {
-                Ok(items.into_iter().map(|item| from_item(item).unwrap()).collect())
+                Ok(items.into_iter().map(|item| {
+                    let expandable: ExpandableInfo = from_item(item).unwrap();
+                    LoanerReturnOutput {
+                        first_name: expandable.data.get("first_name").unwrap().as_string().unwrap_or_default().unwrap_or_default(),
+                        last_name: expandable.data.get("last_name").unwrap().as_string().unwrap_or_default().unwrap_or_default(),
+                        subject: expandable.subject
+                    }
+                }).collect())
             } else {
                 Ok(vec![])
             }
         },
         Err(err) => {
+            log!("{:?}", err);
             let msg = err.message().unwrap_or("Unknown error");
             Err(ServerFnError::new(msg))
         },
@@ -66,21 +69,36 @@ async fn get_loaners_return_list() -> Result<Vec<LoanerReturnOutput>, ServerFnEr
 }
 
 #[server]
-async fn create_borrow_entry(input: LoanerBorrowInput) -> Result<(), ServerFnError> {
+async fn create_borrow_entry(input: ExpandableInfo) -> Result<(), ServerFnError> {
+    let mut input = input;
     let dbclient = Client::new(&aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await);
-    let item = to_item(input)?;
-
-    match dbclient
-        .put_item()
-        .table_name("loaner-info")
-        .set_item(Some(item))
-        .send()
-        .await
-    {
-        Ok(_) => Ok(()),
-        Err(err) => {
-            let msg = err.message().unwrap_or("An unknown error occurred.");
-            Err(ServerFnError::new(msg))
+    
+    loop {
+        let item: serde_dynamo::Item = to_item(&input)?;
+        match dbclient
+            .put_item()
+            .table_name("loaner-info")
+            .set_item(Some(HashMap::from(item.clone())))
+            .condition_expression("attribute_not_exists(subject)")
+            .send()
+            .await
+        {
+            Ok(_) => return Ok(()),
+            Err(err) => {
+                log!("{:?}", err);
+                match err.code() {
+                    Some("ConditionalCheckFailedException") => {
+                        // Retry database write until we have a good subject ID.
+                        log!("Failed conditional check, forcing new subject ID.");
+                        input.subject = uuid::Uuid::new_v4().to_string();
+                        continue
+                    },
+                    _ => {
+                        let msg = err.message().unwrap_or("An unknown error occurred.");
+                        return Err(ServerFnError::new(msg));
+                    }
+                };
+            }
         }
     }
 }
@@ -113,9 +131,138 @@ async fn create_borrow_entry(input: LoanerBorrowInput) -> Result<(), ServerFnErr
 /// from the lists.
 #[component]
 pub fn LoanerPage() -> impl IntoView {
+    // Check URL params. Depending on what string is visible here, we'll display a different form.
+    let params = use_params::<LoanerParams>();
+    let form_passed = move || {
+        params.read()
+            .as_ref()
+            .ok()
+            .and_then(|params| params.form_name.clone())
+            .unwrap_or_default()
+    };
+    
+    let form_view = move || {
+        match form_passed().as_str() {
+            "borrowing" => EitherOf3::A(LoanerBorrowForm),
+            "returning" => EitherOf3::B(LoanerReturnForm),
+            _ => EitherOf3::C("Choose something from the left.".into_view())
+        }
+    };
+
+    // We'll create the page here - the sidebar contains all the buttons, while the form
+    // container either shows forms or shows placeholder text.
+    view! {
+        <Banner
+            title="Chromebook Loaners"
+            logo="/PHS_Stacked_Acronym.png"
+            path="/loaners"
+        />
+        <div class="flex m-5">
+            <div class="flex flex-1 flex-row gap-3">
+                <div id="sidebar" class="flex flex-1 flex-col gap-2">
+                    <DashboardButton
+                        title="Borrowing"
+                        description="Select to take out a loaner."
+                        icon="/Edit.png"
+                        path="/loaners/borrowing"
+                    />
+                    <DashboardButton
+                        title="Returning"
+                        description="Select to return a loaner."
+                        icon="/Person_Black.png"
+                        path="/loaners/returning"
+                    />
+                </div>
+                <div class="flex flex-2">
+                    <Panel>{form_view}</Panel>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+pub fn LoanerBorrowForm() -> impl IntoView {
     // Register server actions.
     let create_entry_action = ServerAction::<CreateBorrowEntry>::new();
+    let navigate = use_navigate();
 
+    let temp = ExpandableInfo::new("test");
+    let temp_reactive = temp.as_reactive();
+    let elements_disabled = RwSignal::new(false);
+    
+    view! {
+        <Row>
+            <OutlinedTextField 
+                label="First Name:"
+                placeholder="John"
+                disabled=elements_disabled
+                data_member="first_name"
+                data_map=temp_reactive.data
+            />
+            <OutlinedTextField 
+                label="Last Name:"
+                placeholder="Smith"
+                disabled=elements_disabled
+                data_member="last_name"
+                data_map=temp_reactive.data
+            />
+        </Row>
+        <Row>
+            <OutlinedTextField 
+                label="Region 15 Email:"
+                placeholder="example@region15.org"
+                disabled=elements_disabled
+                data_member="email"
+                data_map=temp_reactive.data
+            />
+        </Row>
+        <Row>
+            <Select
+                label="Collateral:"
+                value_list=vec![
+                    "Phone".to_string(),
+                    "Earbuds/Headphones".to_string(),
+                    "Keys".to_string(),
+                    "Wallet".to_string(),
+                    "Laptop".to_string(),
+                ]
+                disabled=elements_disabled
+                data_member="collateral"
+                data_map=temp_reactive.data
+            />
+        </Row>
+        <Row>
+            <Select 
+                label="Loan Taken:"
+                value_list=vec![
+                    "Chromebook".to_string(),
+                    "Charger".to_string(),
+                    "Headphones".to_string(),
+                ]
+                disabled=elements_disabled
+                data_member="loan"
+                data_map=temp_reactive.data
+            />
+        </Row>
+        <Row>
+            <ActionButton
+                on:click=move |_| {
+                    let captured = temp_reactive.capture();
+                    log!("Loaner record taken.");
+                    log!("{:?}", captured);
+                    create_entry_action.dispatch(CreateBorrowEntry {
+                        input: captured
+                    });
+                    navigate("/loaners", Default::default());
+                }
+            >"Submit"</ActionButton>
+        </Row>
+    }
+}
+
+#[component]
+pub fn LoanerReturnForm() -> impl IntoView {
     // Register server resources
     let return_list_resource: Resource<Vec<LoanerReturnOutput>> = Resource::new(
         move || (),
@@ -124,8 +271,20 @@ pub fn LoanerPage() -> impl IntoView {
             vec![]
         })
     );
-
-    // We'll create the view here. Just remember that we want to have two sections, where they
-    // preferably slide in when they're activated.
-    view! {}
+    
+    view! {
+        <Suspense fallback=move || "Loading...".into_view()>
+            <div class="flex flex-col gap-2">
+                {move || return_list_resource.get()
+                    .map(move |loaner_list| {
+                        loaner_list.into_iter().map(move |student| {
+                            view! {
+                                <span>{student.first_name}" "{student.last_name}</span>
+                            }
+                        }).collect_view()
+                    })
+                }
+            </div>
+        </Suspense>
+    }
 }
