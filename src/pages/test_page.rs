@@ -1,3 +1,4 @@
+use crate::common::DateInfo;
 use crate::components::{DashboardButton, Date};
 use leptos::prelude::*;
 
@@ -31,30 +32,30 @@ pub fn TestPage() -> impl IntoView {
                         <div class="rounded-lg shadow-lg overflow-hidden">
                             <div class="bg-red-900 text-white px-4 py-3 shadow-lg \
                                         shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.3)">
-                                <h3 class="text-white font-bold">Calendar</h3>
+                                <h3 class="text-white font-bold">Important Dates</h3>
                             </div>
                             <div class="p-6 space-y-6">
                                 <div class="bg-white rounded-md p-3 space-y-2">
                                     <Date
-                                        title="Form opens"
-                                        date="November 15, 2025"
-                                        description="Edit user profile"
+                                        important_dates=vec!{
+                                            DateInfo {
+                                                title: "Title".to_string(),
+                                                date: "Nov 4".to_string(),
+                                                description: "This is a test".to_string(),
+                                            }
+                                        }
                                         icon="/Check_Style2.png"
                                         status="Open"
                                     />
                                     <Date
-                                        title="Form closes"
-                                        date="November 15, 2025"
-                                        description="Edit user profile"
+                                        important_dates=vec!{
+                                            DateInfo {
+                                                title: "Scholarships Due".to_string(),
+                                                date: "Nov 4".to_string(),
+                                                description: "This is a test".to_string(),
+                                            }
+                                        }
                                         icon="/Warning_Style2.png"
-                                        status="Deadline"
-
-                                    />
-                                    <Date
-                                        title="Students apply"
-                                        date="November 15, 2025"
-                                        description="Edit user profile"
-                                        icon="/Calendar.png"
                                         status="Upcoming"
                                     />
                                 </div>
