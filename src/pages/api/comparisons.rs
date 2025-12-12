@@ -1,0 +1,350 @@
+#[cfg(feature = "ssr")]
+use crate::pages::utils::server_utils::create_dynamo_client;
+
+#[cfg(feature = "ssr")]
+use aws_sdk_dynamodb::error::ProvideErrorMetadata;
+
+use crate::common::{
+    ComparisonData, ComparisonType, MapListComparison, NumberComparison, NumberListComparison,
+    TextComparison, TextListComparison, ValueType,
+};
+use leptos::leptos_dom::log;
+use leptos::prelude::ServerFnError;
+use leptos::server;
+
+/// Helper function to create all sports comparisons. Only used to create initial
+/// comparison data, and should be removed upon completion of a comparison editor page.
+fn create_sports_comparisons() -> Vec<ComparisonData> {
+    vec![
+        ComparisonData::new(
+            "sports_football",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Football".to_string())),
+            "Sports Participation",
+            "Football",
+        ),
+        ComparisonData::new(
+            "sports_soccer",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Soccer".to_string())),
+            "Sports Participation",
+            "Soccer",
+        ),
+        ComparisonData::new(
+            "sports_cheerleading",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Cheerleading".to_string())),
+            "Sports Participation",
+            "Cheerleading",
+        ),
+        ComparisonData::new(
+            "sports_field_hockey",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Field Hockey".to_string())),
+            "Sports Participation",
+            "Field Hockey",
+        ),
+        ComparisonData::new(
+            "sports_swimming",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Swimming".to_string())),
+            "Sports Participation",
+            "Swimming",
+        ),
+        ComparisonData::new(
+            "sports_golf",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Golf".to_string())),
+            "Sports Participation",
+            "Golf",
+        ),
+        ComparisonData::new(
+            "sports_basketball",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Basketball".to_string())),
+            "Sports Participation",
+            "Basketball",
+        ),
+        ComparisonData::new(
+            "sports_track",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Track".to_string())),
+            "Sports Participation",
+            "Track",
+        ),
+        ComparisonData::new(
+            "sports_gymnastics",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Gymnastics".to_string())),
+            "Sports Participation",
+            "Gymnastics",
+        ),
+        ComparisonData::new(
+            "sports_ice_hockey",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Ice Hockey".to_string())),
+            "Sports Participation",
+            "Ice Hockey",
+        ),
+        ComparisonData::new(
+            "sports_ski",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Ski".to_string())),
+            "Sports Participation",
+            "Ski",
+        ),
+        ComparisonData::new(
+            "sports_wrestling",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Wrestling".to_string())),
+            "Sports Participation",
+            "Wrestling",
+        ),
+        ComparisonData::new(
+            "sports_lacrosse",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Lacrosse".to_string())),
+            "Sports Participation",
+            "Lacrosse",
+        ),
+        ComparisonData::new(
+            "sports_softball",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Softball".to_string())),
+            "Sports Participation",
+            "Softball",
+        ),
+        ComparisonData::new(
+            "sports_tennis",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Tennis".to_string())),
+            "Sports Participation",
+            "Tennis",
+        ),
+    ]
+}
+
+#[server(CreateTestComparisons, endpoint = "/comparisons/create-test")]
+pub async fn create_test_comparisons() -> Result<(), ServerFnError> {
+    let client = create_dynamo_client().await;
+
+    log!("Creating test comparisons");
+
+    let test_comp = ComparisonData::new(
+        "math_sat_comp",
+        "math_sat",
+        ComparisonType::Number(NumberComparison::GreaterThanOrEqual),
+        ValueType::Number(Some(650.to_string())),
+        "Academic Information",
+        "Math SAT Score > 650",
+    );
+
+    let service_hours_25 = ComparisonData::new(
+        "map_sum_comp",
+        "community_involvement",
+        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
+            "service_hours".to_string(),
+            Box::new(NumberListComparison::Sum(Box::new(
+                NumberComparison::GreaterThanOrEqual,
+            ))),
+        )),
+        ValueType::Number(Some(25.to_string())),
+        "Community Involvement",
+        "25 service hours",
+    );
+
+    let service_hours_20 = ComparisonData::new(
+        "service_hours_20",
+        "community_involvement",
+        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
+            "service_hours".to_string(),
+            Box::new(NumberListComparison::Sum(Box::new(
+                NumberComparison::GreaterThanOrEqual,
+            ))),
+        )),
+        ValueType::Number(Some(20.to_string())),
+        "Community Involvement",
+        "20 service hours",
+    );
+
+    let service_hours_30 = ComparisonData::new(
+        "service_hours_30",
+        "community_involvement",
+        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
+            "service_hours".to_string(),
+            Box::new(NumberListComparison::Sum(Box::new(
+                NumberComparison::GreaterThanOrEqual,
+            ))),
+        )),
+        ValueType::Number(Some(30.to_string())),
+        "Community Involvement",
+        "30 service hours",
+    );
+
+    let residency_southbury = ComparisonData::new(
+        "residency_southbury",
+        "town",
+        ComparisonType::Text(TextComparison::Matches),
+        ValueType::String(Some("Southbury".to_string())),
+        "Residency",
+        "Southbury",
+    );
+
+    let residency_middlebury = ComparisonData::new(
+        "residency_middlebury",
+        "town",
+        ComparisonType::Text(TextComparison::Matches),
+        ValueType::String(Some("Middlebury".to_string())),
+        "Residency",
+        "Middlebury",
+    );
+
+    let attended_bas = ComparisonData::new(
+        "attended_bas",
+        "attended_bas",
+        ComparisonType::Text(TextComparison::Matches),
+        ValueType::String(Some("Yes".to_string())),
+        "Miscellaneous",
+        "Attended BAS",
+    );
+
+    let midd_south = ComparisonData::new(
+        "midd_south",
+        "middsouth_church",
+        ComparisonType::Text(TextComparison::Matches),
+        ValueType::String(Some("Yes".to_string())),
+        "Miscellaneous",
+        "Member of Midd-South Church",
+    );
+
+    let family_military = ComparisonData::new(
+        "family_military",
+        "family_military_service",
+        ComparisonType::Text(TextComparison::Matches),
+        ValueType::String(Some("Yes".to_string())),
+        "Miscellaneous",
+        "Family with Military Service",
+    );
+
+    let mut sports_comps = create_sports_comparisons();
+    let mut major_comps = Vec::<ComparisonData>::new();
+
+    let mut comp_list = vec![
+        test_comp,
+        service_hours_20,
+        service_hours_25,
+        service_hours_30,
+        residency_middlebury,
+        residency_southbury,
+        attended_bas,
+        midd_south,
+        family_military,
+    ];
+
+    comp_list.append(&mut sports_comps);
+    comp_list.append(&mut major_comps);
+
+    for comparison in comp_list {
+        if let Err(err) = client
+            .put_item()
+            .table_name("leptos-comparison-test")
+            .set_item(Some(serde_dynamo::to_item(&comparison)?))
+            .send()
+            .await
+        {
+            let msg = err.message().unwrap_or("An unknown error occurred");
+            return Err(ServerFnError::new(msg));
+        }
+    }
+
+    Ok(())
+}
+
+#[server]
+pub async fn get_comparison_info() -> Result<Vec<ComparisonData>, ServerFnError> {
+    let client = create_dynamo_client().await;
+
+    log!("Getting all comparisons from the database");
+
+    // Query the database for all comparisons. The client is only going to use the
+    // id and display text, but we'll return the whole thing.
+    match client
+        .scan()
+        .table_name("leptos-comparison-test")
+        .send()
+        .await
+    {
+        Ok(output) => {
+            if let Some(items) = output.items {
+                log!("Found comparisons from API: {:?}", items);
+                Ok(serde_dynamo::from_items(items)?)
+            } else {
+                Ok(vec![])
+            }
+        }
+        Err(err) => {
+            let msg = err.message().unwrap_or("An unknown error occurred");
+            Err(ServerFnError::new(msg))
+        }
+    }
+}

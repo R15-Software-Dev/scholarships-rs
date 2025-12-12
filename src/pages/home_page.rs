@@ -4,18 +4,25 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
+#[cfg(feature = "ssr")]
+use std::io::Write;
+#[cfg(feature = "ssr")]
+use std::process::{Command, Stdio};
 
 use crate::common::{ExpandableInfo, UserClaims};
-use crate::pages::UnauthenticatedPage;
 use crate::components::{
     ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
-    Select, ChipsList
+    Select,
 };
 use crate::input;
+use crate::pages::UnauthenticatedPage;
+use base64::Engine;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
+use leptos::task::spawn_local;
+use leptos::wasm_bindgen::JsCast;
+use leptos::web_sys::HtmlAnchorElement;
 use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
-use std::collections::HashMap;
 use traits::{AsReactive, ReactiveCapture};
 
 /// # Get Student Info
@@ -90,14 +97,47 @@ pub async fn create_sample_submission(student_info: ExpandableInfo) -> Result<()
     }
 }
 
-#[server(LogExpandableInfo, endpoint = "/log-expandable")]
-pub async fn log_expandable(info: ExpandableInfo) -> Result<(), ServerFnError> {
-    console_log(format!("Was given info: {:?}", info).as_str());
-    // Manually specify the type here since we're not able to infer the type later.
-    let item: HashMap<String, AttributeValue> = to_item(info)?;
-    console_log(format!("Converted into a DynamoDB item: {:?}", item).as_str());
+#[server(CreateExamplePdf, endpoint = "/example-pdf")]
+pub async fn create_example_pdf() -> Result<Vec<u8>, ServerFnError> {
+    // Create typst template. This will be replaced with getting the template from S3 in the future.
+    // The path I'm thinking, for now, is that we generate a series of "members" from the available
+    // keys that a student contains, prefixed with "student_". This means that to get the member
+    // "unweighted_gpa" we'll use the preprocess variable "student_unweighted_gpa".
+    let template = r#"
+    = Testing Typst
+    This form will create a new student application. The PDF that's generated (like this one)
+    is a template that will be used later. We want to preprocess these templates to insert the
+    correct values from the API later on.
 
-    Ok(())
+    = Second Header
+    This area is going to do some math because I think that's fun. We'll typeset a simple sum:
+    $ sum_(i=0)^(10)
+        (n_i) $
+
+    = Third Test
+    This is just going to create a bulleted list inside a numbered list:
+     + Numbers
+     + Number again
+       - Not a number.
+    "#;
+
+    // Create and run the typst command.
+    let mut command = Command::new("typst");
+    command
+        .arg("compile")
+        .arg("-") // Use stdin as input
+        .arg("-") // Write output to stdout
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped());
+
+    let mut process = command.spawn()?;
+
+    process.stdin.take().unwrap().write(template.as_bytes())?;
+
+    let output = process.wait_with_output()?;
+    let pdf_bytes = output.stdout;
+
+    Ok(pdf_bytes)
 }
 
 /// The main home page component. Contains a simple contact form.
@@ -128,7 +168,6 @@ pub fn HomePage() -> impl IntoView {
         },
     );
     let submit_action = ServerAction::<CreateSampleSubmission>::new();
-    let log_action = ServerAction::<LogExpandableInfo>::new();
 
     view! {
         <AuthLoaded fallback=Loading>
@@ -142,8 +181,6 @@ pub fn HomePage() -> impl IntoView {
                                 let expandable_react = submission.as_reactive();
                                 let elements_disabled = RwSignal::new(false);
                                 let result_msg = Signal::derive(move || {
-                                    // Eventually, this function will show and hide a loading symbol
-                                    // and a success checkmark.
                                     if submit_action.pending().get() {
                                         elements_disabled.set(true);
                                         "Sending request...".to_owned()
@@ -152,17 +189,16 @@ pub fn HomePage() -> impl IntoView {
                                         if let Some(result) = submit_action.value().get() {
                                             match result {
                                                 Ok(_) => "Request sent successfully.".to_owned(),
-                                                Err(e) => format!("Failed to send request: {:?}", e)
+                                                Err(e) => format!("Failed to send request: {:?}", e),
                                             }
                                         } else {
                                             "".to_owned()
                                         }
                                     }
                                 });
-
                                 view! {
                                     <Row>
-                                        <div class="flex flex-col flex-1"/>
+                                        <div class="flex flex-col flex-1" />
                                         <Panel>
                                             <Row>
                                                 <h1 class="text-3xl font-bold">
@@ -180,15 +216,15 @@ pub fn HomePage() -> impl IntoView {
                                                     label="First Name:"
                                                     placeholder="John"
                                                     disabled=elements_disabled
-                                                    data_member = "first_name"
-                                                    data_map = expandable_react.data
+                                                    data_member="first_name"
+                                                    data_map=expandable_react.data
                                                 />
                                                 <OutlinedTextField
                                                     label="Last Name:"
                                                     placeholder="Smith"
                                                     disabled=elements_disabled
-                                                    data_member = "last_name"
-                                                    data_map = expandable_react.data
+                                                    data_member="last_name"
+                                                    data_map=expandable_react.data
                                                 />
                                             </Row>
                                             <Row>
@@ -196,8 +232,8 @@ pub fn HomePage() -> impl IntoView {
                                                     label="Contact Email:"
                                                     placeholder="student@region15.org"
                                                     disabled=elements_disabled
-                                                    data_member = "contact_email"
-                                                    data_map = expandable_react.data
+                                                    data_member="contact_email"
+                                                    data_map=expandable_react.data
                                                 />
                                             </Row>
                                             <Row>
@@ -205,8 +241,8 @@ pub fn HomePage() -> impl IntoView {
                                                     label="Phone Number:"
                                                     placeholder="123-456-7890"
                                                     disabled=elements_disabled
-                                                    data_member = "phone_number"
-                                                    data_map = expandable_react.data
+                                                    data_member="phone_number"
+                                                    data_map=expandable_react.data
                                                 />
                                             </Row>
                                             <Row>
@@ -214,8 +250,8 @@ pub fn HomePage() -> impl IntoView {
                                                     label="Street Address:"
                                                     placeholder="123 Fake Street"
                                                     disabled=elements_disabled
-                                                    data_member = "address"
-                                                    data_map = expandable_react.data
+                                                    data_member="address"
+                                                    data_map=expandable_react.data
                                                 />
                                             </Row>
                                             <Row>
@@ -223,9 +259,9 @@ pub fn HomePage() -> impl IntoView {
                                                     label="Highest Math SAT Score:"
                                                     placeholder="600"
                                                     disabled=elements_disabled
-                                                    data_member = "math_sat"
-                                                    data_map = expandable_react.data
-                                                    input_type = "number"
+                                                    data_member="math_sat"
+                                                    data_map=expandable_react.data
+                                                    input_type="number"
                                                 />
                                             </Row>
                                             <Row>
@@ -268,58 +304,12 @@ pub fn HomePage() -> impl IntoView {
                                                 />
                                             </Row>
                                             <Row>
-                                                <ChipsList
-                                                    data_member="athletic_requirements"
-                                                    data_map=expandable_react.data
-                                                    displayed_text=vec!(
-                                                            "Football", "Soccer", "Cross Country", "Cheerleading",
-                                                            "Swimming", "Wrestling", "Ski", "Basketball",
-                                                            "Lacrosse", "Softball", "Indoor/Outdoor Track",
-                                                            "Golf", "Tennis", "Volleyball"
-                                                        )
-                                                        .into_iter().map(|s| s.to_owned())
-                                                        .collect()
-                                                    values=vec!(
-                                                            "football", "soccer", "cross_country", "cheerleading",
-                                                            "swimming", "wrestling", "ski", "basketball",
-                                                            "lacrosse", "softball", "track",
-                                                            "golf", "tennis", "volleyball"
-                                                        )
-                                                        .into_iter().map(|s| s.to_owned())
-                                                        .collect()
-                                                    disabled=elements_disabled
-                                                    label="Sports/Athletic Requirements"
-                                                />
-                                            </Row>
-                                            <Row>
-                                                <ChipsList
-                                                    data_member="community_involvement"
-                                                    data_map=expandable_react.data
-                                                    displayed_text=vec!(
-                                                            "Lion's Club", "Knights of Columbus",
-                                                            "Community Service > 20hrs"
-                                                        )
-                                                        .into_iter().map(|s| s.to_owned())
-                                                        .collect()
-                                                    values=vec!(
-                                                            "lions_club", "koc", "serv_20h"
-                                                        )
-                                                        .into_iter().map(|s| s.to_owned())
-                                                        .collect()
-                                                    disabled=elements_disabled
-                                                    label="Required Community Involvement"
-                                                />
-                                            </Row>
-                                            <Row>
                                                 <MultiEntry
-                                                    data_map = expandable_react.data
-                                                    data_member = "test"
-                                                    name_member = "first_name"
-                                                    schema = vec![
-                                                        input!(Text, "first_name", "First Name:", "John"),
-                                                        input!(Text, "last_name", "Last Name:", "Smith"),
-                                                        input!(Select, "gender", "Gender:", ["Male", "Female"]),
-                                                        input!(Checkbox, "candy", "Favorite Candy:", ["Twizzlers", "Starburst"])
+                                                    data_map=expandable_react.data
+                                                    data_member="community_involvement"
+                                                    schema=vec![
+                                                        input!(Text, "service_name", "Activity Name:", "Some service activity..."),
+                                                        input!(Number, "service_hours", "Total Service Hours", "20")
                                                     ]
                                                 />
                                             </Row>
@@ -327,21 +317,49 @@ pub fn HomePage() -> impl IntoView {
                                                 <ActionButton
                                                     on:click=move |_| {
                                                         let captured_map = expandable_react.capture();
-                                                        console_log(format!("Map values: {:?}", captured_map).as_str());
-                                                        submit_action.dispatch(CreateSampleSubmission {
-                                                            student_info: captured_map,
-                                                        });
+                                                        console_log(
+                                                            format!("Map values: {:?}", captured_map).as_str(),
+                                                        );
+                                                        submit_action
+                                                            .dispatch(CreateSampleSubmission {
+                                                                student_info: captured_map,
+                                                            });
                                                     }
                                                     disabled=elements_disabled
-                                                >"Submit"</ActionButton>
+                                                >
+                                                    "Submit"
+                                                </ActionButton>
                                             </Row>
                                             <Row>
-                                                <p>
-                                                    {result_msg}
-                                                </p>
+                                                <ActionButton on:click=move |_| {
+                                                    console_log("Attempting to get PDF from server endpoint");
+                                                    spawn_local(async move {
+                                                        let result = create_example_pdf().await;
+                                                        if let Ok(bytes) = result {
+                                                            let base64 = base64::engine::general_purpose::STANDARD
+                                                                .encode(bytes);
+                                                            let data_url = format!(
+                                                                "data:application/pdf;base64,{}",
+                                                                base64,
+                                                            );
+                                                            console_log("Found document, opening in new tab...");
+                                                            let link = document()
+                                                                .create_element("a")
+                                                                .unwrap()
+                                                                .dyn_into::<HtmlAnchorElement>()
+                                                                .unwrap();
+                                                            link.set_href(&*data_url);
+                                                            link.set_target("_blank");
+                                                            link.click();
+                                                        }
+                                                    });
+                                                }>"Get PDF"</ActionButton>
+                                            </Row>
+                                            <Row>
+                                                <p>{result_msg}</p>
                                             </Row>
                                         </Panel>
-                                        <div class="flex flex-col flex-1"/>
+                                        <div class="flex flex-col flex-1" />
                                     </Row>
                                 }
                             })
