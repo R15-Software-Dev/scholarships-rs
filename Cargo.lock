@@ -2939,6 +2939,7 @@ dependencies = [
  "aws-sdk-dynamodb",
  "axum",
  "base64 0.22.1",
+ "chrono",
  "console_error_panic_hook",
  "leptos",
  "leptos_axum",
@@ -2950,7 +2951,6 @@ dependencies = [
  "serde_dynamo",
  "tokio",
  "traits",
- "url",
  "uuid",
  "wasm-bindgen",
 ]
