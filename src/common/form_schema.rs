@@ -49,6 +49,7 @@ impl InputType {
                             placeholder = placeholder.clone()
                             data_member = member.clone()
                             data_map = data_map
+                            input_type = "number"
                         />
                     }),
                 InputType::Checkbox(member, label, options) =>

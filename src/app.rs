@@ -3,21 +3,21 @@ use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge};
 use leptos_router::{components::{Route, Router, Routes}, path};
-use crate::pages::{AboutPage, HomePage, LoanerPage, TestPage};
+use crate::pages::{AboutPage, ComparisonTestPage, HomePage, LoanerPage, TestPage};
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
         <!DOCTYPE html>
         <html lang="en">
             <head>
-                <meta charset="utf-8"/>
-                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <AutoReload options=options.clone() />
-                <HydrationScripts options/>
-                <MetaTags/>
+                <HydrationScripts options />
+                <MetaTags />
             </head>
             <body>
-                <App/>
+                <App />
             </body>
         </html>
     }
@@ -82,17 +82,28 @@ pub fn AppWithRoutes() -> impl IntoView {
 
     let auth = Auth::signal();
     provide_context(auth); // allows use of this signal in lower areas of the tree without
-    // explicitly passing it through the html tree
+                           // explicitly passing it through the html tree
 
     let _ = Auth::init(parameters);
 
     view! {
+        // injects a stylesheet into the document <head>
+        // id=leptos means cargo-leptos will hot-reload this stylesheet
+        <Stylesheet id="leptos" href="/pkg/scholarships-rs-wasm.css" />
+
+        // <AuthLoading><p>"Authentication is loading"</p></AuthLoading>
+        // <AuthErrorContext><AuthErrorView/></AuthErrorContext>
+
+        // sets the document title
+        <Title text="R15 Scholarship App DEV" />
+      
         <main>
             // TODO Create a 404 page
             <Routes fallback=|| "Page not found.".into_view()>
                 <Route path=path!("") view=HomePage/>
                 <Route path=path!("about") view=AboutPage/>
                 <Route path=path!("test_page") view=TestPage/>
+                <Route path=path!("comparison") view=ComparisonTestPage />
                 <Route path=path!("loaners") view=LoanerPage />
                 <Route path=path!("loaners/:form_name") view=LoanerPage />
             </Routes>
