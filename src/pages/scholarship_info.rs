@@ -1,13 +1,15 @@
+use leptos::either::Either;
 use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
-use leptos_router::hooks::use_params;
-use crate::common::{ExpandableInfo, ScholarshipFormParams};
-use crate::components::{ActionButton, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row};
+use leptos_router::hooks::{use_navigate, use_params};
+use crate::common::{ExpandableInfo, ScholarshipFormParams, ValueType};
+use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row};
 use super::UnauthenticatedPage;
 use traits::{AsReactive, ReactiveCapture};
 use crate::common::ComparisonData;
-use super::api::{get_comparison_info, get_scholarship_info, CreateScholarshipInfo, CreateTestComparisons};
+use crate::pages::utils::get_user_claims;
+use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, CreateTestComparisons, RegisterScholarship};
 
 
 /// # Scholarship Info Page
@@ -15,12 +17,8 @@ use super::api::{get_comparison_info, get_scholarship_info, CreateScholarshipInf
 /// scholarship ID and scholarship provider subject number. The form itself will only
 /// track a single scholarship (for now) and so selection of what scholarship will be edited
 /// must be handled *before* navigation to this page.
-/// 
-/// In its current testing form, we'll be using a single fixed ID. This absolutely *MUST* be
-/// changed before a full release.
 #[component]
 pub fn ScholarshipInfoPage() -> impl IntoView {
-    // let scholarship_id = String::from("test-scholarship-id2");
     let url_params = use_params::<ScholarshipFormParams>();
     let scholarship_id = move || {
         url_params.read()
@@ -61,11 +59,17 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
     // Remember that we only want to show the page after we've got authentication information
     // and if there's data for us to use.
     view! {
+        <Banner
+            title="R15 Scholarships"
+            logo="/PHS_Stacked_Acronym.png"
+            path="/"
+        />
         <AuthLoaded fallback=Loading>
             <Authenticated unauthenticated=UnauthenticatedPage>
                 <Suspense fallback=Loading>
-                    <Row>
+                    <div class="flex flex-row align-top items-start">
                         <div class="flex flex-col flex-1" />
+                        <ScholarshipList />
                         {move || Suspend::new(async move {
                             let response = get_scholarship_action.get();
                             let comparisons = get_comparison_info.get();
@@ -91,10 +95,150 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
                             </Row>
                         </div>
                         <div class="flex flex-col flex-1" />
-                    </Row>
+                    </div>
                 </Suspense>
             </Authenticated>
         </AuthLoaded>
+    }
+}
+
+#[component]
+fn ScholarshipList() -> impl IntoView {
+    // Get scholarship provider information from authentication. This element will not display
+    // unless that information is available.
+    let user_claims = get_user_claims();
+    let provider_id = Memo::new(move |_| 
+        user_claims.get()
+            .as_ref()
+            .map(|info| info.claims.subject.clone())
+    );
+    
+    // Register scholarship server resource
+    let scholarships = Resource::new(
+        move || provider_id,
+        async move |provider_id| {
+            let Some(provider_id) = provider_id.get() else {
+                return Ok(Vec::new());
+            };
+            
+            // Get the scholarships
+            get_provider_scholarships(provider_id).await
+        }
+    );
+    
+    // Register scholarship creation action
+    let create_action = ServerAction::<RegisterScholarship>::new();
+    
+    // Button handlers
+    let create_on_click = move |_| {
+        // In the future, we'd actually like to create/show a dialog that gets the
+        // desired name of the scholarship.
+        // After the request is sent, we'll handle it in an effect.
+        create_action.dispatch(RegisterScholarship {
+            provider_id: provider_id.get().unwrap(),
+            scholarship_name: "Testing Scholarship".to_string()
+        });
+    };
+    
+    // Register scholarship creation effect
+    Effect::new(move || {
+        // We want to wait for the action to complete first, but then find whether the request
+        // succeeded.
+        if let Some(Ok(_)) = create_action.value().get() {
+            // Refetch and clear.
+            scholarships.refetch();
+            create_action.clear();
+        }
+    });
+    
+    view! {
+        <div class="w-75">
+            <Panel>
+                <div class="pt-2">
+                    <h2 class="text-xl font-bold text-center">"Scholarships"</h2>
+                </div>
+                <Transition fallback=Loading>
+                    <div class="flex flex-col gap-2">
+                        {move || {
+                            scholarships.get().map(|result| {
+                                match result {
+                                    Ok(list) => {
+                                        let views = list.iter().map(|entry| {
+                                            view! { <ScholarshipListEntry scholarship=entry.clone() /> }
+                                        });
+                                        Either::Left(views.collect_view())
+                                    }
+                                    Err(err) => {
+                                        Either::Right(view! {
+                                            <div>
+                                                <p>"Failed to load scholarship list: "{err.to_string()}</p>
+                                            </div>
+                                        })
+                                    }
+                                }
+                            }).collect_view()
+                        }}
+                    </div>
+                    <div>
+                        <div class="p-2 bg-red-700 rounded-md text-center text-white hover:bg-red-800 transition-all"
+                            on:click=create_on_click>
+                            "Create New"
+                        </div>
+                    </div>
+                </Transition>
+            </Panel>
+        </div>
+    }
+}
+
+#[component]
+fn ScholarshipListEntry(scholarship: ExpandableInfo) -> impl IntoView {
+    let navigate = use_navigate();
+    
+    // Get the values that we need out of the info. We just need the subject and the name of 
+    // the scholarship.
+    let name = scholarship.data.get("scholarship_name")
+        .unwrap_or(&ValueType::String(None))
+        .as_string().unwrap_or_default()
+        .unwrap_or("<no name found>".to_string());
+    
+    // Button click handlers
+    let edit_click = {
+        let subject = scholarship.subject.clone();
+        move |_| {
+            let path = format!("/providers/scholarships/{}", subject);
+            navigate(path.as_str(), Default::default());
+        }
+    };
+    
+    let delete_click = {
+        let subject = scholarship.subject.clone();
+        move |_| {
+            // Delete the scholarship. For now, we'll just log it.
+            log!("Deleting scholarship with ID {:?}", subject);
+        }
+    };
+    
+    view! {
+        <div class="flex flex-col rounded-md border-light inset-shadow-xs shadow-md my-2 transition-all hover:shadow-lg/33">
+            <div class="p-2 text-center">
+                <span>{name}</span>
+            </div>
+            <div class="flex flex-row">
+                <div class="p-2 flex-1 bg-red-700 border-r border-white rounded-bl-md text-white text-center
+                    hover:bg-red-800 cursor-pointer transition-all"
+                    on:click=edit_click
+                >
+                    "Edit"
+                </div>
+                <div class="p-2 flex-1 bg-red-700 border-l border-white rounded-br-md text-white text-center
+                    hover:bg-red-800 cursor-pointer transition-all"
+                    on:click=delete_click
+                >
+                    "Delete"
+                </div>
+            </div>
+        </div>
     }
 }
 

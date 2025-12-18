@@ -9,7 +9,7 @@ use std::process::{Command, Stdio};
 #[cfg(feature = "ssr")]
 use std::io::Write;
 
-use crate::common::{ExpandableInfo, UserClaims};
+use crate::common::ExpandableInfo;
 use crate::pages::UnauthenticatedPage;
 use crate::components::{
     ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
@@ -18,12 +18,13 @@ use crate::components::{
 use crate::input;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
-use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
+use leptos_oidc::{AuthLoaded, Authenticated};
 use base64::Engine;
 use leptos::task::spawn_local;
 use leptos::web_sys::HtmlAnchorElement;
 use leptos::wasm_bindgen::JsCast;
 use traits::{AsReactive, ReactiveCapture};
+use crate::pages::utils::get_user_claims;
 
 /// # Get Student Info
 /// Gets a student's information given their `subject`.
@@ -146,15 +147,7 @@ pub async fn create_example_pdf() -> Result<Vec<u8>, ServerFnError> {
 #[component]
 pub fn HomePage() -> impl IntoView {
     // Creates a reactive value to update the button
-
-    let auth = use_context::<AuthSignal>().expect("Couldn't find user information.");
-    let user_claims = Signal::derive(move || {
-        auth.with(|auth| {
-            auth.authenticated().and_then(|data| {
-                data.decoded_access_token::<UserClaims>(Algorithm::RS256, &["account"])
-            })
-        })
-    });
+    let user_claims = get_user_claims();
 
     // Note that the value passed in MUST be equatable.
     // We get/unwrap the value repeatedly until we get a simple string value, then clone it so that
