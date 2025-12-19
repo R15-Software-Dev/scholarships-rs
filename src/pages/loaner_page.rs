@@ -248,6 +248,7 @@ pub fn LoanerBorrowForm() -> impl IntoView {
                 label="Region 15 Email:"
                 placeholder="example@region15.org"
                 disabled=elements_disabled
+                input_type="email"
                 data_member="email"
                 data_map=temp_reactive.data
             />

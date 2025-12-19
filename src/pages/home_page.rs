@@ -233,6 +233,7 @@ pub fn HomePage() -> impl IntoView {
                                                 <OutlinedTextField
                                                     label="Contact Email:"
                                                     placeholder="student@region15.org"
+                                                    input_type="email"
                                                     disabled=elements_disabled
                                                     data_member="contact_email"
                                                     data_map=expandable_react.data

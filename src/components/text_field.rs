@@ -2,6 +2,7 @@ use crate::common::ValueType;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use std::collections::HashMap;
+use leptos::html::Input;
 
 #[component]
 pub fn OutlinedTextField(
@@ -17,6 +18,9 @@ pub fn OutlinedTextField(
     #[prop(optional, into)] label: String,
     #[prop(optional, into)] error_text: RwSignal<String>,
 ) -> impl IntoView {
+    let valid = RwSignal::new(true);
+    let input_ref = NodeRef::<Input>::new();
+    
     // This function parses the input into the correct type. It only accepts numbers or strings as
     // valid types, and parses them accordingly.
     let on_input = {
@@ -56,6 +60,31 @@ pub fn OutlinedTextField(
                         }
                     };
                 }
+                "email" => {
+                    // Check the validity of the component.
+                    if let Some(input) = input_ref.get() {
+                        if !input.validity().valid() {
+                            error.set(true);
+                            if input.validity().pattern_mismatch() {
+                                error_text.set("Please provide a valid Region 15 email address.".to_string());
+                            }
+                        } else {
+                            error.set(false);
+                            error_text.set("".to_string());
+                            value.set(ValueType::String(Some(to_parse.clone())));
+                            data_map.update(|map| {
+                                map.insert(data_member.clone(), ValueType::String(Some(to_parse)));
+                            });
+                        }
+                    } else {
+                        error.set(false);
+                        error_text.set("".to_string());
+                        value.set(ValueType::String(Some(to_parse.clone())));
+                        data_map.update(|map| { 
+                            map.insert(data_member.clone(), ValueType::String(Some(to_parse)));
+                        });
+                    }
+                }
                 _ => {
                     // Create some custom function that reports failure.
                     let msg = format!("Input {input_type:?} is not a valid type.");
@@ -66,12 +95,18 @@ pub fn OutlinedTextField(
             }
         }
     };
+    
+    let pattern = match input_type.as_str() {
+        "email" => ".+@region15\\.org".to_string(),
+        _ => String::new()
+    };
 
     view! {
         <div class="flex flex-1">
             <label class="flex flex-col flex-1">
                 <span class="block ml-1.5 mb-0 font-bold">{label}</span>
                 <input
+                    node_ref=input_ref
                     class="border-2 m-1.5 p-1.5 mt-0 rounded-md bg-transparent relative flex-1
                         transition-all duration-150
                         border-red-700 bg-transparent
@@ -79,6 +114,7 @@ pub fn OutlinedTextField(
                     r#type={input_type}
                     disabled={disabled}
                     placeholder={placeholder}
+                    pattern={pattern}
                     prop:name=name
                     prop:value=move || data_map
                         .get()  // HashMap
@@ -86,6 +122,7 @@ pub fn OutlinedTextField(
                         .unwrap_or(&ValueType::String(None))  // ValueType
                         .to_string()
                     on:input=on_input
+                    prop:valid=valid
                 />
                 <div
                     class="text-red-600 text-sm mr-1.5 ml-1.5"

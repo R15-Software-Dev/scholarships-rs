@@ -2953,6 +2953,7 @@ dependencies = [
  "traits",
  "uuid",
  "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
