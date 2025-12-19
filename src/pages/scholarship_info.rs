@@ -1,15 +1,16 @@
 use leptos::either::Either;
 use leptos::logging::log;
 use leptos::prelude::*;
+use leptos::reactive::spawn_local;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::{use_navigate, use_params};
-use crate::common::{ExpandableInfo, ScholarshipFormParams, ValueType};
+use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
 use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row};
 use super::UnauthenticatedPage;
 use traits::{AsReactive, ReactiveCapture};
 use crate::common::ComparisonData;
 use crate::pages::utils::get_user_claims;
-use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, CreateTestComparisons, RegisterScholarship};
+use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, delete_provider_scholarship, CreateScholarshipInfo, CreateTestComparisons, RegisterScholarship};
 
 
 /// # Scholarship Info Page
@@ -20,40 +21,13 @@ use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship
 #[component]
 pub fn ScholarshipInfoPage() -> impl IntoView {
     let url_params = use_params::<ScholarshipFormParams>();
-    let scholarship_id = move || {
+    let scholarship_id = Memo::new(move |_| {
         url_params.read()
             .as_ref()
             .ok()
             .and_then(|params| params.id.clone())
-            .unwrap_or_default()
-    };
+    });
     
-    let get_scholarship_action: Resource<ExpandableInfo> = Resource::new(
-        move || scholarship_id().clone(),
-        async |id| {
-            get_scholarship_info(id.clone()).await
-                // Note that this really should notify us of an error and then redirect or ask
-                // the user to try again.
-                .unwrap_or_else(|e| {
-                    log!("Failed to get scholarship info: {:?}", e);
-                    log!("Using default ExpandableInfo");
-                    ExpandableInfo::new(id)
-                })
-        }
-    );
-    
-    let get_comparison_info: Resource<Vec<ComparisonData>> = Resource::new(
-        move || Option::<String>::None,  // There's no input to this function.
-        async |_| {
-            get_comparison_info().await
-                .unwrap_or_else(|e| {
-                    log!("Failed to get comparison info: {:?}", e);
-                    Vec::new()
-                })
-        }
-    );
-    
-    let create_scholarship_action = ServerAction::<CreateScholarshipInfo>::new();
     let create_test_comps = ServerAction::<CreateTestComparisons>::new();
     
     // Remember that we only want to show the page after we've got authentication information
@@ -66,37 +40,25 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
         />
         <AuthLoaded fallback=Loading>
             <Authenticated unauthenticated=UnauthenticatedPage>
-                <Suspense fallback=Loading>
-                    <div class="flex flex-row align-top items-start">
-                        <div class="flex flex-col flex-1" />
-                        <ScholarshipList />
-                        {move || Suspend::new(async move {
-                            let response = get_scholarship_action.get();
-                            let comparisons = get_comparison_info.get();
-                            
-                            response
-                                .zip(comparisons)
-                                .map(|(response, comparison_list)| view! {
-                                    <ScholarshipForm 
-                                        response=response
-                                        comparison_list=comparison_list
-                                        submit_action=create_scholarship_action
-                                    />
-                                })
-                                .collect_view()
-                        })}
-                        <div class="hidden">
-                            <Row>
-                                <ActionButton
-                                    on:click=move |_| {
-                                        create_test_comps.dispatch(CreateTestComparisons {});
-                                    }
-                                >"Create test comparisons"</ActionButton>
-                            </Row>
-                        </div>
-                        <div class="flex flex-col flex-1" />
+                <div class="flex flex-row align-top items-start">
+                    <div class="flex flex-col flex-1" />
+                    <ScholarshipList />
+                    <Transition fallback=Loading>
+                        <ScholarshipForm
+                            scholarship_id=scholarship_id
+                        />
+                    </Transition>
+                    <div class="hidden">
+                        <Row>
+                            <ActionButton
+                                on:click=move |_| {
+                                    create_test_comps.dispatch(CreateTestComparisons {});
+                                }
+                            >"Create test comparisons"</ActionButton>
+                        </Row>
                     </div>
-                </Suspense>
+                    <div class="flex flex-col flex-1" />
+                </div>
             </Authenticated>
         </AuthLoaded>
     }
@@ -115,9 +77,9 @@ fn ScholarshipList() -> impl IntoView {
     
     // Register scholarship server resource
     let scholarships = Resource::new(
-        move || provider_id,
+        move || provider_id.get(),
         async move |provider_id| {
-            let Some(provider_id) = provider_id.get() else {
+            let Some(provider_id) = provider_id else {
                 return Ok(Vec::new());
             };
             
@@ -126,7 +88,7 @@ fn ScholarshipList() -> impl IntoView {
         }
     );
     
-    // Register scholarship creation action
+    // Register scholarship creation/deletion actions
     let create_action = ServerAction::<RegisterScholarship>::new();
     
     // Button handlers
@@ -164,7 +126,12 @@ fn ScholarshipList() -> impl IntoView {
                                 match result {
                                     Ok(list) => {
                                         let views = list.iter().map(|entry| {
-                                            view! { <ScholarshipListEntry scholarship=entry.clone() /> }
+                                            view! { 
+                                                <ScholarshipListEntry scholarship=entry.clone() 
+                                                    on_delete=move || {
+                                                        scholarships.refetch();
+                                                    }/>
+                                            }
                                         });
                                         Either::Left(views.collect_view())
                                     }
@@ -180,7 +147,7 @@ fn ScholarshipList() -> impl IntoView {
                         }}
                     </div>
                     <div>
-                        <div class="p-2 bg-red-700 rounded-md text-center text-white hover:bg-red-800 transition-all"
+                        <div class="p-2 bg-red-800 rounded-md text-center text-white hover:bg-red-900 transition-all"
                             on:click=create_on_click>
                             "Create New"
                         </div>
@@ -192,12 +159,15 @@ fn ScholarshipList() -> impl IntoView {
 }
 
 #[component]
-fn ScholarshipListEntry(scholarship: ExpandableInfo) -> impl IntoView {
+fn ScholarshipListEntry(
+    #[prop()] scholarship: ExpandableInfo,
+    #[prop(into)] on_delete: Callback<()>,
+) -> impl IntoView {
     let navigate = use_navigate();
     
     // Get the values that we need out of the info. We just need the subject and the name of 
     // the scholarship.
-    let name = scholarship.data.get("scholarship_name")
+    let name = scholarship.data.get("name")
         .unwrap_or(&ValueType::String(None))
         .as_string().unwrap_or_default()
         .unwrap_or("<no name found>".to_string());
@@ -214,8 +184,18 @@ fn ScholarshipListEntry(scholarship: ExpandableInfo) -> impl IntoView {
     let delete_click = {
         let subject = scholarship.subject.clone();
         move |_| {
-            // Delete the scholarship. For now, we'll just log it.
+            // Delete the scholarship.
+            let subject = subject.clone();
             log!("Deleting scholarship with ID {:?}", subject);
+            spawn_local(async move {
+                match delete_provider_scholarship(
+                    subject,
+                    "".to_string()
+                ).await {
+                    Ok(_) => on_delete.run(()),
+                    _ => {}
+                }
+            });
         }
     };
     
@@ -225,14 +205,14 @@ fn ScholarshipListEntry(scholarship: ExpandableInfo) -> impl IntoView {
                 <span>{name}</span>
             </div>
             <div class="flex flex-row">
-                <div class="p-2 flex-1 bg-red-700 border-r border-white rounded-bl-md text-white text-center
-                    hover:bg-red-800 cursor-pointer transition-all"
+                <div class="p-2 flex-1 bg-red-800 border-r border-white rounded-bl-md text-white text-center
+                    hover:bg-red-900 cursor-pointer transition-all"
                     on:click=edit_click
                 >
                     "Edit"
                 </div>
-                <div class="p-2 flex-1 bg-red-700 border-l border-white rounded-br-md text-white text-center
-                    hover:bg-red-800 cursor-pointer transition-all"
+                <div class="p-2 flex-1 bg-red-800 border-l border-white rounded-br-md text-white text-center
+                    hover:bg-red-900 cursor-pointer transition-all"
                     on:click=delete_click
                 >
                     "Delete"
@@ -244,29 +224,70 @@ fn ScholarshipListEntry(scholarship: ExpandableInfo) -> impl IntoView {
 
 #[component]
 fn ScholarshipForm(
-    response: ExpandableInfo,
-    comparison_list: Vec<ComparisonData>,
-    submit_action: ServerAction<CreateScholarshipInfo>
+    #[prop(into)] scholarship_id: Signal<Option<String>>
 ) -> impl IntoView {
-    let reactive_info = response.as_reactive();
-    let elements_disabled = RwSignal::new(false);
+    let submit_status = RwSignal::new(SubmitStatus::Idle);
+    let elements_disabled = Signal::derive(move || {
+        match submit_status.get() {
+            SubmitStatus::Sending => true,
+            _ => false
+        }
+    });
     let result_msg = Signal::derive(move || {
+        match submit_status.get() {
+            SubmitStatus::Idle => "".into(),
+            SubmitStatus::Sending => "Sending submission...".into(),
+            SubmitStatus::Success => "Success".into(),
+            SubmitStatus::Error(msg) => format!("Error: {}", msg),
+        }
+    });
+
+    let submit_action = ServerAction::<CreateScholarshipInfo>::new();
+    
+    Effect::new(move || {
         if submit_action.pending().get() {
-            elements_disabled.set(true);
-            "Sending request...".to_string()
-        } else {
-            elements_disabled.set(false);
-            if let Some(result) = submit_action.value().get() {
-                match result {
-                    Ok(()) => "Request sent successfully".to_string(),
-                    Err(err) => {
-                        format!("An error occurred: {:?}", err)
-                    }
-                }
-            } else {
-                "".to_string()
+            submit_status.set(SubmitStatus::Sending);
+            return;
+        }
+        
+        if let Some(result) = submit_action.value().get() {
+            match result {
+                Ok(()) => submit_status.set(SubmitStatus::Success),
+                Err(err) => submit_status.set(SubmitStatus::Error(err.to_string()))
             }
         }
+    });
+    
+    let comparison_list: Resource<Vec<ComparisonData>> = Resource::new(
+        move || (),  // There's no input to this function.
+        async move |_| {
+            get_comparison_info().await
+                .unwrap_or_else(|e| {
+                    log!("Failed to get comparison info: {:?}", e);
+                    Vec::new()
+                })
+        }
+    );
+
+    let scholarship_info: Resource<Result<ExpandableInfo, ServerFnError>> = Resource::new(
+        move || scholarship_id.get().unwrap_or_default(),
+        async move |id| {
+            get_scholarship_info(id).await
+        }
+    );
+    
+    let comparison_ids = Memo::new(move |_| {
+        comparison_list.get().map(|list| list.iter()
+            .map(|comp| comp.clone().id)
+            .collect::<Vec<String>>()
+        ).unwrap_or_default()
+    });
+    
+    let comparison_text = Memo::new(move |_| {
+        comparison_list.get().map(|list| list.iter()
+            .map(|comp| comp.clone().display_text)
+            .collect::<Vec<String>>()
+        ).unwrap_or_default()
     });
 
     // We'll collect the scholarship's name, num_awards, amount_per_award, total_awards,
@@ -275,127 +296,139 @@ fn ScholarshipForm(
     
     view! {
         <Panel>
-            <Row>
-                <h1 class="text-3xl font-bold">
-                    "Scholarship Info Form (test)"
-                </h1>
-            </Row>
-            <Row>
-                <OutlinedTextField
-                    label="Scholarship Name"
-                    placeholder="Example Scholarship Name"
-                    disabled=elements_disabled
-                    data_member="name"
-                    data_map=reactive_info.data
-                />
-            </Row>
-            <Row>
-                <OutlinedTextField
-                    label="Amount per award: (if multiple, enter the highest value)"
-                    placeholder="Enter an amount..."
-                    disabled=elements_disabled
-                    data_member="amount_per_award"
-                    data_map=reactive_info.data
-                    input_type="number"
-                />
-            </Row>
-            <Row>
-                <OutlinedTextField
-                    label="Total number of awards:"
-                    placeholder="Enter an amount..."
-                    disabled=elements_disabled
-                    data_member="num_awards"
-                    data_map=reactive_info.data
-                    input_type="number"
-                />
-            </Row>
-            <Row>
-                <OutlinedTextField
-                    label="Total amount of all awards:"
-                    placeholder="Enter an amount..."
-                    disabled=elements_disabled
-                    data_member="total_awards"
-                    data_map=reactive_info.data
-                    input_type="number"
-                />
-            </Row>
-            <Row>
-                <RadioList
-                    data_member="fafsa_required"
-                    data_map=reactive_info.data
-                    items=vec!["Yes".to_string(), "No".to_string()]
-                    disabled=elements_disabled
-                    label="Do you require student financial information?"
-                />
-            </Row>
-            <Row>
-                <RadioList
-                    data_member="transcript_required"
-                    data_map=reactive_info.data
-                    items=vec!["Yes".to_string(), "No".to_string()]
-                    disabled=elements_disabled
-                    label="Do you require a student transcript?"
-                />
-            </Row>
-            <Row>
-                <RadioList
-                    data_member="award_to"
-                    data_map=reactive_info.data
-                    items=vec!["School".to_string(), "Student".to_string()]
-                    disabled=elements_disabled
-                    label="Will the award be made to the school or the student?"
-                />
-            </Row>
-            <Row>
-                <RadioList
-                    data_member="essay_required"
-                    data_map=reactive_info.data
-                    items=vec!["Yes".to_string(), "No".to_string()]
-                    disabled=elements_disabled
-                    label="Do you require a student essay?"
-                />
-            </Row>
-            <Row>
-                <RadioList
-                    data_member="essay_prompt"
-                    data_map=reactive_info.data
-                    items=vec!["Test 1", "Test 2", "Test 3"].iter().map(|s| s.to_string()).collect()
-                    disabled=elements_disabled
-                    label="If so, select a prompt from the list below."
-                />
-            </Row>
-            <Row>
-                <ChipsList
-                    label="Scholarship Requirements"
-                    data_member="requirements"
-                    data_map=reactive_info.data
-                    values=comparison_list
-                        .iter()
-                        .cloned()
-                        .map(|comp| comp.id)
-                        .collect()
-                    displayed_text=comparison_list
-                        .iter()
-                        .cloned()
-                        .map(|comp| comp.display_text)
-                        .collect()
-                />
-            </Row>
-            <Row>
-                <ActionButton
-                    disabled=elements_disabled
-                    on:click=move |_| {
-                        let captured = reactive_info.capture();
-                        log!("Map values: {:?}", captured);
-                        submit_action.dispatch(CreateScholarshipInfo {
-                            info: captured
-                        });
-                    }
-                >"Submit"</ActionButton>
-            </Row>
-            <Row>
-                <p>{result_msg}</p>
-            </Row>
+            <Suspense fallback=Loading>
+                {move || {
+                    scholarship_info.get()
+                        .map(|res_scholarship| {
+                            match res_scholarship {
+                                Ok(scholarship) => {
+                                    let reactive_info = scholarship.as_reactive();
+                                
+                                    Either::Left(view! {
+                                        <Row>
+                                            <h1 class="text-3xl font-bold">
+                                                "Scholarship Info Form (test)"
+                                            </h1>
+                                        </Row>
+                                        <Row>
+                                            <OutlinedTextField
+                                                label="Scholarship Name"
+                                                placeholder="Example Scholarship Name"
+                                                disabled=elements_disabled
+                                                data_member="name"
+                                                data_map=reactive_info.data
+                                            />
+                                        </Row>
+                                        <Row>
+                                            <OutlinedTextField
+                                                label="Amount per award: (if multiple, enter the highest value)"
+                                                placeholder="Enter an amount..."
+                                                disabled=elements_disabled
+                                                data_member="amount_per_award"
+                                                data_map=reactive_info.data
+                                                input_type="number"
+                                            />
+                                        </Row>
+                                        <Row>
+                                            <OutlinedTextField
+                                                label="Total number of awards:"
+                                                placeholder="Enter an amount..."
+                                                disabled=elements_disabled
+                                                data_member="num_awards"
+                                                data_map=reactive_info.data
+                                                input_type="number"
+                                            />
+                                        </Row>
+                                        <Row>
+                                            <OutlinedTextField
+                                                label="Total amount of all awards:"
+                                                placeholder="Enter an amount..."
+                                                disabled=elements_disabled
+                                                data_member="total_awards"
+                                                data_map=reactive_info.data
+                                                input_type="number"
+                                            />
+                                        </Row>
+                                        <Row>
+                                            <RadioList
+                                                data_member="fafsa_required"
+                                                data_map=reactive_info.data
+                                                items=vec!["Yes".to_string(), "No".to_string()]
+                                                disabled=elements_disabled
+                                                label="Do you require student financial information?"
+                                            />
+                                        </Row>
+                                        <Row>
+                                            <RadioList
+                                                data_member="transcript_required"
+                                                data_map=reactive_info.data
+                                                items=vec!["Yes".to_string(), "No".to_string()]
+                                                disabled=elements_disabled
+                                                label="Do you require a student transcript?"
+                                            />
+                                        </Row>
+                                        <Row>
+                                            <RadioList
+                                                data_member="award_to"
+                                                data_map=reactive_info.data
+                                                items=vec!["School".to_string(), "Student".to_string()]
+                                                disabled=elements_disabled
+                                                label="Will the award be made to the school or the student?"
+                                            />
+                                        </Row>
+                                        <Row>
+                                            <RadioList
+                                                data_member="essay_required"
+                                                data_map=reactive_info.data
+                                                items=vec!["Yes".to_string(), "No".to_string()]
+                                                disabled=elements_disabled
+                                                label="Do you require a student essay?"
+                                            />
+                                        </Row>
+                                        <Row>
+                                            <RadioList
+                                                data_member="essay_prompt"
+                                                data_map=reactive_info.data
+                                                items=vec!["Test 1", "Test 2", "Test 3"].iter().map(|s| s.to_string()).collect()
+                                                disabled=elements_disabled
+                                                label="If so, select a prompt from the list below."
+                                            />
+                                        </Row>
+                                        <Row>
+                                            <ChipsList
+                                                label="Scholarship Requirements"
+                                                data_member="requirements"
+                                                data_map=reactive_info.data
+                                                values=comparison_ids
+                                                displayed_text=comparison_text
+                                            />
+                                        </Row>
+                                        <Row>
+                                            <ActionButton
+                                                disabled=elements_disabled
+                                                on:click=move |_| {
+                                                    let captured = reactive_info.capture();
+                                                    log!("Map values: {:?}", captured);
+                                                    submit_action.dispatch(CreateScholarshipInfo {
+                                                        info: captured
+                                                    });
+                                                }
+                                            >"Submit"</ActionButton>
+                                        </Row>
+                                        <Row>
+                                            <p>{result_msg}</p>
+                                        </Row>
+                                    })
+                                }
+                                Err(err) => {
+                                    Either::Right(view! {
+                                        <p>"Error while getting scholarship: "{err.to_string()}</p>
+                                    })
+                                }
+                            }
+                        }).collect_view()
+                }}
+            </Suspense>
         </Panel>
     }
 }

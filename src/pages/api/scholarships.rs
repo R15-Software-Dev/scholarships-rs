@@ -164,3 +164,31 @@ pub async fn register_scholarship(provider_id: String, scholarship_name: String)
         }
     }
 }
+
+/// Deletes a provider's scholarship given their provider ID and scholarship ID.
+#[server(DeleteProviderScholarship, "/providers/scholarships/delete")]
+pub async fn delete_provider_scholarship(provider_id: String, scholarship_id: String) -> Result<(), ServerFnError> {
+    let client = create_dynamo_client().await;
+    
+    log!("Deleting scholarship with ID {:?} for provider with ID {:?}", scholarship_id, provider_id);
+    
+    // When we delete a scholarship, we need to ensure that the provider's ID matches the scholarship,
+    // otherwise everyone can delete anyone else's scholarships.
+    match client
+        .delete_item()
+        .table_name("leptos-scholarship-test")
+        .key("subject", AttributeValue::S(scholarship_id))
+        .expression_attribute_values(":provider_id", serde_dynamo::to_attribute_value(ValueType::String(Some(provider_id)))?)
+        .condition_expression("provider_id = :provider_id")
+        .send()
+        .await
+    {
+        Ok(_) => {
+            Ok(())
+        }
+        Err(err) => {
+            let msg = err.message().unwrap_or("An unknown error occurred");
+            Err(ServerFnError::new(msg))
+        }
+    }
+}
