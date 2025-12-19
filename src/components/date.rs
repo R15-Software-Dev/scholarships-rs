@@ -1,4 +1,5 @@
-use crate::common::DateInfo;
+use crate::common::{DateInfo, DateRange};
+use leptos::either::Either;
 use leptos::prelude::*;
 /// # Date Component
 ///
@@ -7,6 +8,18 @@ use leptos::prelude::*;
 /// ```
 
 /// ```
+
+fn render_dates(dates: DateRange) -> impl IntoView {
+    match dates {
+        DateRange::Single(date) => Either::Left(view! {
+            <p> {date} </p>
+        }),
+        DateRange::Range(start_date, end_date) => Either::Right(view! {
+            <p> {start_date} " - " {end_date} </p>
+        }),
+    }
+}
+
 #[component]
 pub fn Date(
     /// Struct of title, date, and description
@@ -31,11 +44,11 @@ pub fn Date(
                 <div class="flex-1 min-w-0">
                     <div class="flex items-start justify-between">
                         <div class="flex-1">
-                            <h3 class="font-semibold text-md text-base">
+                            <h3 class="font-bold text-md text-base">
                                 {info.title}
                             </h3>
-                            <h3 class="font-bold text-md text-base mt-1">
-                                {info.date}
+                            <h3 class="text-md text-base mt-1">
+                                {render_dates(info.date)}
                             </h3>
                             <p class="text-sm text-gray-600">
                                 {info.description}
