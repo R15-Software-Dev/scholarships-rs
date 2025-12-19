@@ -68,7 +68,7 @@ pub fn App() -> impl IntoView {
                     <Route path=StaticSegment("") view=HomePage/>
                     <Route path=StaticSegment("about") view=AboutPage/>
                     <Route path=StaticSegment("test_page") view=TestPage/>
-                    <Route path=StaticSegment("provider_portal") view=ProviderPortal/>
+                    <Route path=StaticSegment("providers") view=ProviderPortal/>
                 </Routes>
             </main>
         </Router>
