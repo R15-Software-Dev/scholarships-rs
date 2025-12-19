@@ -298,6 +298,8 @@ pub fn LoanerBorrowForm() -> impl IntoView {
 
 #[component]
 pub fn LoanerReturnForm() -> impl IntoView {
+    let navigate = use_navigate();
+    
     // Register server actions
     let check_in_action = ServerAction::<CheckInLoaner>::new();
 
@@ -313,26 +315,18 @@ pub fn LoanerReturnForm() -> impl IntoView {
 
     let dialog_ref = NodeRef::<Dialog>::new();
     let chosen_student = RwSignal::new(None::<LoanerReturnOutput>);
-    let dialog_disabled = RwSignal::new(false);
+    let dialog_disabled = Signal::derive(move || check_in_action.pending().get());
 
     // Create an effect to run after check-in - refreshes the list with another scan request.
     // This could be beneficial if we ever decided to make multiple loaner kiosks (think SAT days)
     Effect::new(move || {
         if let Some(Ok(_)) = check_in_action.value().get() {
-            // Check the local loaner list and remove the indicated student from it.
-            return_list_refresh.update(|n| *n += 1);
+            // Return to the main page.
             if let Some(dialog) = dialog_ref.get() {
                 dialog.close();
             }
-        }
-    });
-
-    // We can't use a Memo in our custom components for the disabled signal.
-    Effect::new(move || {
-        if check_in_action.pending().get() {
-            dialog_disabled.set(true);
-        } else {
-            dialog_disabled.set(false);
+            navigate("/loaners", Default::default());
+            check_in_action.clear();
         }
     });
 
