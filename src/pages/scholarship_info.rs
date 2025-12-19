@@ -64,6 +64,25 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
     }
 }
 
+/// # Scholarship List Component
+/// 
+/// This component should always be wrapped in an Authenticated component. Assuming that a provider
+/// is authenticated, this component will get all the scholarships that this provider owns and 
+/// will display them in a list, giving them the option to edit, delete, or create new scholarships.
+/// 
+/// It does not accept any props, and instead pulls the provider's information from the surrounding
+/// environment.
+/// 
+/// Example usage:
+/// ```
+/// view! {
+///     <AuthLoaded>
+///         <Authenticated>
+///             <ScholarshipList />
+///         </Authenticated>
+///     </AuthLoaded>
+/// }
+/// ```
 #[component]
 fn ScholarshipList() -> impl IntoView {
     // Get scholarship provider information from authentication. This element will not display
@@ -158,12 +177,33 @@ fn ScholarshipList() -> impl IntoView {
     }
 }
 
+/// # Scholarship List Entry Component
+/// 
+/// Displays a single scholarship within the [`ScholarshipList`] component.
+/// 
+/// Example usage (within the [`ScholarshipList`]):
+/// ```
+/// view! {
+///     <ScholarshipListEntry
+///         scholarship= /* An ExpandableInfo object containing scholarship info */
+///         on_delete=move || log!("This is a callback on successful deletion.")
+///     />
+/// }
+/// ```
 #[component]
 fn ScholarshipListEntry(
+    /// The scholarship information. This element will attempt to get the name of the scholarship
+    /// using its `name` field, and also utilizes the `subject` field.
     #[prop()] scholarship: ExpandableInfo,
+    /// A [`Callback<()>`] that runs upon successful deletion of the scholarship.
     #[prop(into)] on_delete: Callback<()>,
 ) -> impl IntoView {
     let navigate = use_navigate();
+    let user_claims = get_user_claims();
+    let user_id = Memo::new(move |_| {
+        user_claims.get()
+            .map(|info| info.claims.subject.clone())
+    });
     
     // Get the values that we need out of the info. We just need the subject and the name of 
     // the scholarship.
@@ -187,15 +227,17 @@ fn ScholarshipListEntry(
             // Delete the scholarship.
             let subject = subject.clone();
             log!("Deleting scholarship with ID {:?}", subject);
-            spawn_local(async move {
-                match delete_provider_scholarship(
-                    subject,
-                    "".to_string()
-                ).await {
-                    Ok(_) => on_delete.run(()),
-                    _ => {}
-                }
-            });
+            if let Some(user_id) = user_id.get() {
+                spawn_local(async move {
+                    match delete_provider_scholarship(
+                        user_id,
+                        subject
+                    ).await {
+                        Ok(_) => on_delete.run(()),
+                        _ => {}
+                    }
+                });
+            }
         }
     };
     

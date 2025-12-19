@@ -32,8 +32,8 @@ pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFn
                 log!("Found output from API: {:?}", item);
                 Ok(serde_dynamo::from_item(item)?)
             } else {
-                log!("Couldn't find any values, returning default struct.");
-                Ok(ExpandableInfo::new(id.clone()))
+                log!("Couldn't find scholarship with ID {:?}", id);
+                Err(ServerFnError::new("Couldn't find scholarship with given ID."))
             }
         }
         Err(err) => {
