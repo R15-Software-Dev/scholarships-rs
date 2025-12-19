@@ -1,4 +1,4 @@
-use crate::common::DateInfo;
+use crate::common::{DateInfo, DateRange};
 use crate::components::{DashboardButton, Date};
 use leptos::prelude::*;
 
@@ -40,7 +40,7 @@ pub fn TestPage() -> impl IntoView {
                                         important_dates=vec!{
                                             DateInfo {
                                                 title: "Title".to_string(),
-                                                date: "Nov 4".to_string(),
+                                                date: DateRange::Range("February 2nd, 2026".to_string(), "February 10th, 2026".to_string()),
                                                 description: "This is a test".to_string(),
                                             }
                                         }
@@ -51,7 +51,7 @@ pub fn TestPage() -> impl IntoView {
                                         important_dates=vec!{
                                             DateInfo {
                                                 title: "Scholarships Due".to_string(),
-                                                date: "Nov 4".to_string(),
+                                                date: DateRange::Single("November 4th, 2025".to_string()),
                                                 description: "This is a test".to_string(),
                                             }
                                         }
