@@ -1,7 +1,7 @@
 use leptos::either::Either;
+use leptos::html::Dialog;
 use leptos::logging::log;
 use leptos::prelude::*;
-use leptos::reactive::spawn_local;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::{use_navigate, use_params};
 use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
@@ -10,7 +10,7 @@ use super::UnauthenticatedPage;
 use traits::{AsReactive, ReactiveCapture};
 use crate::common::ComparisonData;
 use crate::pages::utils::get_user_claims;
-use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, delete_provider_scholarship, CreateScholarshipInfo, CreateTestComparisons, RegisterScholarship};
+use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, CreateTestComparisons, RegisterScholarship, DeleteProviderScholarship};
 
 
 /// # Scholarship Info Page
@@ -85,6 +85,10 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
 /// ```
 #[component]
 fn ScholarshipList() -> impl IntoView {
+    // List state
+    let pending_delete = RwSignal::new(None::<ExpandableInfo>);
+    let delete_dialog_ref = NodeRef::<Dialog>::new();
+
     // Get scholarship provider information from authentication. This element will not display
     // unless that information is available.
     let user_claims = get_user_claims();
@@ -109,16 +113,18 @@ fn ScholarshipList() -> impl IntoView {
     
     // Register scholarship creation/deletion actions
     let create_action = ServerAction::<RegisterScholarship>::new();
+    let delete_action = ServerAction::<DeleteProviderScholarship>::new();
     
     // Button handlers
     let create_on_click = move |_| {
-        // In the future, we'd actually like to create/show a dialog that gets the
-        // desired name of the scholarship.
-        // After the request is sent, we'll handle it in an effect.
         create_action.dispatch(RegisterScholarship {
             provider_id: provider_id.get().unwrap(),
             scholarship_name: "Testing Scholarship".to_string()
         });
+    };
+
+    let on_delete = move |s| {
+        pending_delete.set(Some(s));
     };
     
     // Register scholarship creation effect
@@ -126,13 +132,71 @@ fn ScholarshipList() -> impl IntoView {
         // We want to wait for the action to complete first, but then find whether the request
         // succeeded.
         if let Some(Ok(_)) = create_action.value().get() {
-            // Refetch and clear.
+            // Refetch and clear. We could alter this slightly to get the new element and
+            // update the list on the client side only (no refetch). We also want to set the name
+            // of the new scholarship before it's created on the server.
             scholarships.refetch();
             create_action.clear();
         }
     });
+
+    // Register scholarship deletion effects
+    let modal_disabled = Signal::derive(move || delete_action.pending().get());
+    Effect::new(move || {
+        if let Some(Ok(_)) = delete_action.value().get() {
+            scholarships.refetch();
+            pending_delete.set(None);
+            delete_action.clear();
+        }
+    });
+
+    // Register scholarship pending delete effects
+    Effect::new(move || {
+        if let Some(dialog) = delete_dialog_ref.get() {
+            if pending_delete.get().is_some() {
+                // Find the modal dialog and show it. Ask for the user's confirmation. Afterward,
+                // take the correct action.
+                dialog.show_modal()
+                    .expect("Couldn't show dialog. Is it already open?");
+            } else {
+                dialog.close();
+            }
+        }
+    });
     
     view! {
+        <dialog
+            node_ref=delete_dialog_ref
+            class="m-auto p-2"
+        >
+            <h2 class="text-2xl font-bold">"Confirm Deletion"</h2>
+            <p>
+                "Are you sure you want to delete "
+                {move || {
+                    pending_delete.get().map(|s| {
+                        s.data.get("name").unwrap_or(&ValueType::String(None))
+                            .as_string()
+                            .unwrap_or_default()
+                            .unwrap_or("<no name found>".to_string())
+                    })
+                }}
+                "?"
+            </p>
+            <ActionButton
+                on:click=move |_| {
+                    let subject = pending_delete.get().map(|s| s.subject.clone()).unwrap_or_default();
+                    log!("Deleting scholarship with subject {}", subject);
+                    delete_action.dispatch(DeleteProviderScholarship {
+                        scholarship_id: subject,
+                        provider_id: provider_id.get().unwrap_or_default()
+                    });
+                }
+                disabled=modal_disabled
+            >"Confirm"</ActionButton>
+            <ActionButton
+                on:click=move |_| pending_delete.set(None)
+            >"Cancel"</ActionButton>
+        </dialog>
         <div class="w-75">
             <Panel>
                 <div class="pt-2">
@@ -145,11 +209,9 @@ fn ScholarshipList() -> impl IntoView {
                                 match result {
                                     Ok(list) => {
                                         let views = list.iter().map(|entry| {
-                                            view! { 
-                                                <ScholarshipListEntry scholarship=entry.clone() 
-                                                    on_delete=move || {
-                                                        scholarships.refetch();
-                                                    }/>
+                                            view! {
+                                                <ScholarshipListEntry scholarship=entry.clone()
+                                                    on_delete=Callback::new(on_delete)/>
                                             }
                                         });
                                         Either::Left(views.collect_view())
@@ -186,7 +248,7 @@ fn ScholarshipList() -> impl IntoView {
 /// view! {
 ///     <ScholarshipListEntry
 ///         scholarship= /* An ExpandableInfo object containing scholarship info */
-///         on_delete=move || log!("This is a callback on successful deletion.")
+///         on_delete=move |_| log!("This is a callback on successful deletion.")
 ///     />
 /// }
 /// ```
@@ -195,8 +257,8 @@ fn ScholarshipListEntry(
     /// The scholarship information. This element will attempt to get the name of the scholarship
     /// using its `name` field, and also utilizes the `subject` field.
     #[prop()] scholarship: ExpandableInfo,
-    /// A [`Callback<()>`] that runs upon successful deletion of the scholarship.
-    #[prop(into)] on_delete: Callback<()>,
+    /// A [`Callback<ExpandableInfo>`] that runs upon successful deletion of the scholarship.
+    #[prop(into)] on_delete: Callback<ExpandableInfo, ()>,
 ) -> impl IntoView {
     let navigate = use_navigate();
     let user_claims = get_user_claims();
@@ -221,26 +283,6 @@ fn ScholarshipListEntry(
         }
     };
     
-    let delete_click = {
-        let subject = scholarship.subject.clone();
-        move |_| {
-            // Delete the scholarship.
-            let subject = subject.clone();
-            log!("Deleting scholarship with ID {:?}", subject);
-            if let Some(user_id) = user_id.get() {
-                spawn_local(async move {
-                    match delete_provider_scholarship(
-                        user_id,
-                        subject
-                    ).await {
-                        Ok(_) => on_delete.run(()),
-                        _ => {}
-                    }
-                });
-            }
-        }
-    };
-    
     view! {
         <div class="flex flex-col rounded-md border-light inset-shadow-xs shadow-md my-2 transition-all hover:shadow-lg/33">
             <div class="p-2 text-center">
@@ -255,7 +297,7 @@ fn ScholarshipListEntry(
                 </div>
                 <div class="p-2 flex-1 bg-red-800 border-l border-white rounded-br-md text-white text-center
                     hover:bg-red-900 cursor-pointer transition-all"
-                    on:click=delete_click
+                    on:click=move |_| on_delete.run(scholarship.clone())
                 >
                     "Delete"
                 </div>
