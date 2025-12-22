@@ -28,4 +28,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ghcr.io/r15-software-dev/scholarships-runner:${{ github.ref_name }}
+          tags: |
+            ghcr.io/r15-software-dev/scholarships-runner:latest
+            ghcr.io/r15-software-dev/scholarships-runner:${{ github.ref_name }}
