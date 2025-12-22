@@ -1,8 +1,9 @@
+name: Release
+
 on:
-  pull_request:
+  push:
     branches:
-      - main
-      - develop
+      - "main"
   workflow_dispatch:
 
 permissions:
@@ -10,7 +11,7 @@ permissions:
   packages: write
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     
     steps:
