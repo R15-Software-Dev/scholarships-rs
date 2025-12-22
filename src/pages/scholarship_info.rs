@@ -1,21 +1,24 @@
+use super::UnauthenticatedPage;
+use super::api::{
+    CreateScholarshipInfo, CreateTestComparisons, get_comparison_info, get_scholarship_info,
+};
+use crate::common::ComparisonData;
+use crate::common::{ExpandableInfo, ScholarshipFormParams};
+use crate::components::{
+    ActionButton, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row,
+};
 use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::use_params;
-use crate::common::{ExpandableInfo, ScholarshipFormParams};
-use crate::components::{ActionButton, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row};
-use super::UnauthenticatedPage;
 use traits::{AsReactive, ReactiveCapture};
-use crate::common::ComparisonData;
-use super::api::{get_comparison_info, get_scholarship_info, CreateScholarshipInfo, CreateTestComparisons};
-
 
 /// # Scholarship Info Page
-/// This page will handle creating or editing scholarship information given a specific 
+/// This page will handle creating or editing scholarship information given a specific
 /// scholarship ID and scholarship provider subject number. The form itself will only
 /// track a single scholarship (for now) and so selection of what scholarship will be edited
 /// must be handled *before* navigation to this page.
-/// 
+///
 /// In its current testing form, we'll be using a single fixed ID. This absolutely *MUST* be
 /// changed before a full release.
 #[component]
@@ -23,17 +26,19 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
     // let scholarship_id = String::from("test-scholarship-id2");
     let url_params = use_params::<ScholarshipFormParams>();
     let scholarship_id = move || {
-        url_params.read()
+        url_params
+            .read()
             .as_ref()
             .ok()
             .and_then(|params| params.id.clone())
             .unwrap_or_default()
     };
-    
+
     let get_scholarship_action: Resource<ExpandableInfo> = Resource::new(
         move || scholarship_id().clone(),
         async |id| {
-            get_scholarship_info(id.clone()).await
+            get_scholarship_info(id.clone())
+                .await
                 // Note that this really should notify us of an error and then redirect or ask
                 // the user to try again.
                 .unwrap_or_else(|e| {
@@ -41,23 +46,22 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
                     log!("Using default ExpandableInfo");
                     ExpandableInfo::new(id)
                 })
-        }
+        },
     );
-    
+
     let get_comparison_info: Resource<Vec<ComparisonData>> = Resource::new(
-        move || Option::<String>::None,  // There's no input to this function.
+        move || Option::<String>::None, // There's no input to this function.
         async |_| {
-            get_comparison_info().await
-                .unwrap_or_else(|e| {
-                    log!("Failed to get comparison info: {:?}", e);
-                    Vec::new()
-                })
-        }
+            get_comparison_info().await.unwrap_or_else(|e| {
+                log!("Failed to get comparison info: {:?}", e);
+                Vec::new()
+            })
+        },
     );
-    
+
     let create_scholarship_action = ServerAction::<CreateScholarshipInfo>::new();
     let create_test_comps = ServerAction::<CreateTestComparisons>::new();
-    
+
     // Remember that we only want to show the page after we've got authentication information
     // and if there's data for us to use.
     view! {
@@ -69,11 +73,11 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
                         {move || Suspend::new(async move {
                             let response = get_scholarship_action.get();
                             let comparisons = get_comparison_info.get();
-                            
+
                             response
                                 .zip(comparisons)
                                 .map(|(response, comparison_list)| view! {
-                                    <ScholarshipForm 
+                                    <ScholarshipForm
                                         response=response
                                         comparison_list=comparison_list
                                         submit_action=create_scholarship_action
@@ -102,7 +106,7 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
 fn ScholarshipForm(
     response: ExpandableInfo,
     comparison_list: Vec<ComparisonData>,
-    submit_action: ServerAction<CreateScholarshipInfo>
+    submit_action: ServerAction<CreateScholarshipInfo>,
 ) -> impl IntoView {
     let reactive_info = response.as_reactive();
     let elements_disabled = RwSignal::new(false);
@@ -128,7 +132,7 @@ fn ScholarshipForm(
     // We'll collect the scholarship's name, num_awards, amount_per_award, total_awards,
     // fafsa_required, award_to, transcript_required, recipient_selection, essay_requirement (and prompt)
     // award_night_remarks
-    
+
     view! {
         <Panel>
             <Row>

@@ -62,7 +62,7 @@ impl Comparison for NumberListComparison {
 
 /// Represents all available comparisons for a text list. All comparisons are comparable to a
 /// single value.
-/// 
+///
 /// For example, using `TextListComparison::Contains` checks if a specific value is contained
 /// in the list.
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -148,12 +148,12 @@ impl Comparison for TextListComparison {
 /// For right now, nested lists should be flattened into a list of a single type before they
 /// are compared. The plan is to create a more robust framework that eventually be able to
 /// query specific lists and perform comparisons on them.
-/// 
+///
 /// For example:
 /// ```
 /// NestedListComparison::FlattenToTextList(Box::new(TextListComparison::Contains));
 /// ```
-/// 
+///
 /// This will flatten a nested list into a single list of `ValueType::String` enums and then
 /// will check if the list contains the indicated target value.
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -288,10 +288,12 @@ impl Comparison for MapListComparison {
 
 #[cfg(test)]
 mod tests {
+    use super::super::test_utils::create_map_list_helper;
     use super::*;
-    use super::super::test_utils::{create_map_list_helper};
-    use crate::common::{ComparisonType};
-    use crate::common::comparison::test_utils::{create_empty_lists, create_number_list, create_text_list};
+    use crate::common::ComparisonType;
+    use crate::common::comparison::test_utils::{
+        create_empty_lists, create_number_list, create_text_list,
+    };
 
     #[test]
     fn map_list_flatten_to_text_list() {
@@ -415,61 +417,59 @@ mod tests {
         assert_eq!(incorrect_value.unwrap(), false);
         assert_eq!(mixed_incorrect_type.unwrap(), false);
     }
-    
+
     #[test]
     fn text_list_contains() {
         let (none_list, empty_list) = create_empty_lists();
         let num_list = create_number_list();
         let text_list = create_text_list();
-        
+
         // Define comparisons here
         let comparison = ComparisonType::TextList(TextListComparison::Contains);
         let target_value = ValueType::String(Some("one".to_string()));
-        
+
         let none_result = comparison.evaluate(&none_list, &target_value);
         let empty_result = comparison.evaluate(&empty_list, &target_value);
         let num_result = comparison.evaluate(&num_list, &target_value);
         let text_list = comparison.evaluate(&text_list, &target_value);
-        
+
         assert_eq!(none_result.unwrap(), false);
         assert_eq!(empty_result.unwrap(), false);
         assert_eq!(num_result.unwrap(), false);
         assert_eq!(text_list.unwrap(), true);
     }
-    
+
     #[test]
     fn text_list_empty() {
         let none_list = ValueType::List(None);
         let empty_list = ValueType::List(Some(vec![]));
-        let long_list = ValueType::List(Some(vec![
-            ValueType::String(None),
-        ]));
-        
+        let long_list = ValueType::List(Some(vec![ValueType::String(None)]));
+
         let empty_comp = ComparisonType::TextList(TextListComparison::IsEmpty);
         let not_empty_comp = ComparisonType::TextList(TextListComparison::IsNotEmpty);
-        
+
         // This comparison does not use a target value, as it should just check if the list
         // either doesn't exist or is empty.
         let mut result = empty_comp.evaluate(&empty_list, &ValueType::List(None));
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), true);
-        
+
         result = empty_comp.evaluate(&none_list, &ValueType::List(None));
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), true);
-        
+
         result = empty_comp.evaluate(&long_list, &ValueType::List(None));
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), false);
-        
+
         result = not_empty_comp.evaluate(&empty_list, &ValueType::List(None));
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), false);
-        
+
         result = not_empty_comp.evaluate(&none_list, &ValueType::List(None));
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), false);
-        
+
         result = not_empty_comp.evaluate(&long_list, &ValueType::List(None));
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), true);

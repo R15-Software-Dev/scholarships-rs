@@ -1,13 +1,10 @@
 #[cfg(feature = "ssr")]
-use aws_sdk_dynamodb::{
-    types::AttributeValue,
-    error::ProvideErrorMetadata,
-};
+use aws_sdk_dynamodb::{error::ProvideErrorMetadata, types::AttributeValue};
 
+use crate::common::ExpandableInfo;
 use leptos::leptos_dom::log;
 use leptos::prelude::ServerFnError;
 use leptos::server;
-use crate::common::ExpandableInfo;
 
 #[cfg(feature = "ssr")]
 use crate::pages::utils::server_utils::create_dynamo_client;
@@ -49,7 +46,10 @@ pub async fn create_scholarship_info(info: ExpandableInfo) -> Result<(), ServerF
 
     let client = create_dynamo_client().await;
 
-    log!("Creating or updating scholarship with ID {:?}", info.subject);
+    log!(
+        "Creating or updating scholarship with ID {:?}",
+        info.subject
+    );
 
     match client
         .put_item()
@@ -82,7 +82,7 @@ pub async fn get_all_scholarship_info() -> Result<Vec<ExpandableInfo>, ServerFnE
             } else {
                 Ok(Vec::new())
             }
-        },
+        }
         Err(err) => {
             let msg = err.message().unwrap_or("An unknown error occurred");
             Err(ServerFnError::new(msg))

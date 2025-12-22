@@ -5,24 +5,24 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
 #[cfg(feature = "ssr")]
-use std::process::{Command, Stdio};
-#[cfg(feature = "ssr")]
 use std::io::Write;
+#[cfg(feature = "ssr")]
+use std::process::{Command, Stdio};
 
 use crate::common::{ExpandableInfo, UserClaims};
-use crate::pages::UnauthenticatedPage;
 use crate::components::{
     ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
-    Select
+    Select,
 };
 use crate::input;
+use crate::pages::UnauthenticatedPage;
+use base64::Engine;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
-use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
-use base64::Engine;
 use leptos::task::spawn_local;
-use leptos::web_sys::HtmlAnchorElement;
 use leptos::wasm_bindgen::JsCast;
+use leptos::web_sys::HtmlAnchorElement;
+use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
 use traits::{AsReactive, ReactiveCapture};
 
 /// # Get Student Info
@@ -125,16 +125,14 @@ pub async fn create_example_pdf() -> Result<Vec<u8>, ServerFnError> {
     let mut command = Command::new("typst");
     command
         .arg("compile")
-        .arg("-")  // Use stdin as input
-        .arg("-")  // Write output to stdout
+        .arg("-") // Use stdin as input
+        .arg("-") // Write output to stdout
         .stdin(Stdio::piped())
         .stdout(Stdio::piped());
 
     let mut process = command.spawn()?;
 
-    process.stdin
-        .take().unwrap()
-        .write(template.as_bytes())?;
+    process.stdin.take().unwrap().write(template.as_bytes())?;
 
     let output = process.wait_with_output()?;
     let pdf_bytes = output.stdout;

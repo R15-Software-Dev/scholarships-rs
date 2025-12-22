@@ -40,10 +40,15 @@ impl ComparisonData {
             display_text: display_text.into(),
         }
     }
-    
+
     pub fn compare(&self, student_data: &ExpandableInfo) -> Result<bool, String> {
-        let value = student_data.data.get(&self.member)
-            .expect(format!("Couldn't find member {:?}, current student data: {:?}", self.member, student_data).as_str());
+        let value = student_data.data.get(&self.member).expect(
+            format!(
+                "Couldn't find member {:?}, current student data: {:?}",
+                self.member, student_data
+            )
+            .as_str(),
+        );
         self.comparison.evaluate(value, &self.target_value)
     }
 }
@@ -73,13 +78,13 @@ impl Comparison for ComparisonType {
 
 #[cfg(test)]
 mod tests {
-    use crate::common::comparison::test_utils::create_student_data;
     use super::*;
-    
+    use crate::common::comparison::test_utils::create_student_data;
+
     #[test]
     fn test_student_data() {
         let student_data = create_student_data();
-        
+
         // Should succeed every time.
         let text_comp_success = ComparisonData {
             id: "first_name_success".to_string(),
@@ -99,11 +104,11 @@ mod tests {
             category: "Basic Checks".to_string(),
             display_text: "First Name is Jane".to_string(),
         };
-        
+
         let mut result = text_comp_success.compare(&student_data);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), true);
-        
+
         result = text_comp_fail.compare(&student_data);
         assert!(result.is_err());
     }

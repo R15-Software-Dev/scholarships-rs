@@ -1,9 +1,12 @@
-use leptos::logging::log;
+use crate::pages::{AboutPage, ComparisonTestPage, HomePage, LoanerPage, ProviderPortal, TestPage};
+use leptos::leptos_dom::log;
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge};
-use leptos_router::{components::{Route, Router, Routes}, path};
-use crate::pages::{AboutPage, ComparisonTestPage, HomePage, LoanerPage, TestPage};
+use leptos_router::{
+    components::{Route, Router, Routes},
+    path,
+};
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -32,7 +35,7 @@ pub fn App() -> impl IntoView {
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet
         <Stylesheet id="leptos" href="/pkg/scholarships-rs-wasm.css"/>
-        
+
         // sets the document title
         <Title text="R15 Scholarship App DEV"/>
 
@@ -44,7 +47,8 @@ pub fn App() -> impl IntoView {
 }
 
 fn use_origin() -> String {
-    #[cfg(target_arch = "wasm32")] {
+    #[cfg(target_arch = "wasm32")]
+    {
         use leptos::web_sys;
         // Just get the current URL origin.
         web_sys::window()
@@ -53,8 +57,9 @@ fn use_origin() -> String {
             .origin()
             .unwrap_or("http://localhost:3000/".to_string())
     }
-    
-    #[cfg(not(target_arch = "wasm32"))] {
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
         // Read the expected origin out of an environment variable.
         std::env::var("LP_SITE_ORIGIN").unwrap_or("http://localhost:3000/".to_string())
     }
@@ -63,7 +68,7 @@ fn use_origin() -> String {
 #[component]
 pub fn AppWithRoutes() -> impl IntoView {
     provide_meta_context();
-    
+
     let current_origin = use_origin();
     log!("Current origin: {}", current_origin);
 
@@ -82,7 +87,7 @@ pub fn AppWithRoutes() -> impl IntoView {
 
     let auth = Auth::signal();
     provide_context(auth); // allows use of this signal in lower areas of the tree without
-                           // explicitly passing it through the html tree
+    // explicitly passing it through the html tree
 
     let _ = Auth::init(parameters);
 
@@ -96,7 +101,7 @@ pub fn AppWithRoutes() -> impl IntoView {
 
         // sets the document title
         <Title text="R15 Scholarship App DEV" />
-      
+
         <main>
             // TODO Create a 404 page
             <Routes fallback=|| "Page not found.".into_view()>
@@ -104,6 +109,7 @@ pub fn AppWithRoutes() -> impl IntoView {
                 <Route path=path!("about") view=AboutPage/>
                 <Route path=path!("test_page") view=TestPage/>
                 <Route path=path!("comparison") view=ComparisonTestPage />
+                <Route path=path!("providers") view=ProviderPortal />
                 <Route path=path!("loaners") view=LoanerPage />
                 <Route path=path!("loaners/:form_name") view=LoanerPage />
             </Routes>
