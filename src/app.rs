@@ -1,10 +1,9 @@
-use leptos::logging::log;
+use crate::pages::{AboutPage, HomePage, LoanerPage, ProviderPortal, ScholarshipInfoPage, TestPage};
+use leptos::leptos_dom::log;
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge};
-use leptos_router::{components::{Route, Router, Routes}, path};
-use leptos_router::components::ParentRoute;
-use crate::pages::{AboutPage, ComparisonTestPage, HomePage, LoanerPage, ScholarshipInfoPage, TestPage};
+use leptos_router::{components::{Route, Router, Routes, ParentRoute}, path};
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -97,7 +96,7 @@ pub fn AppWithRoutes() -> impl IntoView {
 
         // sets the document title
         <Title text="R15 Scholarship App DEV" />
-        
+      
         <main>
             // TODO Create a 404 page
             <Routes fallback=|| "Page not found.".into_view()>

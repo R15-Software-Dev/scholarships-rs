@@ -1,10 +1,10 @@
-use leptos::either::Either;
+use super::UnauthenticatedPage;
 use super::home_page::get_submission;
-use super::{UnauthenticatedPage};
 use crate::common::{
     ComparisonData, ExpandableInfo, ValueType,
 };
 use crate::components::{ActionButton, Loading, Panel, Row};
+use leptos::either::Either;
 use leptos::leptos_dom::logging::console_log;
 use leptos::logging::log;
 use leptos::prelude::*;
@@ -22,17 +22,15 @@ pub fn ComparisonTestPage() -> impl IntoView {
     // we don't lose access to it in the future, should we need it again.
     let student_resource: Resource<ExpandableInfo> = Resource::new(
         move || user_claims.get().map(|claim| claim.claims.subject.clone()),
-        async
-            | opt_username
-            | match opt_username {
-                Some(subject) => get_submission(subject.clone()).await.unwrap_or_else(|e| {
-                    console_log(e.to_string().as_str());
-                    ExpandableInfo::new(subject)
-                }),
-                None => ExpandableInfo::new("".to_owned()),
-            },
+        async |opt_username| match opt_username {
+            Some(subject) => get_submission(subject.clone()).await.unwrap_or_else(|e| {
+                console_log(e.to_string().as_str());
+                ExpandableInfo::new(subject)
+            }),
+            None => ExpandableInfo::new("".to_owned()),
+        },
     );
-    
+
     let scholarship_resource: Resource<Vec<ExpandableInfo>> = Resource::new(
         move || Option::<String>::None,
         async |_| {
@@ -40,9 +38,9 @@ pub fn ComparisonTestPage() -> impl IntoView {
                 log!("An error occurred: {:?}", e);
                 Vec::new()
             })
-        }
+        },
     );
-    
+
     let comparison_resource: Resource<Vec<ComparisonData>> = Resource::new(
         move || Option::<String>::None,
         async |_| {
@@ -50,7 +48,7 @@ pub fn ComparisonTestPage() -> impl IntoView {
                 log!("An error occurred: {:?}", e);
                 Vec::new()
             })
-        }
+        },
     );
 
     view! {
@@ -83,9 +81,9 @@ pub fn ComparisonTestPage() -> impl IntoView {
                                                         return Ok(Some(scholarship))  // students will always qualify when there are no requirements
                                                     }
                                                 };
-                                        
+
                                                 let mut final_result = Ok(true);
-                                    
+
                                                 // The list should exist, and it should contain a series of strings.
                                                 for val in list {
                                                     let comp_opt = match val {
@@ -95,7 +93,7 @@ pub fn ComparisonTestPage() -> impl IntoView {
                                                         }
                                                         _ => None
                                                     };
-                                        
+
                                                     let comparison_outcome = match comp_opt {
                                                         Some(comp) => {
                                                             // Perform the comparison
@@ -103,7 +101,7 @@ pub fn ComparisonTestPage() -> impl IntoView {
                                                         }
                                                         _ => Err("".to_string())
                                                     };
-                                            
+
                                                     match comparison_outcome {
                                                         Ok(true) => {},
                                                         Ok(false) => final_result = Ok(false),
@@ -113,14 +111,14 @@ pub fn ComparisonTestPage() -> impl IntoView {
                                                         }
                                                     }
                                                 }
-                                    
+
                                                 match final_result {
                                                     Ok(true) => Ok(Some(scholarship)),
                                                     Ok(false) => Ok(None),
                                                     Err(e) => Err(e)
                                                 }
                                             }).collect::<Vec<Result<Option<&ExpandableInfo>, String>>>();
-                                            
+
                                             // Build a display string
                                             let mut strings = Vec::new();
                                             strings.push("Scholarship results: \n".to_string());
@@ -137,9 +135,9 @@ pub fn ComparisonTestPage() -> impl IntoView {
                                                     Err(msg) => strings.push(msg)
                                                 }
                                             }
-                                
+
                                             let display_text = strings.join("\n").to_string();
-                                
+
                                             result_msg.set(display_text);
                                         }>"Test Comparison"</ActionButton>
                                     </Row>

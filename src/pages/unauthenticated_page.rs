@@ -1,5 +1,5 @@
-use leptos::logging::log;
 use crate::components::ActionButton;
+use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_oidc::AuthSignal;
 
@@ -12,7 +12,7 @@ pub fn UnauthenticatedPage() -> impl IntoView {
                 .map(|unauthenticated| unauthenticated.login_url())
         })
     };
-    
+
     Effect::new(move || log!("Generated login url: {:?}", login_url()));
 
     let navigate = leptos_router::hooks::use_navigate();

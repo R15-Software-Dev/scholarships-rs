@@ -4,23 +4,25 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
 
-use leptos::either::{Either, EitherOf3};
-use leptos::prelude::*;
-use serde::{Deserialize, Serialize};
-use leptos::logging::log;
-use leptos_router::params::Params;
-use leptos_router::hooks::{use_navigate, use_params};
-use leptos::Params;
-use traits::{AsReactive, ReactiveCapture};
 use crate::common::{ExpandableInfo, ValueType};
-use crate::components::{ActionButton, Banner, DashboardButton, OutlinedTextField, Panel, Row, Select};
-use std::collections::HashMap;
+use crate::components::{
+    ActionButton, Banner, DashboardButton, OutlinedTextField, Panel, Row, Select,
+};
 use chrono::{FixedOffset, TimeZone};
+use leptos::Params;
+use leptos::either::{Either, EitherOf3};
 use leptos::html::Dialog;
+use leptos::logging::log;
+use leptos::prelude::*;
+use leptos_router::hooks::{use_navigate, use_params};
+use leptos_router::params::Params;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use traits::{AsReactive, ReactiveCapture};
 
 #[derive(Params, PartialEq)]
 struct LoanerParams {
-    form_name: Option<String>
+    form_name: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -39,7 +41,8 @@ struct LoanerReturnOutput {
 async fn get_loaners_return_list() -> Result<Vec<LoanerReturnOutput>, ServerFnError> {
     // We want to query the database for all loaners, but we only want the name and
     // date of borrowing. This will be cheaper than querying the entire table.
-    let dbclient = Client::new(&aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await);
+    let dbclient =
+        Client::new(&aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await);
 
     log!("Getting loaners from database.");
 
@@ -48,34 +51,57 @@ async fn get_loaners_return_list() -> Result<Vec<LoanerReturnOutput>, ServerFnEr
         .table_name("loaner-info")
         .projection_expression("subject, first_name, last_name, date_taken")
         .send()
-        .await {
+        .await
+    {
         Ok(output) => {
             if let Some(items) = output.items {
-                Ok(items.into_iter().map(|item| {
-                    let expandable: ExpandableInfo = from_item(item).unwrap();
-                    // This set of function calls is ridiculous, we need to make a better way to do this.
-                    LoanerReturnOutput {
-                        first_name: expandable.data.get("first_name").unwrap().as_string().unwrap_or_default().unwrap_or_default(),
-                        last_name: expandable.data.get("last_name").unwrap().as_string().unwrap_or_default().unwrap_or_default(),
-                        date: expandable.data.get("date_taken").unwrap().as_string().unwrap_or_default().unwrap_or_default(),
-                        subject: expandable.subject
-                    }
-                }).collect())
+                Ok(items
+                    .into_iter()
+                    .map(|item| {
+                        let expandable: ExpandableInfo = from_item(item).unwrap();
+                        // This set of function calls is ridiculous, we need to make a better way to do this.
+                        LoanerReturnOutput {
+                            first_name: expandable
+                                .data
+                                .get("first_name")
+                                .unwrap()
+                                .as_string()
+                                .unwrap_or_default()
+                                .unwrap_or_default(),
+                            last_name: expandable
+                                .data
+                                .get("last_name")
+                                .unwrap()
+                                .as_string()
+                                .unwrap_or_default()
+                                .unwrap_or_default(),
+                            date: expandable
+                                .data
+                                .get("date_taken")
+                                .unwrap()
+                                .as_string()
+                                .unwrap_or_default()
+                                .unwrap_or_default(),
+                            subject: expandable.subject,
+                        }
+                    })
+                    .collect())
             } else {
                 Ok(vec![])
             }
-        },
+        }
         Err(err) => {
             log!("{:?}", err);
             let msg = err.message().unwrap_or("Unknown error");
             Err(ServerFnError::new(msg))
-        },
+        }
     }
 }
 
 #[server]
 async fn check_in_loaner(student: LoanerReturnOutput) -> Result<(), ServerFnError> {
-    let dbclient = Client::new(&aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await);
+    let dbclient =
+        Client::new(&aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await);
 
     match dbclient
         .delete_item()
@@ -96,13 +122,17 @@ async fn check_in_loaner(student: LoanerReturnOutput) -> Result<(), ServerFnErro
 #[server]
 async fn create_borrow_entry(input: ExpandableInfo) -> Result<(), ServerFnError> {
     let mut input = input;
-    let dbclient = Client::new(&aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await);
+    let dbclient =
+        Client::new(&aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await);
 
     let current_time = chrono::Utc::now().format("%H:%M, %m/%d/%Y").to_string();
     log!("Creating entry with timestamp {}", current_time);
 
     // Add the timestamp to the data map as a string and then push it to the database.
-    input.data.insert("date_taken".to_string(), ValueType::String(Some(current_time.clone())));
+    input.data.insert(
+        "date_taken".to_string(),
+        ValueType::String(Some(current_time.clone())),
+    );
 
     loop {
         let item: serde_dynamo::Item = to_item(&input)?;
@@ -122,8 +152,8 @@ async fn create_borrow_entry(input: ExpandableInfo) -> Result<(), ServerFnError>
                         // Retry database writes until we have a good subject ID.
                         log!("Failed conditional check, forcing new subject ID.");
                         input.subject = uuid::Uuid::new_v4().to_string();
-                        continue
-                    },
+                        continue;
+                    }
                     _ => {
                         let msg = err.message().unwrap_or("An unknown error occurred.");
                         return Err(ServerFnError::new(msg));
@@ -165,19 +195,18 @@ pub fn LoanerPage() -> impl IntoView {
     // Check URL params. Depending on what string is visible here, we'll display a different form.
     let params = use_params::<LoanerParams>();
     let form_passed = move || {
-        params.read()
+        params
+            .read()
             .as_ref()
             .ok()
             .and_then(|params| params.form_name.clone())
             .unwrap_or_default()
     };
-    
-    let form_view = move || {
-        match form_passed().as_str() {
-            "borrowing" => EitherOf3::A(LoanerBorrowForm),
-            "returning" => EitherOf3::B(LoanerReturnForm),
-            _ => EitherOf3::C("Choose something from the left.".into_view())
-        }
+
+    let form_view = move || match form_passed().as_str() {
+        "borrowing" => EitherOf3::A(LoanerBorrowForm),
+        "returning" => EitherOf3::B(LoanerReturnForm),
+        _ => EitherOf3::C("Choose something from the left.".into_view()),
     };
 
     // We'll create the page here - the sidebar contains all the buttons, while the form
@@ -221,21 +250,21 @@ pub fn LoanerBorrowForm() -> impl IntoView {
     let temp = ExpandableInfo::new(uuid::Uuid::new_v4().to_string());
     let temp_reactive = temp.as_reactive();
     let elements_disabled = RwSignal::new(false);
-    
+
     view! {
         <div class="flex flex-col justify-center gap-2 mb-1 py-3 px-2">
             <h2 class="text-2xl font-bold">"Borrower Information"</h2>
             <p class="text-lg">"Please fill out the form below."</p>
         </div>
         <Row>
-            <OutlinedTextField 
+            <OutlinedTextField
                 label="First Name:"
                 placeholder="John"
                 disabled=elements_disabled
                 data_member="first_name"
                 data_map=temp_reactive.data
             />
-            <OutlinedTextField 
+            <OutlinedTextField
                 label="Last Name:"
                 placeholder="Smith"
                 disabled=elements_disabled
@@ -244,7 +273,7 @@ pub fn LoanerBorrowForm() -> impl IntoView {
             />
         </Row>
         <Row>
-            <OutlinedTextField 
+            <OutlinedTextField
                 label="Region 15 Email:"
                 placeholder="example@region15.org"
                 disabled=elements_disabled
@@ -268,7 +297,7 @@ pub fn LoanerBorrowForm() -> impl IntoView {
             />
         </Row>
         <Row>
-            <Select 
+            <Select
                 label="Loan Taken:"
                 value_list=vec![
                     "Chromebook".to_string(),
@@ -307,10 +336,12 @@ pub fn LoanerReturnForm() -> impl IntoView {
     let return_list_refresh = RwSignal::new(0);
     let return_list_resource: Resource<Vec<LoanerReturnOutput>> = Resource::new(
         move || return_list_refresh.get(),
-        async |_| get_loaners_return_list().await.unwrap_or_else(|e| {
-            log!("There was an error getting the loaner list: {}", e);
-            vec![]
-        })
+        async |_| {
+            get_loaners_return_list().await.unwrap_or_else(|e| {
+                log!("There was an error getting the loaner list: {}", e);
+                vec![]
+            })
+        },
     );
 
     let dialog_ref = NodeRef::<Dialog>::new();
@@ -334,7 +365,9 @@ pub fn LoanerReturnForm() -> impl IntoView {
     let dialog_check_in = move |_| {
         chosen_student.with(|opt_student| {
             if let Some(student) = opt_student.as_ref() {
-                check_in_action.dispatch(CheckInLoaner { student: student.clone() });
+                check_in_action.dispatch(CheckInLoaner {
+                    student: student.clone(),
+                });
             }
         })
     };

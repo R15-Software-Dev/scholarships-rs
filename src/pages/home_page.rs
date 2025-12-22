@@ -9,11 +9,11 @@ use std::process::{Command, Stdio};
 #[cfg(feature = "ssr")]
 use std::io::Write;
 
-use crate::common::ExpandableInfo;
+use crate::common::{ExpandableInfo, UserClaims};
 use crate::pages::UnauthenticatedPage;
 use crate::components::{
     ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
-    Select
+    Select,
 };
 use crate::input;
 use leptos::leptos_dom::logging::console_log;
@@ -126,16 +126,14 @@ pub async fn create_example_pdf() -> Result<Vec<u8>, ServerFnError> {
     let mut command = Command::new("typst");
     command
         .arg("compile")
-        .arg("-")  // Use stdin as input
-        .arg("-")  // Write output to stdout
+        .arg("-") // Use stdin as input
+        .arg("-") // Write output to stdout
         .stdin(Stdio::piped())
         .stdout(Stdio::piped());
 
     let mut process = command.spawn()?;
 
-    process.stdin
-        .take().unwrap()
-        .write(template.as_bytes())?;
+    process.stdin.take().unwrap().write(template.as_bytes())?;
 
     let output = process.wait_with_output()?;
     let pdf_bytes = output.stdout;

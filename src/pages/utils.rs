@@ -3,7 +3,7 @@ use leptos_oidc::{Algorithm, AuthSignal, TokenData};
 use crate::common::UserClaims;
 
 /// # Server Utilities
-/// 
+///
 /// These utility functions can only be used from the server. They are created to use server-side
 /// dependencies like the AWS SDK. Use of these functions will crash the front end, as these
 /// dependencies cannot be compiled for WASM (nor should they be).
@@ -15,7 +15,7 @@ pub mod server_utils {
     pub async fn create_aws_config() -> SdkConfig {
         aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await
     }
-    
+
     /// Creates a DynamoDB client.
     pub async fn create_dynamo_client() -> aws_sdk_dynamodb::Client {
         aws_sdk_dynamodb::Client::new(&create_aws_config().await)
