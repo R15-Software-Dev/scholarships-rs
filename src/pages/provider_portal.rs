@@ -23,7 +23,7 @@ pub fn ProviderPortal() -> impl IntoView {
                             title="Create Scholarship"
                             description="Navigate to Scholarship Creation Page"
                             icon="/Create_Black.png"
-                            path="/"
+                            path="/providers/scholarships"
                             />
                         <DashboardButton
                             title="Applicants"

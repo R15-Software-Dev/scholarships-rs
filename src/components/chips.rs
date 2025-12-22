@@ -70,8 +70,8 @@ pub fn Chip(
 pub fn ChipsList(
     #[prop(into)] data_member: String,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
-    #[prop()] displayed_text: Vec<String>,
-    #[prop()] values: Vec<String>,
+    #[prop(into)] displayed_text: Signal<Vec<String>>,
+    #[prop(into)] values: Signal<Vec<String>>,
     #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
     #[prop(optional, into)] label: String,
 ) -> impl IntoView {
@@ -79,7 +79,7 @@ pub fn ChipsList(
         <div class="m-1.5 mt-0 mb-0">
             <span class="font-bold">{label}</span>
             <div class="flex flex-row flex-wrap gap-2 mt-1">
-                {displayed_text.into_iter().zip(values)
+                {move || { displayed_text.get().into_iter().zip(values.get())
                     .into_iter()
                     .map(|(text, value)| {
                         let checked_signal = Signal::derive({
@@ -140,7 +140,7 @@ pub fn ChipsList(
                         }
                     })
                     .collect_view()
-                }
+                }}
             </div>
         </div>
     }

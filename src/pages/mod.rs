@@ -10,6 +10,6 @@ mod unauthenticated_page;
 mod utils;
 
 pub use self::{
-    about_page::*, comparison_test::*, home_page::*, loaner_page::LoanerPage, provider_portal::*,
-    test_page::*, unauthenticated_page::*,
+    about_page::*, comparison_test::*, home_page::*, loaner_page::*, provider_portal::*,
+    test_page::*, unauthenticated_page::*, scholarship_info::*
 };
