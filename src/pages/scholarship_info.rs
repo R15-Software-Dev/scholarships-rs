@@ -33,6 +33,11 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
     
     let create_test_comps = ServerAction::<CreateTestComparisons>::new();
     
+    let on_delete = move || {
+        let navigate = use_navigate();
+        navigate("/providers/scholarships", Default::default());
+    };
+    
     // Remember that we only want to show the page after we've got authentication information
     // and if there's data for us to use.
     view! {
@@ -45,7 +50,10 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
             <Authenticated unauthenticated=UnauthenticatedPage>
                 <div class="flex flex-row align-top items-start">
                     <div class="flex flex-col flex-1" />
-                    <ScholarshipList refresh_token=list_refresh/>
+                    <ScholarshipList 
+                        refresh_token=list_refresh
+                        on_delete=on_delete
+                    />
                     <Transition fallback=Loading>
                         <ScholarshipForm
                             scholarship_id=scholarship_id
@@ -67,22 +75,28 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
 /// is authenticated, this component will get all the scholarships that this provider owns and 
 /// will display them in a list, giving them the option to edit, delete, or create new scholarships.
 /// 
-/// It does not accept any props, and instead pulls the provider's information from the surrounding
-/// environment.
-/// 
 /// Example usage:
 /// ```
+/// let refresh = RwSignal::new(0);
+/// 
 /// view! {
 ///     <AuthLoaded>
 ///         <Authenticated>
-///             <ScholarshipList />
+///             <ScholarshipList 
+///                 refresh_token=refresh
+///                 on_delete=move || log!("This is run when an item is deleted on the server.")
+///             />
 ///         </Authenticated>
 ///     </AuthLoaded>
 /// }
 /// ```
 #[component]
 fn ScholarshipList(
+    /// A signal that refreshes the list when changed. Most times, we don't need to worry about the
+    /// user reloading our page 2 billion times.
     #[prop()] refresh_token: RwSignal<i32>,
+    /// A callback that is run on successful server-side deletion of an item.
+    #[prop(into)] on_delete: Callback<()>
 ) -> impl IntoView {
     // List state
     let pending_delete = RwSignal::new(None::<ExpandableInfo>);
@@ -125,7 +139,7 @@ fn ScholarshipList(
         });
     };
 
-    let on_delete = move |s| {
+    let on_item_delete = move |s| {
         pending_delete.set(Some(s));
     };
     
@@ -149,6 +163,7 @@ fn ScholarshipList(
             scholarships.refetch();
             pending_delete.set(None);
             delete_action.clear();
+            on_delete.run(());
         }
     });
 
@@ -213,7 +228,7 @@ fn ScholarshipList(
                                         let views = list.iter().map(|entry| {
                                             view! {
                                                 <ScholarshipListEntry scholarship=entry.clone()
-                                                    on_delete=Callback::new(on_delete)/>
+                                                    on_delete=Callback::new(on_item_delete)/>
                                             }
                                         });
                                         Either::Left(views.collect_view())

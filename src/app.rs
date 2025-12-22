@@ -1,4 +1,4 @@
-use crate::pages::{AboutPage, HomePage, LoanerPage, ProviderPortal, ScholarshipInfoPage, TestPage};
+use crate::pages::{AboutPage, HomePage, LoanerPage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage};
 use leptos::leptos_dom::log;
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
@@ -96,17 +96,18 @@ pub fn AppWithRoutes() -> impl IntoView {
 
         // sets the document title
         <Title text="R15 Scholarship App DEV" />
-      
+        
         <main>
             // TODO Create a 404 page
             <Routes fallback=|| "Page not found.".into_view()>
                 <Route path=path!("") view=HomePage/>
-                <Route path=path!("about") view=AboutPage/>
-                <Route path=path!("test_page") view=TestPage/>
-                <Route path=path!("comparison") view=ComparisonTestPage />
-                <ParentRoute path=path!("providers/scholarships") view=ScholarshipInfoPage>
-                    <Route path=path!(":id") view=ScholarshipInfoPage />
-                    <Route path=path!("") view=ScholarshipInfoPage />
+                <Route path=path!("/about") view=AboutPage/>
+                <Route path=path!("/test_page") view=TestPage/>
+                <Route path=path!("/comparison") view=ComparisonTestPage />
+                <Route path=path!("/providers") view=ProviderPortal/>
+                <ParentRoute path=path!("/providers/scholarships") view=ScholarshipInfoPage>
+                    <Route path=path!(":id") view=ScholarshipInfoPage/>
+                    <Route path=path!("") view=ScholarshipInfoPage/>
                 </ParentRoute>
                 <ParentRoute path=path!("loaners") view=LoanerPage>
                     <Route path=path!("") view=LoanerPage />
