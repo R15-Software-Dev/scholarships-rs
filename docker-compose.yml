@@ -1,9 +1,6 @@
-﻿
-services:
-  leptos-watch:
-    image: rust:1.86
+﻿services:
+  scholarships-rs:
+    build: .
+    image: scholarships-rs-runner:latest
     ports:
-      - '3000:3000'
-    volumes:
-      - .:/app
-    command: cargo leptos watch
+      - '8080:8080'

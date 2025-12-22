@@ -73,7 +73,9 @@ pub fn MultiEntry(
     /// component's `data_member` input.
     #[prop()]
     data_map: RwSignal<HashMap<String, ValueType>>,
-    #[prop(into)] name_member: String,
+    /// Currently unused.
+    #[prop(optional, into)]
+    name_member: String,
     /// The type and order of the inputs for each `Entry` component within this `MultiEntry` component.
     #[prop(optional)]
     schema: Vec<InputType>,
