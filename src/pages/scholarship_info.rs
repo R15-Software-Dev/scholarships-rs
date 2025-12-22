@@ -308,9 +308,31 @@ fn ScholarshipListEntry(
     }
 }
 
+/// # Scholarship Edit Form Component
+///
+/// Displays all information about a scholarship and allows the provider to edit that information.
+/// All information is only saved when the submit button is clicked.
+///
+/// The component will call the `on_submit` callback when the API returns an `Ok` result. In the
+/// event that the API call fails, it will not call anything. This is mainly used to allow updates
+/// to neighboring components from the parent.
+///
+/// Example usage:
+/// ```
+/// view! {
+///     <ScholarshipForm
+///         scholarship_id="SomeScholarshipID"
+///         on_submit=move || log!("This is a callback!")
+///     />
+/// }
+/// ```
 #[component]
 fn ScholarshipForm(
+    /// The ID of the scholarship to edit. The form will handle getting all information about the
+    /// scholarship and submitting new information.
     #[prop(into)] scholarship_id: Signal<Option<String>>,
+    /// A callback that is run when the form successfully submits new data. In the event that the
+    /// submission fails, this function is not run.
     #[prop(into)] on_submit: Callback<()>
 ) -> impl IntoView {
     let submit_status = RwSignal::new(SubmitStatus::Idle);
