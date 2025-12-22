@@ -4,9 +4,33 @@ use leptos::prelude::*;
 /// # Date Component
 ///
 ///
-/// Example usage:
+/// Example usage - Single Date:
 /// ```
-
+/// <Date
+/// important_dates=vec!{
+///     DateInfo {
+///        title: "Some Title".to_string(),
+///         date: DateRange::Single("November 4th, 2025".to_string()),
+///         description: "This is a test".to_string(),
+///         status: DateStatus::Closed
+///     }
+/// }
+/// icon="/icon.png"
+/// />
+/// ```
+/// Example usage - Date Range
+/// ```
+/// <Date
+/// important_dates=vec!{
+///     DateInfo {
+///         title: "Some Title".to_string(),
+///         date: DateRange::Range("February 2nd, 2026".to_string(), "February 10th, 2026".to_string()),
+///         description: "This is a test".to_string(),
+///         status: DateStatus::Upcoming
+///     }
+/// }
+/// icon="/icon.png"
+/// />
 /// ```
 
 fn render_dates(dates: DateRange) -> impl IntoView {
