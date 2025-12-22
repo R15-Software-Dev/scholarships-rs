@@ -1,6 +1,5 @@
 ﻿services:
   scholarships-rs:
-    build: .
-    image: scholarships-rs-runner:latest
+    image: ghcr.io/r15-software-dev/scholarships-runner:latest
     ports:
-      - '8080:8080'
+      - '3000:8080'
