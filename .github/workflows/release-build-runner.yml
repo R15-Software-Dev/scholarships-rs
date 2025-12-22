@@ -2,8 +2,8 @@ name: Release
 
 on:
   push:
-    branches:
-      - "main"
+    tags:
+      - "v*"
   workflow_dispatch:
 
 permissions:
@@ -29,4 +29,4 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ghcr.io/r15-software-dev/scholarships-runner:latest
+          tags: ghcr.io/r15-software-dev/scholarships-runner:${{ github.ref_name }}
