@@ -20,6 +20,9 @@ use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship
 /// must be handled *before* navigation to this page.
 #[component]
 pub fn ScholarshipInfoPage() -> impl IntoView {
+    // Changes to this signal update the scholarship list.
+    let list_refresh = RwSignal::new(0);
+
     let url_params = use_params::<ScholarshipFormParams>();
     let scholarship_id = Memo::new(move |_| {
         url_params.read()
@@ -42,21 +45,15 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
             <Authenticated unauthenticated=UnauthenticatedPage>
                 <div class="flex flex-row align-top items-start">
                     <div class="flex flex-col flex-1" />
-                    <ScholarshipList />
+                    <ScholarshipList refresh_token=list_refresh/>
                     <Transition fallback=Loading>
                         <ScholarshipForm
                             scholarship_id=scholarship_id
+                            on_submit=move || {
+                                list_refresh.update(|n| *n += 1);
+                            }
                         />
                     </Transition>
-                    <div class="hidden">
-                        <Row>
-                            <ActionButton
-                                on:click=move |_| {
-                                    create_test_comps.dispatch(CreateTestComparisons {});
-                                }
-                            >"Create test comparisons"</ActionButton>
-                        </Row>
-                    </div>
                     <div class="flex flex-col flex-1" />
                 </div>
             </Authenticated>
@@ -84,7 +81,9 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
 /// }
 /// ```
 #[component]
-fn ScholarshipList() -> impl IntoView {
+fn ScholarshipList(
+    #[prop()] refresh_token: RwSignal<i32>,
+) -> impl IntoView {
     // List state
     let pending_delete = RwSignal::new(None::<ExpandableInfo>);
     let delete_dialog_ref = NodeRef::<Dialog>::new();
@@ -100,8 +99,11 @@ fn ScholarshipList() -> impl IntoView {
     
     // Register scholarship server resource
     let scholarships = Resource::new(
-        move || provider_id.get(),
-        async move |provider_id| {
+        move || {
+            (refresh_token.get(), provider_id.get())
+        },
+        |(_, provider_id)| async move {
+            log!("Fetching from scholarship API.");
             let Some(provider_id) = provider_id else {
                 return Ok(Vec::new());
             };
@@ -308,7 +310,8 @@ fn ScholarshipListEntry(
 
 #[component]
 fn ScholarshipForm(
-    #[prop(into)] scholarship_id: Signal<Option<String>>
+    #[prop(into)] scholarship_id: Signal<Option<String>>,
+    #[prop(into)] on_submit: Callback<()>
 ) -> impl IntoView {
     let submit_status = RwSignal::new(SubmitStatus::Idle);
     let elements_disabled = Signal::derive(move || {
@@ -336,7 +339,10 @@ fn ScholarshipForm(
         
         if let Some(result) = submit_action.value().get() {
             match result {
-                Ok(()) => submit_status.set(SubmitStatus::Success),
+                Ok(()) => {
+                    submit_status.set(SubmitStatus::Success);
+                    on_submit.run(());
+                },
                 Err(err) => submit_status.set(SubmitStatus::Error(err.to_string()))
             }
         }
@@ -502,7 +508,7 @@ fn ScholarshipForm(
                                                         let captured = reactive_info.capture();
                                                         log!("Map values: {:?}", captured);
                                                         submit_action.dispatch(CreateScholarshipInfo {
-                                                            info: captured
+                                                            info: captured.clone()
                                                         });
                                                     }
                                                 >"Submit"</ActionButton>
