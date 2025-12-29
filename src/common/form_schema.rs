@@ -1,5 +1,5 @@
 use crate::common::ValueType;
-use crate::components::{CheckboxList, OutlinedTextField, RadioList, Row, Select};
+use crate::components::{CheckboxList, OutlinedTextField, RadioList, Row, Select, TextFieldType};
 use leptos::either::EitherOf5;
 use leptos::prelude::RwSignal;
 use leptos::{IntoView, view};
@@ -49,7 +49,7 @@ impl InputType {
                             placeholder = placeholder.clone()
                             data_member = member.clone()
                             data_map = data_map
-                            input_type = "number"
+                            input_type = TextFieldType::Number
                         />
                     }),
                 InputType::Checkbox(member, label, options) =>

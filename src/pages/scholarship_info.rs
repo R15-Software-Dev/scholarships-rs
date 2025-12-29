@@ -5,7 +5,7 @@ use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::{use_navigate, use_params};
 use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
-use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row};
+use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType};
 use super::UnauthenticatedPage;
 use traits::{AsReactive, ReactiveCapture};
 use crate::common::ComparisonData;
@@ -461,7 +461,7 @@ fn ScholarshipForm(
                                                     disabled=elements_disabled
                                                     data_member="amount_per_award"
                                                     data_map=reactive_info.data
-                                                    input_type="number"
+                                                    input_type=TextFieldType::Number
                                                 />
                                             </Row>
                                             <Row>
@@ -471,7 +471,7 @@ fn ScholarshipForm(
                                                     disabled=elements_disabled
                                                     data_member="num_awards"
                                                     data_map=reactive_info.data
-                                                    input_type="number"
+                                                    input_type=TextFieldType::Number
                                                 />
                                             </Row>
                                             <Row>
@@ -481,7 +481,7 @@ fn ScholarshipForm(
                                                     disabled=elements_disabled
                                                     data_member="total_awards"
                                                     data_map=reactive_info.data
-                                                    input_type="number"
+                                                    input_type=TextFieldType::Number
                                                 />
                                             </Row>
                                             <Row>

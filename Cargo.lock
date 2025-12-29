@@ -2947,6 +2947,7 @@ dependencies = [
  "leptos_oidc",
  "leptos_router",
  "macros",
+ "regex",
  "serde",
  "serde_dynamo",
  "tokio",

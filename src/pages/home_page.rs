@@ -9,12 +9,9 @@ use std::process::{Command, Stdio};
 #[cfg(feature = "ssr")]
 use std::io::Write;
 
-use crate::common::{ExpandableInfo, UserClaims};
+use crate::common::ExpandableInfo;
 use crate::pages::UnauthenticatedPage;
-use crate::components::{
-    ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
-    Select,
-};
+use crate::components::{ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row, Select, TextFieldType, ValidatedForm};
 use crate::input;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
@@ -167,6 +164,7 @@ pub fn HomePage() -> impl IntoView {
             <Authenticated unauthenticated=UnauthenticatedPage>
                 // Replace this fallback with a real loading screen.
                 <Suspense fallback=Loading>
+                    <ValidatedForm on_submit=Callback::new(move |_| {})>
                     {move || {
                         server_resource
                             .get()
@@ -227,6 +225,7 @@ pub fn HomePage() -> impl IntoView {
                                                     disabled=elements_disabled
                                                     data_member="contact_email"
                                                     data_map=expandable_react.data
+                                                    input_type=TextFieldType::Email
                                                 />
                                             </Row>
                                             <Row>
@@ -254,7 +253,7 @@ pub fn HomePage() -> impl IntoView {
                                                     disabled=elements_disabled
                                                     data_member="math_sat"
                                                     data_map=expandable_react.data
-                                                    input_type="number"
+                                                    input_type=TextFieldType::Number
                                                 />
                                             </Row>
                                             <Row>
@@ -357,6 +356,7 @@ pub fn HomePage() -> impl IntoView {
                                 }
                             })
                     }}
+                    </ValidatedForm>
                 </Suspense>
             </Authenticated>
         </AuthLoaded>
