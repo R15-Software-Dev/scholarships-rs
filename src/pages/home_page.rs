@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 // Server dependencies
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValue};
@@ -12,6 +11,7 @@ use std::io::Write;
 
 use crate::common::ExpandableInfo;
 use crate::pages::UnauthenticatedPage;
+use crate::pages::utils::get_user_claims;
 use crate::components::{ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row, Select, TextFieldType, ValidatedForm};
 use crate::input;
 use leptos::leptos_dom::logging::console_log;
@@ -22,7 +22,7 @@ use leptos::logging::log;
 use leptos::task::spawn_local;
 use leptos::web_sys::HtmlAnchorElement;
 use leptos::wasm_bindgen::JsCast;
-use crate::pages::utils::get_user_claims;
+use std::collections::HashMap;
 
 /// # Get Student Info
 /// Gets a student's information given their `subject`.
