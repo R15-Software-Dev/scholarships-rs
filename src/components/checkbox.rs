@@ -9,7 +9,7 @@ pub fn Checkbox(
     #[prop(into)] on_change: Callback<(), ()>,
     #[prop(into)] value: String,
     #[prop(into)] name: String,
-    #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
+    #[prop(into)] disabled: Signal<bool>,
 ) -> impl IntoView {
     let id = create_unique_id(&name, &value);
 
@@ -53,7 +53,7 @@ pub fn CheckboxList(
     #[prop(into)] data_member: String,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop()] items: Vec<String>,
-    #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
+    #[prop(optional, into)] disabled: Signal<bool>,
     #[prop(optional, into)] label: String,
 ) -> impl IntoView {
     view! {

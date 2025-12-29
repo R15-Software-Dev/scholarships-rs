@@ -15,7 +15,7 @@ pub fn Select(
     #[prop(into)] data_member: String,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop(optional, into)] label: String,
-    #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
+    #[prop(optional, into)] disabled: Signal<bool>,
 ) -> impl IntoView {
     let on_change = {
         let data_member = data_member.clone();
