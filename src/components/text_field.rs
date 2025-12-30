@@ -21,7 +21,6 @@ pub enum TextFieldType {
 
 /// Entry point for validating a text field.
 fn validate(required: bool, value: &str, input_type: &TextFieldType) -> ValidationState {
-    log!("Input information: required: {}, value: \"{}\", input_type: {:?}", required, value, input_type);
     if required && value.is_empty() {
         ValidationState::Invalid("This field is required.".to_string())
     } else {
@@ -36,7 +35,6 @@ fn validate(required: bool, value: &str, input_type: &TextFieldType) -> Validati
 /// Validates an email address.
 fn validate_email(input: &str) -> ValidationState {
     // TODO Accept more than just Region 15 addresses.
-    log!("Validating email: {}", input);
     let pattern = regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@region15\.org$").expect("Invalid regex pattern");
 
     if pattern.is_match(input) {
@@ -48,7 +46,6 @@ fn validate_email(input: &str) -> ValidationState {
 
 /// Validates a number.
 fn validate_number(input: &str) -> ValidationState {
-    log!("Validating number: {}", input);
     if input.parse::<i32>().is_ok() {
         ValidationState::Valid
     } else {
