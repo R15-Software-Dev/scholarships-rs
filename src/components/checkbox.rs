@@ -2,16 +2,17 @@ use crate::common::ValueType;
 use crate::components::utils::create_unique_id;
 use leptos::prelude::*;
 use std::collections::HashMap;
+use crate::components::{FormValidationRegistry, InputState, ValidationState};
 
 #[component]
 pub fn Checkbox(
     #[prop()] checked: Signal<bool>,
     #[prop(into)] on_change: Callback<(), ()>,
-    #[prop(into)] value: String,
+    #[prop(into)] value: Signal<String>,
     #[prop(into)] name: String,
     #[prop(into)] disabled: Signal<bool>,
 ) -> impl IntoView {
-    let id = create_unique_id(&name, &value);
+    let id = create_unique_id(&name, &value.get_untracked());
 
     view! {
         <label for=id class="flex items-center">
@@ -42,9 +43,21 @@ pub fn Checkbox(
                 rotate-45 transform border-b-3 border-r-3
                 border-white transition-opacity duration-150"></span>
             </div>
-            <span>{value.clone()}</span>
+            <span>{value}</span>
         </label>
     }
+}
+
+fn value_type_to_vec(value_type: &ValueType) -> Vec<String> {
+    let ValueType::List(Some(list)) = value_type else {
+        return Vec::new();
+    };
+
+    list.iter().map(|val| {
+        val.as_string()
+            .unwrap_or_default()
+            .unwrap_or_default()
+    }).collect::<Vec<String>>()
 }
 
 #[component]
@@ -55,71 +68,117 @@ pub fn CheckboxList(
     #[prop()] items: Vec<String>,
     #[prop(optional, into)] disabled: Signal<bool>,
     #[prop(optional, into)] label: String,
+    #[prop(optional, into)] required: Signal<bool>
 ) -> impl IntoView {
+    //#region Central List Logic
+
+    // Get default values from the data map. This will only run once, when the input is created
+    // and mounted to the DOM.
+    let temp_map = data_map.get_untracked();
+    let origin_value_type = temp_map.get(&data_member)
+        .unwrap_or(&ValueType::List(None));
+    let origin_list = value_type_to_vec(origin_value_type);
+
+    // "Raw" selected values - just strings, no ValueTyping
+    let selected_list = RwSignal::new(origin_list);
+
+    Effect::new({
+        let data_member = data_member.clone();
+        move || {
+            // Convert selected strings into ValueTypes
+            let typed_list = selected_list.with(|list|
+                list.iter().cloned().map(|val|
+                    ValueType::String(Some(val))
+                ).collect::<Vec<ValueType>>()
+            );
+
+            // Update the map
+            data_map.update(|map| {
+                map.insert(data_member.clone(), ValueType::List(Some(typed_list)));
+            });
+        }
+    });
+
+    //#endregion
+    //#region Form Validation
+
+    let validation_context = use_context::<FormValidationRegistry>()
+        .expect("FormValidationRegistry was not found");
+
+    let error = Signal::derive(move || {
+        if required.get() && selected_list.get().len() <= 0 {
+            ValidationState::Invalid("This field is required.".to_string())
+        } else {
+            ValidationState::Valid
+        }
+    });
+    let dirty = RwSignal::new(false);
+    let show_errors = Signal::derive(move || dirty.get() && matches!(error.get(), ValidationState::Invalid(_)));
+
+    let validator = RwSignal::new(InputState::new(
+        data_member.clone(),
+        error.clone(),
+        dirty.clone()
+    ));
+
+    validation_context.validators.update(|list| list.push(validator.clone()));
+
+    //#endregion
+    //#region Render Logic
     view! {
-        <div class="m-1.5 mt-0 mb-0">
-            <span class="font-bold">{label}</span>
-            {items
-                .into_iter()
-                .map(|item| {
-                    let checked_signal = Signal::derive({
-                        let item_name = item.clone();
-                        let data_member = data_member.clone();
-                        move || {
-                            data_map.get()  // HashMap
-                                .get(&data_member)  // Option<ValueType>
-                                .unwrap_or(&ValueType::List(None))  // ValueType
-                                .as_list()  // Result<Option<Vec<ValueType>>, ValueType>
-                                .unwrap_or(Some(vec!()))  // Option<Vec<ValueType>>
-                                .unwrap_or(vec!())  // Vec<ValueType>
-                                .contains(&ValueType::String(Some(item_name.clone())))  // bool
-                        }
-                    });
+        <div class="flex flex-col">
+            <div class="m-1.5 mt-0 mb-0">
+                <span class="font-bold">{label}</span>
+                {items
+                    .into_iter()
+                    .map(|item| {
+                        let item = Signal::derive({
+                            let cloned = item.clone();
+                            move || cloned.clone()
+                        });
 
-                    let on_change = {
-                        let item_name = item.clone();
-                        let data_member = data_member.clone();
-                        move || {
-                            let result = ValueType::String(Some(item_name.clone()));
-                            data_map.update(|map| {
-                                // Attempt to get the value type from the hash map.
-                                match map.get_mut(&data_member) {
-                                    Some(value_type) => {
-                                        // Attempt to get the value as a list.
-                                        match value_type.as_list().unwrap_or(None) {
-                                            Some(mut list) => {
-                                                // Attempt to find the selected value in the selected list.
-                                                // If it's present, remove it, or vice versa.
-                                                match list.iter().position(|val| *val == result) {
-                                                    Some(index) => { list.remove(index); },
-                                                    None => { list.push(result); }
-                                                };
-                                                // Update the existing value_type entry in the hash map.
-                                                *value_type = ValueType::List(Some(list));
-                                            },
-                                            // Insert a new value_type entry.
-                                            None => { *value_type = ValueType::List(Some(vec![result])); }
-                                        };
-                                    },
-                                    // Insert a new value_type entry.
-                                    None => { map.insert(data_member.clone(), ValueType::List(Some(vec![result]))); }
-                                };
+                        let checked = Signal::derive(move || {
+                            selected_list.get().contains(&item.get())
+                        });
+
+                        let on_change = move || {
+                            // Update the data list by checking if the value is present in it. If so,
+                            // remove it. If not, add it.
+                            selected_list.update(|list| {
+                                let item = item.get();
+                                if list.contains(&item) {
+                                    list.retain(|val| *val != item);
+                                } else {
+                                    list.push(item);
+                                }
                             });
-                        }
-                    };
+                            dirty.set(true);
+                        };
 
-                    view! {
-                        <Checkbox
-                            checked=checked_signal
-                            on_change=on_change
-                            // The actual selected values are tracked by this element, not by the checkboxes themselves.
-                            value=item.clone()
-                            name=data_member.clone()
-                            disabled=disabled
-                        />
-                    }
-                })
-                .collect::<Vec<_>>()}
+                        view! {
+                            <Checkbox
+                                checked=checked
+                                on_change=on_change
+                                // The actual selected values are tracked by this element, not by the checkboxes themselves.
+                                value=item
+                                name=data_member.clone()
+                                disabled=disabled
+                            />
+                        }
+                    })
+                    .collect_view()}
+            </div>
+            <Show when=move || show_errors.get()>
+                <div class="text-red-600 text-sm mr-1.5 ml-1.5">
+                    {move || {
+                        match error.get() {
+                            ValidationState::Invalid(msg) => msg,
+                            _ => "There is no error - should not see this message.".to_string()
+                        }
+                    }}
+                </div>
+            </Show>
         </div>
     }
+    //#endregion
 }

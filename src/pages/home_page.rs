@@ -1,7 +1,6 @@
 // Server dependencies
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValue};
-
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
 #[cfg(feature = "ssr")]
@@ -310,6 +309,7 @@ pub fn HomePage() -> impl IntoView {
                                                         disabled=elements_disabled
                                                         data_member="favorite_candies"
                                                         data_map=form_data
+                                                        required=true
                                                     />
                                                 </Row>
                                                 <Row>
