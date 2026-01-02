@@ -56,6 +56,11 @@ pub struct FormValidationRegistry {
     pub validators: RwSignal<ValidatorList>
 }
 
+/// Gets the [`FormValidationRegistry`] context if it exists.
+pub fn use_validation_context() -> Option<FormValidationRegistry> {
+    use_context::<FormValidationRegistry>()
+}
+
 /// # Validated Form Component
 ///
 /// A simple HTML `<form>` wrapper that executes validation logic using a [`FormValidationRegistry`].

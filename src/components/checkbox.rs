@@ -2,7 +2,7 @@ use crate::common::ValueType;
 use crate::components::utils::create_unique_id;
 use leptos::prelude::*;
 use std::collections::HashMap;
-use crate::components::{FormValidationRegistry, InputState, ValidationState};
+use crate::components::{use_validation_context, FormValidationRegistry, InputState, ValidationState};
 
 /// # Checkbox Component
 /// This component should only be used from within a [`CheckboxList`] component.
@@ -160,7 +160,7 @@ pub fn CheckboxList(
     //#endregion
     //#region Form Validation
 
-    let validation_context = use_context::<FormValidationRegistry>()
+    let validation_context = use_validation_context()
         .expect("FormValidationRegistry was not found");
 
     let error = Signal::derive(move || {

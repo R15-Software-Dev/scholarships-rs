@@ -3,7 +3,7 @@ use leptos::prelude::*;
 use std::collections::HashMap;
 use leptos::html::Input;
 use leptos::logging::log;
-use crate::components::InputState;
+use crate::components::{use_validation_context, InputState};
 use crate::components::validated_form::{FormValidationRegistry, ValidationState};
 
 /// Determines the available types of text fields.
@@ -68,7 +68,7 @@ pub fn OutlinedTextField(
     let input_ref = NodeRef::<Input>::new();
 
     // Register this input's validation signal.
-    let validator_context = use_context::<FormValidationRegistry>()
+    let validator_context = use_validation_context()
         .expect("FormValidSignal was not found");
 
     let raw_value = RwSignal::new(data_map.get_untracked()
