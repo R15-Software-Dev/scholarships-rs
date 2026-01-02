@@ -1,25 +1,19 @@
 use super::UnauthenticatedPage;
 use super::api::{get_all_scholarship_info, get_comparison_info};
 use super::home_page::get_submission;
-use crate::common::{ComparisonData, ExpandableInfo, UserClaims, ValueType};
+use crate::common::{ComparisonData, ExpandableInfo, ValueType};
 use crate::components::{ActionButton, Loading, Panel, Row};
+use crate::pages::utils::get_user_claims;
 use leptos::either::Either;
 use leptos::leptos_dom::logging::console_log;
 use leptos::logging::log;
 use leptos::prelude::*;
-use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
+use leptos_oidc::{AuthLoaded, Authenticated};
 
 #[component]
 pub fn ComparisonTestPage() -> impl IntoView {
     let result_msg = RwSignal::new("Found submission, waiting for input.".to_string());
-    let auth = use_context::<AuthSignal>().expect("Couldn't find user information.");
-    let user_claims = Signal::derive(move || {
-        auth.with(|auth| {
-            auth.authenticated().and_then(|data| {
-                data.decoded_access_token::<UserClaims>(Algorithm::RS256, &["account"])
-            })
-        })
-    });
+    let user_claims = get_user_claims();
 
     // Note that the value passed in MUST be equatable.
     // We get/unwrap the value repeatedly until we get a simple string value, then clone it so that

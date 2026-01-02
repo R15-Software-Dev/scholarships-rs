@@ -16,13 +16,14 @@ use crate::components::{
 };
 use crate::input;
 use crate::pages::UnauthenticatedPage;
+use crate::pages::utils::get_user_claims;
 use base64::Engine;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos::wasm_bindgen::JsCast;
 use leptos::web_sys::HtmlAnchorElement;
-use leptos_oidc::{Algorithm, AuthLoaded, AuthSignal, Authenticated};
+use leptos_oidc::{AuthLoaded, Authenticated};
 use traits::{AsReactive, ReactiveCapture};
 
 /// # Get Student Info
@@ -144,15 +145,7 @@ pub async fn create_example_pdf() -> Result<Vec<u8>, ServerFnError> {
 #[component]
 pub fn HomePage() -> impl IntoView {
     // Creates a reactive value to update the button
-
-    let auth = use_context::<AuthSignal>().expect("Couldn't find user information.");
-    let user_claims = Signal::derive(move || {
-        auth.with(|auth| {
-            auth.authenticated().and_then(|data| {
-                data.decoded_access_token::<UserClaims>(Algorithm::RS256, &["account"])
-            })
-        })
-    });
+    let user_claims = get_user_claims();
 
     // Note that the value passed in MUST be equatable.
     // We get/unwrap the value repeatedly until we get a simple string value, then clone it so that
