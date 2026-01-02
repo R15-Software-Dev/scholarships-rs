@@ -4,12 +4,44 @@ use leptos::prelude::*;
 use std::collections::HashMap;
 use crate::components::{FormValidationRegistry, InputState, ValidationState};
 
+/// # Checkbox Component
+/// This component should only be used from within a [`CheckboxList`] component.
+///
+/// It creates a single checkbox with a specific value. Indicating if it is checked is done
+/// _externally_ from the component, and requires some sort of signal. The component itself
+/// does not track whether it is checked, it only runs the `on_change` callback.
+///
+/// Example usage (from within a [`CheckboxList`]:
+/// ```
+/// let disabled_signal = RwSignal::new(false);
+/// let checked_signal = Signal::derive(move || {
+///     // It's recommended to use a derived signal of some sort, but if you want to create
+///     // a manually controlled RwSignal, that's fine too.
+///     true
+/// });
+///
+/// view! {
+///     <Checkbox
+///         checked=checked_signal
+///         on_change=move || log!("A callback that's run on change.")
+///         name="some_name"
+///         disabled=disabled_signal
+///         value="Some Value"
+///     />
+/// }
+/// ```
 #[component]
 pub fn Checkbox(
+    /// A [`Signal`] indicating whether the checkbox is checked.
     #[prop()] checked: Signal<bool>,
+    /// A callback that is run when the checkbox is checked and unchecked.
     #[prop(into)] on_change: Callback<(), ()>,
+    /// The value of the checkbox.
     #[prop(into)] value: Signal<String>,
+    /// The name of the checkbox. This is used to group checkboxes together, so every checkbox
+    /// in a group should have the same name.
     #[prop(into)] name: String,
+    /// A [`Signal`] indicating whether the checkbox is disabled.
     #[prop(into)] disabled: Signal<bool>,
 ) -> impl IntoView {
     let id = create_unique_id(&name, &value.get_untracked());
@@ -60,14 +92,40 @@ fn value_type_to_vec(value_type: &ValueType) -> Vec<String> {
     }).collect::<Vec<String>>()
 }
 
+
+/// # Checkbox List Component
+/// This component creates a list of checkboxes, each with a specific value. The values are passed
+/// through a prop rather than manually creating children.
+///
+/// Example usage:
+/// ```
+/// let items = vec! [
+///     "Item 1",
+///     "Item 2",
+///     "Item 3"
+/// ];
+///
+/// view! {
+///     <CheckboxList
+///         data_member="data_map_member"
+///         data_map=RwSignal::new(HashMap::new())
+///         items=items
+///     />
+/// }
+/// ```
 #[component]
 pub fn CheckboxList(
-    #[prop(optional)] selected: RwSignal<Vec<String>>,
+    /// The data member that this list should edit/display from the `data_map`.
     #[prop(into)] data_member: String,
+    /// A [`Signal`] allowing access to a data store.
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
+    /// The available choices for this list.
     #[prop()] items: Vec<String>,
+    /// A [`Signal`] indicating whether the checkbox list is disabled.
     #[prop(optional, into)] disabled: Signal<bool>,
+    /// A label for the list. Shown like a field name in a form.
     #[prop(optional, into)] label: String,
+    /// A [`Signal`] indicating whether the list is required. Used for validation.
     #[prop(optional, into)] required: Signal<bool>
 ) -> impl IntoView {
     //#region Central List Logic
