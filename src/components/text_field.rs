@@ -11,7 +11,7 @@ pub fn OutlinedTextField(
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop(optional)] value: RwSignal<ValueType>,
     #[prop(default = "text".to_owned(), into)] input_type: String,
-    #[prop(optional)] disabled: RwSignal<bool>,
+    #[prop(into, optional)] disabled: Signal<bool>,
     #[prop(optional)] error: RwSignal<bool>,
     #[prop(optional, into)] name: String,
     #[prop(optional, into)] label: String,

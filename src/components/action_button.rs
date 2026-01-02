@@ -2,8 +2,8 @@ use leptos::prelude::*;
 
 #[component]
 pub fn ActionButton(
-    #[prop(optional, default = String::from("button"))] button_type: String,
-    #[prop(optional, default = RwSignal::new(false))] disabled: RwSignal<bool>,
+    #[prop(default = String::from("button"))] button_type: String,
+    #[prop(optional, into)] disabled: Signal<bool>,
     children: Children,
 ) -> impl IntoView {
     view! {

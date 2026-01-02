@@ -1,4 +1,5 @@
 use crate::common::ValueType;
+use crate::components::utils::create_unique_id;
 use leptos::prelude::*;
 use std::collections::HashMap;
 
@@ -7,10 +8,13 @@ pub fn Radio(
     #[prop()] checked: Signal<bool>,
     #[prop(into)] on_change: Callback<(), ()>,
     #[prop(into)] value: String,
-    #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
+    #[prop(into)] name: String,
+    #[prop(optional, into)] disabled: Signal<bool>,
 ) -> impl IntoView {
+    let id = create_unique_id(&name, &value);
+
     view! {
-        <label for=value class="flex items-center">
+        <label for=id class="flex items-center">
             <input
                 // Using the "peer" class links this input with the div "peer" at the same level.
                 // By using the "peer-checked" selector this div can toggle states based on this
@@ -18,8 +22,9 @@ pub fn Radio(
                 class="
                 relative peer shrink-0
                 hidden"
-                type="checkbox"
-                id=value.clone()
+                type="radio"
+                id=id.clone()
+                name=name.clone()
                 on:change=move |_| on_change.run(())
                 prop:checked=checked
                 disabled=disabled
@@ -48,7 +53,7 @@ pub fn RadioList(
     #[prop(into)] data_member: String,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop()] items: Vec<String>,
-    #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
+    #[prop(optional, into)] disabled: Signal<bool>,
     #[prop(optional, into)] label: String,
 ) -> impl IntoView {
     view! {
@@ -96,6 +101,7 @@ pub fn RadioList(
                             on_change=on_change
                             // The actual selected values are tracked by this element, not by the checkboxes themselves.
                             value=item.clone()
+                            name=data_member.clone()
                             disabled=disabled
                         />
                     }

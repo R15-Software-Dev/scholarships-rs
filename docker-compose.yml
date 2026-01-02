@@ -1,9 +1,5 @@
-﻿
-services:
-  leptos-watch:
-    image: rust:1.86
+﻿services:
+  scholarships-rs:
+    image: ghcr.io/r15-software-dev/scholarships-runner:latest
     ports:
-      - '3000:3000'
-    volumes:
-      - .:/app
-    command: cargo leptos watch
+      - '3000:8080'

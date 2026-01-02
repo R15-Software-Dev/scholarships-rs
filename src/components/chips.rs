@@ -1,13 +1,14 @@
-use std::collections::HashMap;
-use leptos::prelude::*;
 use crate::common::ValueType;
+use crate::components::utils::create_unique_id;
+use leptos::prelude::*;
+use std::collections::HashMap;
 
 /// # Chip Component
-/// 
+///
 /// This component defines a single chip for use in the `ChipsList` component. It functions almost
 /// identically to the `Checkbox` component. It should only be created from within its parent
 /// `CheckboxList` component.
-/// 
+///
 /// Example usage:
 /// ```
 /// view! {
@@ -22,6 +23,7 @@ use crate::common::ValueType;
 /// ```
 #[component]
 pub fn Chip(
+    #[prop(into)] display_text: String,
     #[prop(into)] value: String,
     #[prop(into)] name: String,
     #[prop(into)] on_change: Callback<(), ()>,
@@ -30,15 +32,12 @@ pub fn Chip(
 ) -> impl IntoView {
     // Generate a unique id - ensure that the value doesn't contain spaces.
     // Without this id, checkbox/radio inputs can interfere with each other.
-    let value_no_spaces = value.clone().chars()
-        .filter(|c| !c.is_whitespace())
-        .collect::<String>();
-    let id = format!("{}-{}", name.clone(), value_no_spaces);
-    
+    let id = create_unique_id(&name, &value);
+
     view! {
         <label for=id>
             <input
-                type="checkbox" 
+                r#type="checkbox"
                 class="relative peer shrink-0 hidden"
                 name=name.clone()
                 id=id.clone()
@@ -54,24 +53,25 @@ pub fn Chip(
                 peer-disabled:peer-checked:border-gray-700
                 peer-disabled:cursor-default
                 transition-all duration-150">
-                <span>{value.clone()}</span>
+                <span>{display_text.clone()}</span>
             </div>
         </label>
     }
 }
 
 /// # Chips List Component
-/// 
+///
 /// This defines a list of `Chip` components. The list of values is created based on the data from the
 /// `data_map` prop, which is found using the given `data_member`.
-/// 
+///
 /// Any values selected from the list are stored within the `data_map` immediately as part of a callback
 /// passed to the `on_change` prop for each individual `Chip` component.
 #[component]
 pub fn ChipsList(
     #[prop(into)] data_member: String,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
-    #[prop()] items: Vec<String>,
+    #[prop(into)] displayed_text: Signal<Vec<String>>,
+    #[prop(into)] values: Signal<Vec<String>>,
     #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
     #[prop(optional, into)] label: String,
 ) -> impl IntoView {
@@ -79,11 +79,11 @@ pub fn ChipsList(
         <div class="m-1.5 mt-0 mb-0">
             <span class="font-bold">{label}</span>
             <div class="flex flex-row flex-wrap gap-2 mt-1">
-                {items
+                {move || { displayed_text.get().into_iter().zip(values.get())
                     .into_iter()
-                    .map(|item| {
+                    .map(|(text, value)| {
                         let checked_signal = Signal::derive({
-                            let item_name = item.clone();
+                            let item_name = value.clone();
                             let data_member = data_member.clone();
                             move || {
                                 data_map.get()
@@ -95,9 +95,9 @@ pub fn ChipsList(
                                     .contains(&ValueType::String(Some(item_name.clone())))
                             }
                         });
-                    
+
                         let on_change = {
-                            let item_name = item.clone();
+                            let item_name = value.clone();
                             let data_member = data_member.clone();
                             move || {
                                 let result = ValueType::String(Some(item_name.clone()));
@@ -127,19 +127,20 @@ pub fn ChipsList(
                                 });
                             }
                         };
-                    
+
                         view! {
                             <Chip
                                 checked=checked_signal
                                 name=data_member.clone()
                                 on_change=on_change
-                                value=item.clone()
+                                value=value.clone()
+                                display_text=text.clone()
                                 disabled=disabled
                             />
                         }
                     })
                     .collect_view()
-                }
+                }}
             </div>
         </div>
     }

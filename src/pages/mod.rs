@@ -1,5 +1,15 @@
 mod about_page;
+mod api;
+mod comparison_test;
 mod home_page;
+mod loaner_page;
+mod provider_portal;
+mod scholarship_info;
+mod test_page;
 mod unauthenticated_page;
+mod utils;
 
-pub use self::{about_page::*, home_page::*, unauthenticated_page::*};
+pub use self::{
+    about_page::*, comparison_test::*, home_page::*, loaner_page::*, provider_portal::*,
+    scholarship_info::*, test_page::*, unauthenticated_page::*,
+};

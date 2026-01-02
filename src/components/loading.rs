@@ -4,7 +4,7 @@ use leptos::prelude::*;
 pub fn Loading() -> impl IntoView {
     view! {
         <div>
-            <img src="loading.gif" />
+            <img src="/loading.gif" />
         </div>
     }
 }

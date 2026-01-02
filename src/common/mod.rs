@@ -1,6 +1,12 @@
+mod comparison;
 mod expandable_info;
+mod form_params;
 mod form_schema;
+mod submit_status;
 mod user;
-pub mod value_type;
+mod value_type;
 
-pub use self::{expandable_info::*, form_schema::*, user::*, value_type::*};
+pub use self::{
+    comparison::*, expandable_info::*, form_params::*, form_schema::*, submit_status::*, user::*,
+    value_type::*,
+};

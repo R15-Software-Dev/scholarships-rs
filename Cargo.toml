@@ -21,17 +21,11 @@ serde = "1.0.219"
 serde_dynamo = { version = "4.2.14", features = ["aws-sdk-dynamodb+1"], optional = true }
 uuid = { version = "1.17.0", features = ["serde", "v4", "js"] }
 leptos_oidc = "0.9.0"
-url = "2.5.4"
+base64 = "0.22.1"
+chrono = "0.4.42"
 
 macros = { path = "./macros" }
 traits = { path = "./traits" }
-chrono = { version = "0.4.42", features = ["serde"] }
-reactive_stores = "0.2.5"
-web-sys = { version = "0.3.77", features = ["DataTransfer", "FileList", "File", "BlobPropertyBag"] }
-console = "0.16.1"
-base64 = "0.22.1"
-wasm-bindgen-futures = "0.4.50"
-js-sys = "0.3.77"
 
 [features]
 hydrate = [
