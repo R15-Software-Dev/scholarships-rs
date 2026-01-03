@@ -2,16 +2,17 @@ use crate::common::ValueType;
 use crate::components::utils::create_unique_id;
 use leptos::prelude::*;
 use std::collections::HashMap;
+use crate::components::{use_validation_context, InputState, ValidationState};
 
 #[component]
 pub fn Radio(
     #[prop()] checked: Signal<bool>,
     #[prop(into)] on_change: Callback<(), ()>,
-    #[prop(into)] value: String,
-    #[prop(into)] name: String,
+    #[prop(into)] value: Signal<String>,
+    #[prop(into)] name: Signal<String>,
     #[prop(optional, into)] disabled: Signal<bool>,
 ) -> impl IntoView {
-    let id = create_unique_id(&name, &value);
+    let id = create_unique_id(&name.get_untracked(), &value.get_untracked());
 
     view! {
         <label for=id class="flex items-center">
@@ -24,7 +25,7 @@ pub fn Radio(
                 hidden"
                 type="radio"
                 id=id.clone()
-                name=name.clone()
+                name=name
                 on:change=move |_| on_change.run(())
                 prop:checked=checked
                 disabled=disabled
@@ -47,66 +48,111 @@ pub fn Radio(
     }
 }
 
+fn validate(value: String, required: bool) -> ValidationState {
+    if required && value.is_empty() {
+        ValidationState::Invalid("This field is required".into())
+    } else {
+        ValidationState::Valid
+    }
+}
+
 #[component]
 pub fn RadioList(
-    // #[prop(default = RwSignal::new(String::new()))] selected: RwSignal<ValueType>,
-    #[prop(into)] data_member: String,
+    #[prop(into)] data_member: Signal<String>,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop()] items: Vec<String>,
     #[prop(optional, into)] disabled: Signal<bool>,
     #[prop(optional, into)] label: String,
+    #[prop(optional, into)] required: Signal<bool>,
 ) -> impl IntoView {
+    //#region Value Logic
+
+    // Store a single signal that is the currently selected value. We can only have one selected
+    // value, so there's no list needed. The default selected value is whatever the map has selected
+    // already, or nothing.
+    let default_value = match data_map.get_untracked().get(&data_member.get_untracked()) {
+        Some(ValueType::String(Some(value))) => value.clone(),
+        _ => String::new()
+    };
+
+    let selected_value = RwSignal::new(default_value);
+
+    // When the selected value changes, update the data map at the correct location
+    Effect::new(move || {
+        data_map.update(|map| {
+            map.insert(data_member.get(), ValueType::String(Some(selected_value.get())));
+        });
+    });
+
+    //#endregion
+    //#region Validation Logic
+
+    let validation_context = use_validation_context()
+        .expect("Could not find FormValidationRegistry context");
+
+    let error = RwSignal::new(validate(selected_value.get_untracked(), required.get_untracked()));
+    let dirty = RwSignal::new(false);
+    let show_errors = Signal::derive(move || {
+        dirty.get() && matches!(error.get(), ValidationState::Invalid(_))
+    });
+
+    let input_state = InputState::new(
+        data_member.get_untracked(),
+        error.clone(),
+        dirty.clone()
+    );
+
+    validation_context.validators.update(|list| list.push(RwSignal::new(input_state)));
+
+    //#endregion
+    //#region Render Logic
+
     view! {
-        <div class="m-1.5 mt-0 mb-0">
-            <span class="font-bold">{label}</span>
-            {items
-                .into_iter()
-                .map(|item| {
-                    let checked_signal = Signal::derive({
-                        let item_name = item.clone();
-                        let data_member = data_member.clone();
-                        move || {
-                            // Check if the value is contained in the data map's fields
-                            let map = data_map.get();
-                            let value = map.get(&data_member);
-                            let mut result = false;
-                            if let Some(val) = value {
-                                if val.is_string() {
-                                    result = val.as_string().unwrap().unwrap() == item_name
-                                }
-                            }
+        <div class="flex flex-col flex-1">
+            <div class="m-1.5 mt-0 mb-0">
+                <span class="font-bold">{label}</span>
+                {items
+                    .into_iter()
+                    .map(|item| {
+                        let item = RwSignal::new(item);
 
-                            result
+                        let checked_signal = Signal::derive(move || {
+                            selected_value.get() == item.get()
+                        });
+
+                        let on_change = move || {
+                            // on_change only runs when the radio button is checked, not when unchecked.
+                            // Change the selected value to the new one.
+                            selected_value.set(item.get());
+                            error.set(validate(selected_value.get_untracked(), required.get_untracked()));
+                            dirty.set(true);
+                        };
+
+                        view! {
+                            <Radio
+                                checked=checked_signal
+                                on_change=on_change
+                                // The actual selected values are tracked by this element, not by the checkboxes themselves.
+                                value=item
+                                name=data_member
+                                disabled=disabled
+                            />
                         }
-                    });
-
-                    let on_change = {
-                        let item_name = item.clone();
-                        let data_member = data_member.clone();
-                        move || {
-                            // Update the hash map
-                            data_map.update(|map| {
-                                if let Some(val) = map.get_mut(&data_member) {
-                                    *val = ValueType::String(Some(item_name.clone()));
-                                } else {
-                                    map.insert(data_member.clone(), ValueType::String(Some(item_name.clone())));
-                                }
-                            });
+                    })
+                    .collect::<Vec<_>>()}
+            </div>
+            <Show when=move || show_errors.get()>
+                <div class="text-red-600 text-sm mr-1.5 ml-1.5">
+                    {move || {
+                        match error.get() {
+                            ValidationState::Invalid(msg) => msg,
+                            _ => "There is no error - should not see this message.".to_string()
                         }
-                    };
-
-                    view! {
-                        <Radio
-                            checked=checked_signal
-                            on_change=on_change
-                            // The actual selected values are tracked by this element, not by the checkboxes themselves.
-                            value=item.clone()
-                            name=data_member.clone()
-                            disabled=disabled
-                        />
-                    }
-                })
-                .collect::<Vec<_>>()}
+                    }}
+                </div>
+            </Show>
         </div>
     }
+
+    //#endregion
 }

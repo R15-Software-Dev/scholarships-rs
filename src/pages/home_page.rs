@@ -296,7 +296,8 @@ pub fn HomePage() -> impl IntoView {
                                                             .collect()
                                                         disabled=elements_disabled
                                                         data_member="town"
-                                                        data_map = form_data
+                                                        data_map=form_data
+                                                        required=true
                                                     />
                                                 </Row>
                                                 <Row>
