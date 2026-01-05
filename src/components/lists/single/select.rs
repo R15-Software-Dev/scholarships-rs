@@ -6,8 +6,8 @@ use std::collections::HashMap;
 use leptos::logging::{log, warn};
 use crate::components::{use_validation_context, InputState, ValidationState};
 
-fn validate(required: bool, value: String, default_value: String) -> ValidationState {
-    if required && (value.is_empty() || value == default_value) {
+fn validate(required: bool, value: String) -> ValidationState {
+    if required && (value.is_empty()) {
         ValidationState::Invalid("This input is required.".to_string())
     } else {
         ValidationState::Valid
@@ -21,7 +21,6 @@ fn validate(required: bool, value: String, default_value: String) -> ValidationS
 #[component]
 pub fn Select(
     #[prop()] value_list: Vec<String>,
-    #[prop(optional, into)] default_value: Signal<String>,
     #[prop(optional)] value: RwSignal<String>,
     #[prop(into)] data_member: Signal<String>,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
@@ -31,20 +30,11 @@ pub fn Select(
 ) -> impl IntoView {
     //#region Value Logic
 
-    let default_raw_value = if default_value.get_untracked().is_empty() {
-        data_map.get_untracked()
-            .get(&data_member.get_untracked())
-            .cloned()
-            .unwrap_or_default()
-            .as_string().unwrap_or_default().unwrap_or_default()
-    } else {
-        let default = default_value.get_untracked();
-        if !value_list.contains(&default) {
-            warn!("The default value {} is not in the list of options. This may cause validation issues.", default);
-        }
-
-        default
-    };
+    let default_raw_value = data_map.get_untracked()
+        .get(&data_member.get_untracked())
+        .cloned()
+        .unwrap_or_default()
+        .as_string().unwrap_or_default().unwrap_or_default();
 
     let raw_value = RwSignal::new(default_raw_value);
 
@@ -58,7 +48,7 @@ pub fn Select(
     //#region Validation Logic
 
     let error = RwSignal::new(
-        validate(required.get_untracked(), raw_value.get_untracked(), default_value.get_untracked())
+        validate(required.get_untracked(), raw_value.get_untracked())
     );
     warn!("Current error state: {:?}", error.get_untracked());
     let dirty = RwSignal::new(false);
@@ -78,7 +68,7 @@ pub fn Select(
         let value = e.target().value();
         log!("Found value {}", value);
         raw_value.set(value.clone());
-        error.set(validate(required.get(), raw_value.get(), default_value.get()));
+        error.set(validate(required.get(), raw_value.get()));
         dirty.set(true);
         data_map.update(|map| {
             if let Some(val) = map.get_mut(&data_member.get()) {
@@ -102,8 +92,15 @@ pub fn Select(
                             border-red-700 bg-transparent
                             disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
                         on:change:target=on_change
-                        disabled = disabled >
+                        disabled=disabled
+                    >
                         // This closure handles the display of the options.
+                        <option
+                            value=""
+                            disabled
+                            hidden
+                            selected=raw_value.get().is_empty()
+                        >"Select one..."</option>
                         {move || {
                             value_list.iter().map(
                                 move |value| {

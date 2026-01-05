@@ -326,7 +326,6 @@ pub fn HomePage() -> impl IntoView {
                                                             .into_iter()
                                                             .map(|s| s.to_owned())
                                                             .collect()
-                                                        default_value="Male"
                                                         disabled=elements_disabled
                                                         data_member="gender"
                                                         data_map=form_data
