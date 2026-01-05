@@ -2,7 +2,8 @@ use crate::common::ValueType;
 use crate::components::utils::create_unique_id;
 use leptos::prelude::*;
 use std::collections::HashMap;
-use crate::components::{use_validation_context, FormValidationRegistry, InputState, ValidationState};
+use crate::components::ValidationState;
+use crate::components::lists::use_selectable_list;
 
 /// # Checkbox Component
 /// This component should only be used from within a [`CheckboxList`] component.
@@ -80,17 +81,6 @@ pub fn Checkbox(
     }
 }
 
-fn value_type_to_vec(value_type: &ValueType) -> Vec<String> {
-    let ValueType::List(Some(list)) = value_type else {
-        return Vec::new();
-    };
-
-    list.iter().map(|val| {
-        val.as_string()
-            .unwrap_or_default()
-            .unwrap_or_default()
-    }).collect::<Vec<String>>()
-}
 
 
 /// # Checkbox List Component
@@ -128,60 +118,12 @@ pub fn CheckboxList(
     /// A [`Signal`] indicating whether the list is required. Used for validation.
     #[prop(optional, into)] required: Signal<bool>
 ) -> impl IntoView {
-    //#region Central List Logic
-
-    // Get default values from the data map. This will only run once, when the input is created
-    // and mounted to the DOM.
-    let temp_map = data_map.get_untracked();
-    let origin_value_type = temp_map.get(&data_member)
-        .unwrap_or(&ValueType::List(None));
-    let origin_list = value_type_to_vec(origin_value_type);
-
-    // "Raw" selected values - just strings, no ValueTyping
-    let selected_list = RwSignal::new(origin_list);
-
-    Effect::new({
-        let data_member = data_member.clone();
-        move || {
-            // Convert selected strings into ValueTypes
-            let typed_list = selected_list.with(|list|
-                list.iter().cloned().map(|val|
-                    ValueType::String(Some(val))
-                ).collect::<Vec<ValueType>>()
-            );
-
-            // Update the map
-            data_map.update(|map| {
-                map.insert(data_member.clone(), ValueType::List(Some(typed_list)));
-            });
-        }
-    });
-
-    //#endregion
-    //#region Form Validation
-
-    let validation_context = use_validation_context()
-        .expect("FormValidationRegistry was not found");
-
-    let error = Signal::derive(move || {
-        if required.get() && selected_list.get().len() <= 0 {
-            ValidationState::Invalid("This field is required.".to_string())
-        } else {
-            ValidationState::Valid
-        }
-    });
-    let dirty = RwSignal::new(false);
-    let show_errors = Signal::derive(move || dirty.get() && matches!(error.get(), ValidationState::Invalid(_)));
-
-    let validator = RwSignal::new(InputState::new(
+    let controller = use_selectable_list(
         data_member.clone(),
-        error.clone(),
-        dirty.clone()
-    ));
+        data_map.clone(),
+        required.clone()
+    );
 
-    validation_context.validators.update(|list| list.push(validator.clone()));
-
-    //#endregion
     //#region Render Logic
     view! {
         <div class="flex flex-col">
@@ -196,13 +138,13 @@ pub fn CheckboxList(
                         });
 
                         let checked = Signal::derive(move || {
-                            selected_list.get().contains(&item.get())
+                            controller.selected_list.get().contains(&item.get())
                         });
 
                         let on_change = move || {
                             // Update the data list by checking if the value is present in it. If so,
                             // remove it. If not, add it.
-                            selected_list.update(|list| {
+                            controller.selected_list.update(|list| {
                                 let item = item.get();
                                 if list.contains(&item) {
                                     list.retain(|val| *val != item);
@@ -210,7 +152,7 @@ pub fn CheckboxList(
                                     list.push(item);
                                 }
                             });
-                            dirty.set(true);
+                            controller.dirty.set(true);
                         };
 
                         view! {
@@ -226,10 +168,10 @@ pub fn CheckboxList(
                     })
                     .collect_view()}
             </div>
-            <Show when=move || show_errors.get()>
+            <Show when=move || controller.show_errors.get()>
                 <div class="text-red-600 text-sm mr-1.5 ml-1.5">
                     {move || {
-                        match error.get() {
+                        match controller.error.get() {
                             ValidationState::Invalid(msg) => msg,
                             _ => "There is no error - should not see this message.".to_string()
                         }

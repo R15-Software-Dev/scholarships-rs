@@ -2,6 +2,8 @@ use crate::common::ValueType;
 use crate::components::utils::create_unique_id;
 use leptos::prelude::*;
 use std::collections::HashMap;
+use crate::components::ValidationState;
+use crate::components::lists::use_selectable_list;
 
 /// # Chip Component
 ///
@@ -23,16 +25,16 @@ use std::collections::HashMap;
 /// ```
 #[component]
 pub fn Chip(
-    #[prop(into)] display_text: String,
-    #[prop(into)] value: String,
+    #[prop(into)] display_text: Signal<String>,
+    #[prop(into)] value: Signal<String>,
     #[prop(into)] name: String,
     #[prop(into)] on_change: Callback<(), ()>,
     #[prop()] checked: Signal<bool>,
-    #[prop(optional)] disabled: RwSignal<bool>,
+    #[prop(optional, into)] disabled: Signal<bool>,
 ) -> impl IntoView {
     // Generate a unique id - ensure that the value doesn't contain spaces.
     // Without this id, checkbox/radio inputs can interfere with each other.
-    let id = create_unique_id(&name, &value);
+    let id = create_unique_id(&name, &value.get_untracked());
 
     view! {
         <label for=id>
@@ -72,76 +74,66 @@ pub fn ChipsList(
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop(into)] displayed_text: Signal<Vec<String>>,
     #[prop(into)] values: Signal<Vec<String>>,
-    #[prop(default = RwSignal::new(false))] disabled: RwSignal<bool>,
+    #[prop(optional, into)] disabled: Signal<bool>,
     #[prop(optional, into)] label: String,
+    #[prop(optional, into)] required: Signal<bool>
 ) -> impl IntoView {
+    let controller = use_selectable_list(
+        data_member.clone(),
+        data_map.clone(),
+        required.clone()
+    );
+
     view! {
-        <div class="m-1.5 mt-0 mb-0">
-            <span class="font-bold">{label}</span>
-            <div class="flex flex-row flex-wrap gap-2 mt-1">
-                {move || { displayed_text.get().into_iter().zip(values.get())
+        <div class="flex flex-col">
+            <div class="m-1.5 mt-0 mb-0">
+                <span class="font-bold">{label}</span>
+                {displayed_text.get().into_iter().zip(values.get())
                     .into_iter()
                     .map(|(text, value)| {
-                        let checked_signal = Signal::derive({
-                            let item_name = value.clone();
-                            let data_member = data_member.clone();
-                            move || {
-                                data_map.get()
-                                    .get(&data_member)
-                                    .unwrap_or(&ValueType::List(None))
-                                    .as_list()
-                                    .unwrap_or(Some(vec!()))
-                                    .unwrap_or(vec!())
-                                    .contains(&ValueType::String(Some(item_name.clone())))
-                            }
+                        let value = RwSignal::new(value);
+
+                        let checked = Signal::derive(move || {
+                            controller.selected_list.get().contains(&value.get())
                         });
 
-                        let on_change = {
-                            let item_name = value.clone();
-                            let data_member = data_member.clone();
-                            move || {
-                                let result = ValueType::String(Some(item_name.clone()));
-                                data_map.update(|map| {
-                                    // Attempt to get the value type from the hash map.
-                                    match map.get_mut(&data_member) {
-                                        Some(value_type) => {
-                                            // Attempt to get the value as a list.
-                                            match value_type.as_list().unwrap_or(None) {
-                                                Some(mut list) => {
-                                                    // Attempt to find the selected value in the selected list.
-                                                    // If it's present, remove it, or vice versa.
-                                                    match list.iter().position(|val| *val == result) {
-                                                        Some(index) => { list.remove(index); },
-                                                        None => { list.push(result); }
-                                                    };
-                                                    // Update the existing value_type entry in the hash map.
-                                                    *value_type = ValueType::List(Some(list));
-                                                },
-                                                // Insert a new value_type entry.
-                                                None => { *value_type = ValueType::List(Some(vec![result])); }
-                                            };
-                                        },
-                                        // Insert a new value_type entry.
-                                        None => { map.insert(data_member.clone(), ValueType::List(Some(vec![result]))); }
-                                    };
-                                });
-                            }
+                        let on_change = move || {
+                            // Update the data list by checking if the value is present in it. If so,
+                            // remove it. If not, add it.
+                            controller.selected_list.update(|list| {
+                                let value = value.get();
+                                if list.contains(&value) {
+                                    list.retain(|val| *val != value);
+                                } else {
+                                    list.push(value.clone());
+                                }
+                            });
+                            controller.dirty.set(true);
                         };
 
                         view! {
                             <Chip
-                                checked=checked_signal
-                                name=data_member.clone()
+                                checked=checked
                                 on_change=on_change
-                                value=value.clone()
-                                display_text=text.clone()
+                                value=value
+                                display_text=text
+                                name=data_member.clone()
                                 disabled=disabled
                             />
                         }
                     })
-                    .collect_view()
-                }}
+                    .collect_view()}
             </div>
+            <Show when=move || controller.show_errors.get()>
+                <div class="text-red-600 text-sm mr-1.5 ml-1.5">
+                    {move || {
+                        match controller.error.get() {
+                            ValidationState::Invalid(msg) => msg,
+                            _ => "There is no error - should not see this message.".to_string()
+                        }
+                    }}
+                </div>
+            </Show>
         </div>
     }
 }

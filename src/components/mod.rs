@@ -12,6 +12,7 @@ mod select;
 mod text_field;
 mod utils;
 mod validated_form;
+mod lists;
 
 pub use self::{
     action_button::*, banner::*, checkbox::*, chips::*, dashboard_button::*, loading::*,
