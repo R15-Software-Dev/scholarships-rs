@@ -270,6 +270,7 @@ pub fn LoanerBorrowForm() -> impl IntoView {
                     disabled=elements_disabled
                     data_member="first_name"
                     data_map=data
+                    required=true
                 />
                 <OutlinedTextField
                     label="Last Name:"
@@ -277,6 +278,7 @@ pub fn LoanerBorrowForm() -> impl IntoView {
                     disabled=elements_disabled
                     data_member="last_name"
                     data_map=data
+                    required=true
                 />
             </Row>
             <Row>
@@ -287,6 +289,7 @@ pub fn LoanerBorrowForm() -> impl IntoView {
                     data_member="email"
                     data_map=data
                     input_type=TextFieldType::Email
+                    required=true
                 />
             </Row>
             <Row>
@@ -302,6 +305,7 @@ pub fn LoanerBorrowForm() -> impl IntoView {
                     disabled=elements_disabled
                     data_member="collateral"
                     data_map=data
+                    required=true
                 />
             </Row>
             <Row>
@@ -315,6 +319,7 @@ pub fn LoanerBorrowForm() -> impl IntoView {
                     disabled=elements_disabled
                     data_member="loan"
                     data_map=data
+                    required=true
                 />
             </Row>
         </ValidatedForm>
