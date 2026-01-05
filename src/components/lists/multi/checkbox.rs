@@ -2,8 +2,8 @@ use crate::common::ValueType;
 use crate::components::utils::create_unique_id;
 use leptos::prelude::*;
 use std::collections::HashMap;
+use super::utils::use_selectable_list;
 use crate::components::ValidationState;
-use crate::components::lists::use_selectable_list;
 
 /// # Checkbox Component
 /// This component should only be used from within a [`CheckboxList`] component.
@@ -80,8 +80,6 @@ pub fn Checkbox(
         </label>
     }
 }
-
-
 
 /// # Checkbox List Component
 /// This component creates a list of checkboxes, each with a specific value. The values are passed

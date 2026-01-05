@@ -3,7 +3,7 @@ use crate::components::utils::create_unique_id;
 use leptos::prelude::*;
 use std::collections::HashMap;
 use crate::components::ValidationState;
-use crate::components::lists::use_selectable_list;
+use super::utils::use_selectable_list;
 
 /// # Chip Component
 ///
