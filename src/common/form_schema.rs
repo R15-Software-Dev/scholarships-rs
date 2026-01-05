@@ -1,8 +1,6 @@
 use crate::common::ValueType;
 use crate::components::{CheckboxList, OutlinedTextField, RadioList, Row, Select, TextFieldType};
-use leptos::either::EitherOf5;
-use leptos::prelude::RwSignal;
-use leptos::{IntoView, view};
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -32,7 +30,7 @@ impl InputType {
         view! {
             {match self {
                 InputType::Text(member, label, placeholder, required) =>
-                    EitherOf5::A(view! {
+                    view! {
                         <Row>
                             <OutlinedTextField
                                 label = label.clone()
@@ -42,9 +40,9 @@ impl InputType {
                                 required = required
                             />
                         </Row>
-                    }),
+                    }.into_any(),
                 InputType::Number(member, label, placeholder, required) =>
-                    EitherOf5::B(view! {
+                    view! {
                         <OutlinedTextField
                             label = label.clone()
                             placeholder = placeholder.clone()
@@ -53,9 +51,9 @@ impl InputType {
                             input_type = TextFieldType::Number
                             required = required
                         />
-                    }),
+                    }.into_any(),
                 InputType::Checkbox(member, label, options, required) =>
-                    EitherOf5::C(view! {
+                    view! {
                         <CheckboxList
                             label = label.clone()
                             items = options.clone()
@@ -63,9 +61,9 @@ impl InputType {
                             data_map = data_map
                             required = required
                         />
-                    }),
+                    }.into_any(),
                 InputType::Radio(member, label, options, required) =>
-                    EitherOf5::D(view! {
+                    view! {
                         <RadioList
                             label = label.clone()
                             data_member = member.clone()
@@ -73,9 +71,9 @@ impl InputType {
                             items = options.clone()
                             required = required
                         />
-                    }),
+                    }.into_any(),
                 InputType::Select(member, label, options, required) =>
-                    EitherOf5::E(view! {
+                    view! {
                         <Select
                             label = label.clone()
                             value_list = options.clone()
@@ -83,7 +81,7 @@ impl InputType {
                             data_map = data_map
                             required = required
                         />
-                    })
+                    }.into_any()
             }}
         }
     }

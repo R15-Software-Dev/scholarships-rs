@@ -355,5 +355,5 @@ pub fn HomePage() -> impl IntoView {
                 </Suspense>
             </Authenticated>
         </AuthLoaded>
-    }
+    }.into_any()
 }

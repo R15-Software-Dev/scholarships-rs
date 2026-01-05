@@ -567,5 +567,5 @@ fn ScholarshipForm(
                 </Suspense>
             </Show>
         </Panel>
-    }
+    }.into_any()
 }
