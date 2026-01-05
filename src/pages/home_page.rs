@@ -240,6 +240,7 @@ pub fn HomePage() -> impl IntoView {
                                                         disabled=elements_disabled
                                                         data_member="first_name"
                                                         data_map=form_data
+                                                        required=true
                                                     />
                                                     <OutlinedTextField
                                                         label="Last Name:"
@@ -247,6 +248,7 @@ pub fn HomePage() -> impl IntoView {
                                                         disabled=elements_disabled
                                                         data_member="last_name"
                                                         data_map=form_data
+                                                        required=true
                                                     />
                                                 </Row>
                                                 <Row>
@@ -257,6 +259,7 @@ pub fn HomePage() -> impl IntoView {
                                                         data_member="contact_email"
                                                         data_map=form_data
                                                         input_type=TextFieldType::Email
+                                                        required=true
                                                     />
                                                 </Row>
                                                 <Row>
@@ -266,6 +269,7 @@ pub fn HomePage() -> impl IntoView {
                                                         disabled=elements_disabled
                                                         data_member="phone_number"
                                                         data_map=form_data
+                                                        required=true
                                                     />
                                                 </Row>
                                                 <Row>
@@ -275,6 +279,7 @@ pub fn HomePage() -> impl IntoView {
                                                         disabled=elements_disabled
                                                         data_member="address"
                                                         data_map=form_data
+                                                        required=true
                                                     />
                                                 </Row>
                                                 <Row>
@@ -285,6 +290,7 @@ pub fn HomePage() -> impl IntoView {
                                                         data_member="math_sat"
                                                         data_map=form_data
                                                         input_type=TextFieldType::Number
+                                                        required=true
                                                     />
                                                 </Row>
                                                 <Row>
@@ -332,8 +338,8 @@ pub fn HomePage() -> impl IntoView {
                                                         data_map=form_data
                                                         data_member="community_involvement"
                                                         schema=vec![
-                                                            input!(Text, "service_name", "Activity Name:", "Some service activity..."),
-                                                            input!(Number, "service_hours", "Total Service Hours", "20")
+                                                            input!(Text, "service_name", "Activity Name:", true, "Some service activity..."),
+                                                            input!(Number, "service_hours", "Total Service Hours", true, "20")
                                                         ]
                                                     />
                                                 </Row>

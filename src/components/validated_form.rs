@@ -115,12 +115,16 @@ pub fn ValidatedForm(
             .with(|list| {
                 list.iter()
                     // TODO all() short circuits on the first false
-                    .all(|v| {
-                        // Not sure how this will work reactively.
-                        let result = matches!(v.get().error().get(), ValidationState::Valid);
+                    .fold(true, |acc, v| {
                         v.update(|validator| validator.form_requested_validation.set(true));
-                        result
+                        matches!(v.get().error().get(), ValidationState::Valid) && acc
                     })
+                    // .all(|v| {
+                    //     // Not sure how this will work reactively.
+                    //     let result = matches!(v.get().error().get(), ValidationState::Valid);
+                    //     v.update(|validator| validator.form_requested_validation.set(true));
+                    //     result
+                    // })
             })
     });
 
