@@ -10,7 +10,7 @@ use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextFi
 use super::UnauthenticatedPage;
 use crate::common::ComparisonData;
 use crate::pages::utils::get_user_claims;
-use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, CreateTestComparisons, RegisterScholarship, DeleteProviderScholarship};
+use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship};
 
 
 /// # Scholarship Info Page
@@ -31,7 +31,7 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
             .and_then(|params| params.id.clone())
     });
     
-    let create_test_comps = ServerAction::<CreateTestComparisons>::new();
+    // let create_test_comps = ServerAction::<CreateTestComparisons>::new();
     
     let on_delete = move || {
         let navigate = use_navigate();
@@ -279,7 +279,7 @@ fn ScholarshipListEntry(
 ) -> impl IntoView {
     let navigate = use_navigate();
     let user_claims = get_user_claims();
-    let user_id = Memo::new(move |_| {
+    let _user_id = Memo::new(move |_| {
         user_claims.get()
             .map(|info| info.claims.subject.clone())
     });
@@ -350,13 +350,6 @@ fn ScholarshipForm(
     /// submission fails, this function is not run.
     #[prop(into)] on_submit: Callback<()>
 ) -> impl IntoView {
-    let submit_status = RwSignal::new(SubmitStatus::Idle);
-    let elements_disabled = Signal::derive(move || {
-        match submit_status.get() {
-            SubmitStatus::Sending => true,
-            _ => false
-        }
-    });
     // let result_msg = Signal::derive(move || {
     //     match submit_status.get() {
     //         SubmitStatus::Idle => "".into(),
@@ -367,7 +360,12 @@ fn ScholarshipForm(
     // });
 
     let submit_action = ServerAction::<CreateScholarshipInfo>::new();
-    
+
+    let submit_status = RwSignal::new(SubmitStatus::Idle);
+    let elements_disabled = Signal::derive(move || {
+        matches!(submit_action.pending().get(), true)
+    });
+
     Effect::new(move || {
         if submit_action.pending().get() {
             submit_status.set(SubmitStatus::Sending);
@@ -380,7 +378,7 @@ fn ScholarshipForm(
                     submit_status.set(SubmitStatus::Success);
                     on_submit.run(());
                 },
-                Err(err) => submit_status.set(SubmitStatus::Error(err.to_string()))
+                Err(_err) => submit_status.set(SubmitStatus::Error(()))
             }
         }
     });
@@ -455,7 +453,7 @@ fn ScholarshipForm(
                             scholarship_info.get()
                                 .map(|res_scholarship| {
                                     match res_scholarship {
-                                        Ok(scholarship) => {
+                                        Ok(_) => {
                                             Either::Left(view! {
                                                 <Row>
                                                     <h1 class="text-3xl font-bold">

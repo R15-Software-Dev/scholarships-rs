@@ -4,7 +4,10 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
 
-use crate::common::{ExpandableInfo, ValueType};
+#[cfg(feature = "ssr")]
+use crate::common::ValueType;
+
+use crate::common::ExpandableInfo;
 use crate::components::{ActionButton, Banner, DashboardButton, OutlinedTextField, Panel, Row, Select, TextFieldType, ValidatedForm};
 use chrono::{FixedOffset, TimeZone};
 use leptos::Params;
@@ -16,7 +19,6 @@ use leptos_router::hooks::{use_navigate, use_params};
 use leptos_router::params::Params;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use traits::{AsReactive, ReactiveCapture};
 
 #[derive(Params, PartialEq)]
 struct LoanerParams {
@@ -243,7 +245,6 @@ pub fn LoanerPage() -> impl IntoView {
 pub fn LoanerBorrowForm() -> impl IntoView {
     // Register server actions.
     let create_entry_action = ServerAction::<CreateBorrowEntry>::new();
-    let navigate = use_navigate();
 
     let data = RwSignal::new(HashMap::new());
     let elements_disabled = Signal::derive(move || create_entry_action.pending().get());

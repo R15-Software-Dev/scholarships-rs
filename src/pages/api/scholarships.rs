@@ -3,15 +3,19 @@ use aws_sdk_dynamodb::{
     types::AttributeValue,
     error::ProvideErrorMetadata,
 };
-
+#[cfg(feature = "ssr")]
 use leptos::leptos_dom::log;
-use leptos::prelude::ServerFnError;
-use leptos::server;
+#[cfg(feature = "ssr")]
 use uuid::Uuid;
-use crate::common::{ExpandableInfo, ValueType};
-
 #[cfg(feature = "ssr")]
 use crate::pages::utils::server_utils::create_dynamo_client;
+#[cfg(feature = "ssr")]
+use crate::common::ValueType;
+
+use crate::common::ExpandableInfo;
+
+use leptos::prelude::ServerFnError;
+use leptos::server;
 
 #[server(GetScholarshipInfo, endpoint = "/scholarship/info/get")]
 pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFnError> {

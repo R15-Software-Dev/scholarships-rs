@@ -73,9 +73,6 @@ pub fn MultiEntry(
     /// component's `data_member` input.
     #[prop()]
     data_map: RwSignal<HashMap<String, ValueType>>,
-    /// Currently unused.
-    #[prop(optional, into)]
-    name_member: String,
     /// The type and order of the inputs for each `Entry` component within this `MultiEntry` component.
     #[prop(optional)]
     schema: Vec<InputType>,
@@ -132,7 +129,6 @@ pub fn MultiEntry(
                         view! {
                             <Entry
                                 data_map = map_signal
-                                name_member = name_member.clone()
                                 schema = schema.clone()
                             />
                         }
@@ -186,14 +182,6 @@ fn Entry(
     /// data members those inputs modify.
     #[prop()]
     schema: Vec<InputType>,
-    /// The display name member of this entry. Determines where the component should search for the
-    /// name of the entry within the `data_map`.
-    #[prop(into)]
-    name_member: String,
-    /// The info member of this entry. Determines where the component should search for the extra
-    /// information of this entry within the `data_map`.
-    #[prop(optional, into)]
-    info_member: String,
 ) -> impl IntoView {
     view! {
         <div class="flex flex-col flex-1 p-2 rounded-sm transition-shadow shadow-sm hover:shadow-lg/30">

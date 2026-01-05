@@ -8,12 +8,12 @@ use crate::common::{
     ComparisonData, ComparisonType, MapListComparison, NumberComparison, NumberListComparison,
     TextComparison, TextListComparison, ValueType,
 };
-use leptos::leptos_dom::log;
 use leptos::prelude::ServerFnError;
 use leptos::server;
 
 /// Helper function to create all sports comparisons. Only used to create initial
 /// comparison data, and should be removed upon completion of a comparison editor page.
+#[allow(unused)]
 fn create_sports_comparisons() -> Vec<ComparisonData> {
     vec![
         ComparisonData::new(
@@ -184,12 +184,8 @@ fn create_sports_comparisons() -> Vec<ComparisonData> {
     ]
 }
 
-#[server(CreateTestComparisons, endpoint = "/comparisons/create-test")]
-pub async fn create_test_comparisons() -> Result<(), ServerFnError> {
-    let client = create_dynamo_client().await;
-
-    log!("Creating test comparisons");
-
+#[allow(unused)]
+fn make_comp_list() -> Vec<ComparisonData> {
     let test_comp = ComparisonData::new(
         "math_sat_comp",
         "math_sat",
@@ -304,6 +300,19 @@ pub async fn create_test_comparisons() -> Result<(), ServerFnError> {
     comp_list.append(&mut sports_comps);
     comp_list.append(&mut major_comps);
 
+    comp_list
+}
+
+#[server(CreateTestComparisons, endpoint = "/comparisons/create-test")]
+pub async fn create_test_comparisons() -> Result<(), ServerFnError> {
+    use leptos::logging::log;
+
+    let client = create_dynamo_client().await;
+
+    log!("Creating test comparisons");
+
+    let comp_list = make_comp_list();
+
     for comparison in comp_list {
         if let Err(err) = client
             .put_item()
@@ -322,6 +331,8 @@ pub async fn create_test_comparisons() -> Result<(), ServerFnError> {
 
 #[server]
 pub async fn get_comparison_info() -> Result<Vec<ComparisonData>, ServerFnError> {
+    use leptos::logging::log;
+
     let client = create_dynamo_client().await;
 
     log!("Getting all comparisons from the database");

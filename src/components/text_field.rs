@@ -2,9 +2,8 @@ use crate::common::ValueType;
 use leptos::prelude::*;
 use std::collections::HashMap;
 use leptos::html::Input;
-use leptos::logging::log;
 use crate::components::{use_validation_context, InputState};
-use crate::components::validated_form::{FormValidationRegistry, ValidationState};
+use crate::components::validated_form::ValidationState;
 
 /// Determines the available types of text fields.
 #[derive(Default, Debug, Clone)]
@@ -64,7 +63,6 @@ pub fn OutlinedTextField(
     #[prop(optional, into)] label: String,
     #[prop(optional, into)] required: Signal<bool>
 ) -> impl IntoView {
-    let valid = RwSignal::new(true);
     let input_ref = NodeRef::<Input>::new();
 
     // Register this input's validation signal.

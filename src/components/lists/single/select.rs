@@ -21,7 +21,6 @@ fn validate(required: bool, value: String) -> ValidationState {
 #[component]
 pub fn Select(
     #[prop()] value_list: Vec<String>,
-    #[prop(optional)] value: RwSignal<String>,
     #[prop(into)] data_member: Signal<String>,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop(optional, into)] label: String,

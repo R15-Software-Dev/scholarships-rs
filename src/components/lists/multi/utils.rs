@@ -7,7 +7,6 @@ pub struct ListController {
     pub error: Signal<ValidationState>,
     pub dirty: RwSignal<bool>,
     pub show_errors: Signal<bool>,
-    pub validator: RwSignal<InputState>,
     pub selected_list: RwSignal<Vec<String>>,
 }
 
@@ -87,7 +86,6 @@ pub fn use_selectable_list(
         error,
         dirty,
         show_errors,
-        validator,
         selected_list,
     }
 }

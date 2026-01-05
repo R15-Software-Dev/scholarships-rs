@@ -217,7 +217,7 @@ pub fn HomePage() -> impl IntoView {
                     {move || {
                         server_resource
                             .get()
-                            .map(|submission| {
+                            .map(|_| {
                                 view! {
                                     <Row>
                                         <div class="flex flex-col flex-1" />

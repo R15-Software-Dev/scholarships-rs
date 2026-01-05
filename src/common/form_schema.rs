@@ -87,14 +87,6 @@ impl InputType {
             }}
         }
     }
-
-    pub fn into_view_rows(self, data_map: RwSignal<HashMap<String, ValueType>>) -> impl IntoView {
-        view! {
-            <Row>
-                {self.into_view(data_map)}
-            </Row>
-        }
-    }
 }
 
 /// Shorthand macro for creating `InputType` enums.

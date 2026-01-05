@@ -23,6 +23,7 @@ pub struct ComparisonData {
 }
 
 impl ComparisonData {
+    #[allow(unused)]
     pub fn new(
         id: impl Into<String>,
         member: impl Into<String>,
