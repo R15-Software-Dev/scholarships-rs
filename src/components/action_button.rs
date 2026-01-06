@@ -2,7 +2,7 @@ use leptos::prelude::*;
 
 #[component]
 pub fn ActionButton(
-    #[prop(default = String::from("button"))] button_type: String,
+    #[prop(default = String::from("button"), into)] button_type: String,
     #[prop(optional, into)] disabled: Signal<bool>,
     children: Children,
 ) -> impl IntoView {

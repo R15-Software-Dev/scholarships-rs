@@ -1,7 +1,6 @@
 // Server dependencies
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValue};
-
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
 #[cfg(feature = "ssr")]
@@ -9,22 +8,20 @@ use std::process::{Command, Stdio};
 #[cfg(feature = "ssr")]
 use std::io::Write;
 
-use crate::common::{ExpandableInfo, UserClaims};
+use crate::common::ExpandableInfo;
 use crate::pages::UnauthenticatedPage;
-use crate::components::{
-    ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
-    Select,
-};
+use crate::pages::utils::get_user_claims;
+use crate::components::{ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row, Select, TextFieldType, ValidatedForm};
 use crate::input;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use base64::Engine;
+use leptos::logging::log;
 use leptos::task::spawn_local;
 use leptos::web_sys::HtmlAnchorElement;
 use leptos::wasm_bindgen::JsCast;
-use traits::{AsReactive, ReactiveCapture};
-use crate::pages::utils::get_user_claims;
+use std::collections::HashMap;
 
 /// # Get Student Info
 /// Gets a student's information given their `subject`.
@@ -144,23 +141,73 @@ pub async fn create_example_pdf() -> Result<Vec<u8>, ServerFnError> {
 /// The main home page component. Contains a simple contact form.
 #[component]
 pub fn HomePage() -> impl IntoView {
-    // Creates a reactive value to update the button
+    //#region Server Resources
     let user_claims = get_user_claims();
+    let user_subject = Memo::new(move |_| {
+        user_claims.get()
+            .map(|claim| claim.claims.subject.clone())
+    });
 
-    // Note that the value passed in MUST be equatable.
-    // We get/unwrap the value repeatedly until we get a simple string value, then clone it so that
-    // we don't lose access to it in the future, should we need it again.
-    let server_resource: Resource<ExpandableInfo> = Resource::new(
-        move || user_claims.get().map(|claim| claim.claims.subject.clone()),
-        async |opt_username| match opt_username {
-            Some(subject) => get_submission(subject.clone()).await.unwrap_or_else(|e| {
-                console_log(e.to_string().as_str());
-                ExpandableInfo::new(subject)
-            }),
-            None => ExpandableInfo::new("".to_owned()),
-        },
+    let form_data = RwSignal::new(HashMap::new());
+
+    let server_resource = Resource::new(
+        move || user_subject.get(),
+        async move |subject| get_submission(subject.unwrap_or_default()).await
     );
     let submit_action = ServerAction::<CreateSampleSubmission>::new();
+    
+    Effect::new(move || {
+        match server_resource.get() {
+            Some(Ok(submission)) => {
+                form_data.set(submission.data);
+            }
+            Some(Err(err)) => {
+                log!("Error while getting information: {:?}", err);
+            }
+            _ => {
+                log!("An unknown error occurred.");
+            }
+        }
+    });
+    //#endregion
+    //#region Component State
+    let elements_disabled = Signal::derive(move || {
+        submit_action.pending().get()
+    });
+    //#endregion
+    //#region Event logic
+    let on_submit = move |_| {
+        let mut exp_info = ExpandableInfo::new(user_subject.get().unwrap_or_default());
+        exp_info.data = form_data.get();
+        submit_action.dispatch(CreateSampleSubmission {
+            student_info: exp_info
+        });
+    };
+
+    let pdf_button_click = move |_| {
+        console_log("Attempting to get PDF from server endpoint");
+        spawn_local(async move {
+            let result = create_example_pdf().await;
+            if let Ok(bytes) = result {
+                let base64 = base64::engine::general_purpose::STANDARD
+                    .encode(bytes);
+                let data_url = format!(
+                    "data:application/pdf;base64,{}",
+                    base64,
+                );
+                console_log("Found document, opening in new tab...");
+                let link = document()
+                    .create_element("a")
+                    .unwrap()
+                    .dyn_into::<HtmlAnchorElement>()
+                    .unwrap();
+                link.set_href(&*data_url);
+                link.set_target("_blank");
+                link.click();
+            }
+        });
+    };
+    //#endregion
 
     view! {
         <AuthLoaded fallback=Loading>
@@ -170,195 +217,143 @@ pub fn HomePage() -> impl IntoView {
                     {move || {
                         server_resource
                             .get()
-                            .map(|submission| {
-                                let expandable_react = submission.as_reactive();
-                                let elements_disabled = RwSignal::new(false);
-                                let result_msg = Signal::derive(move || {
-                                    if submit_action.pending().get() {
-                                        elements_disabled.set(true);
-                                        "Sending request...".to_owned()
-                                    } else {
-                                        elements_disabled.set(false);
-                                        if let Some(result) = submit_action.value().get() {
-                                            match result {
-                                                Ok(_) => "Request sent successfully.".to_owned(),
-                                                Err(e) => format!("Failed to send request: {:?}", e),
-                                            }
-                                        } else {
-                                            "".to_owned()
-                                        }
-                                    }
-                                });
+                            .map(|_| {
                                 view! {
                                     <Row>
                                         <div class="flex flex-col flex-1" />
                                         <Panel>
-                                            <Row>
-                                                <h1 class="text-3xl font-bold">
-                                                    "Region 15 Scholarship Application (DEMO)"
-                                                </h1>
-                                            </Row>
-                                            <Row>
-                                                <p class="text-sm">
-                                                    "This is a very simple demonstration of the scholarship application written in Rust."
-                                                </p>
-                                            </Row>
-                                            <Row>
-                                                // Text { data_member, label, placeholder }
-                                                <OutlinedTextField
-                                                    label="First Name:"
-                                                    placeholder="John"
-                                                    disabled=elements_disabled
-                                                    data_member="first_name"
-                                                    data_map=expandable_react.data
-                                                />
-                                                <OutlinedTextField
-                                                    label="Last Name:"
-                                                    placeholder="Smith"
-                                                    disabled=elements_disabled
-                                                    data_member="last_name"
-                                                    data_map=expandable_react.data
-                                                />
-                                            </Row>
-                                            <Row>
-                                                <OutlinedTextField
-                                                    label="Contact Email:"
-                                                    placeholder="student@region15.org"
-                                                    disabled=elements_disabled
-                                                    data_member="contact_email"
-                                                    data_map=expandable_react.data
-                                                />
-                                            </Row>
-                                            <Row>
-                                                <OutlinedTextField
-                                                    label="Phone Number:"
-                                                    placeholder="123-456-7890"
-                                                    disabled=elements_disabled
-                                                    data_member="phone_number"
-                                                    data_map=expandable_react.data
-                                                />
-                                            </Row>
-                                            <Row>
-                                                <OutlinedTextField
-                                                    label="Street Address:"
-                                                    placeholder="123 Fake Street"
-                                                    disabled=elements_disabled
-                                                    data_member="address"
-                                                    data_map=expandable_react.data
-                                                />
-                                            </Row>
-                                            <Row>
-                                                <OutlinedTextField
-                                                    label="Highest Math SAT Score:"
-                                                    placeholder="600"
-                                                    disabled=elements_disabled
-                                                    data_member="math_sat"
-                                                    data_map=expandable_react.data
-                                                    input_type="number"
-                                                />
-                                            </Row>
-                                            <Row>
-                                                // Radio { data_member, label, items }
-                                                <RadioList
-                                                    label="Town:"
-                                                    items=vec!["Southbury", "Middlebury"]
-                                                        .into_iter()
-                                                        .map(|s| s.into())
-                                                        .collect()
-                                                    disabled=elements_disabled
-                                                    data_member="town"
-                                                    data_map = expandable_react.data
-                                                />
-                                            </Row>
-                                            <Row>
-                                                // Checkbox { data_member, label, items }
-                                                <CheckboxList
-                                                    label="Favorite Candies:"
-                                                    items=vec!["Twizzlers", "Reese's", "Starburst"]
-                                                        .into_iter()
-                                                        .map(|s| s.into())
-                                                        .collect()
-                                                    disabled=elements_disabled
-                                                    data_member="favorite_candies"
-                                                    data_map=expandable_react.data
-                                                />
-                                            </Row>
-                                            <Row>
-                                                // Select { data_member, label, items }
-                                                <Select
-                                                    label="Gender:"
-                                                    value_list=vec!["Male", "Female", "Prefer not to answer"]
-                                                        .into_iter()
-                                                        .map(|s| s.to_owned())
-                                                        .collect()
-                                                    disabled=elements_disabled
-                                                    data_member="gender"
-                                                    data_map=expandable_react.data
-                                                />
-                                            </Row>
-                                            <Row>
-                                                <MultiEntry
-                                                    data_map=expandable_react.data
-                                                    data_member="community_involvement"
-                                                    schema=vec![
-                                                        input!(Text, "service_name", "Activity Name:", "Some service activity..."),
-                                                        input!(Number, "service_hours", "Total Service Hours", "20")
-                                                    ]
-                                                />
-                                            </Row>
-                                            <Row>
-                                                <ActionButton
-                                                    on:click=move |_| {
-                                                        let captured_map = expandable_react.capture();
-                                                        console_log(
-                                                            format!("Map values: {:?}", captured_map).as_str(),
-                                                        );
-                                                        submit_action
-                                                            .dispatch(CreateSampleSubmission {
-                                                                student_info: captured_map,
-                                                            });
-                                                    }
-                                                    disabled=elements_disabled
-                                                >
-                                                    "Submit"
-                                                </ActionButton>
-                                            </Row>
-                                            <Row>
-                                                <ActionButton on:click=move |_| {
-                                                    console_log("Attempting to get PDF from server endpoint");
-                                                    spawn_local(async move {
-                                                        let result = create_example_pdf().await;
-                                                        if let Ok(bytes) = result {
-                                                            let base64 = base64::engine::general_purpose::STANDARD
-                                                                .encode(bytes);
-                                                            let data_url = format!(
-                                                                "data:application/pdf;base64,{}",
-                                                                base64,
-                                                            );
-                                                            console_log("Found document, opening in new tab...");
-                                                            let link = document()
-                                                                .create_element("a")
-                                                                .unwrap()
-                                                                .dyn_into::<HtmlAnchorElement>()
-                                                                .unwrap();
-                                                            link.set_href(&*data_url);
-                                                            link.set_target("_blank");
-                                                            link.click();
-                                                        }
-                                                    });
-                                                }>"Get PDF"</ActionButton>
-                                            </Row>
-                                            <Row>
-                                                <p>{result_msg}</p>
-                                            </Row>
+                                            <ValidatedForm on_submit=Callback::new(on_submit)>
+                                                <Row>
+                                                    <h1 class="text-3xl font-bold">
+                                                        "Region 15 Scholarship Application (DEMO)"
+                                                    </h1>
+                                                </Row>
+                                                <Row>
+                                                    <p class="text-sm">
+                                                        "This is a very simple demonstration of the scholarship application written in Rust."
+                                                    </p>
+                                                </Row>
+                                                <Row>
+                                                    <OutlinedTextField
+                                                        label="First Name:"
+                                                        placeholder="John"
+                                                        disabled=elements_disabled
+                                                        data_member="first_name"
+                                                        data_map=form_data
+                                                        required=true
+                                                    />
+                                                    <OutlinedTextField
+                                                        label="Last Name:"
+                                                        placeholder="Smith"
+                                                        disabled=elements_disabled
+                                                        data_member="last_name"
+                                                        data_map=form_data
+                                                        required=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <OutlinedTextField
+                                                        label="Contact Email:"
+                                                        placeholder="student@region15.org"
+                                                        disabled=elements_disabled
+                                                        data_member="contact_email"
+                                                        data_map=form_data
+                                                        input_type=TextFieldType::Email
+                                                        required=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <OutlinedTextField
+                                                        label="Phone Number:"
+                                                        placeholder="123-456-7890"
+                                                        disabled=elements_disabled
+                                                        data_member="phone_number"
+                                                        data_map=form_data
+                                                        required=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <OutlinedTextField
+                                                        label="Street Address:"
+                                                        placeholder="123 Fake Street"
+                                                        disabled=elements_disabled
+                                                        data_member="address"
+                                                        data_map=form_data
+                                                        required=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <OutlinedTextField
+                                                        label="Highest Math SAT Score:"
+                                                        placeholder="600"
+                                                        disabled=elements_disabled
+                                                        data_member="math_sat"
+                                                        data_map=form_data
+                                                        input_type=TextFieldType::Number
+                                                        required=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <RadioList
+                                                        label="Town:"
+                                                        items=vec!["Southbury", "Middlebury"]
+                                                            .into_iter()
+                                                            .map(|s| s.into())
+                                                            .collect()
+                                                        disabled=elements_disabled
+                                                        data_member="town"
+                                                        data_map=form_data
+                                                        required=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <CheckboxList
+                                                        label="Favorite Candies:"
+                                                        items=vec!["Twizzlers", "Reese's", "Starburst"]
+                                                            .into_iter()
+                                                            .map(|s| s.into())
+                                                            .collect()
+                                                        disabled=elements_disabled
+                                                        data_member="favorite_candies"
+                                                        data_map=form_data
+                                                        required=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <Select
+                                                        label="Gender:"
+                                                        value_list=vec!["Male", "Female", "Prefer not to answer"]
+                                                            .into_iter()
+                                                            .map(|s| s.to_owned())
+                                                            .collect()
+                                                        disabled=elements_disabled
+                                                        data_member="gender"
+                                                        data_map=form_data
+                                                        required=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <MultiEntry
+                                                        data_map=form_data
+                                                        data_member="community_involvement"
+                                                        schema=vec![
+                                                            input!(Text, "service_name", "Activity Name:", true, "Some service activity..."),
+                                                            input!(Number, "service_hours", "Total Service Hours", true, "20")
+                                                        ]
+                                                    />
+                                                </Row>
+                                            </ValidatedForm>
                                         </Panel>
                                         <div class="flex flex-col flex-1" />
                                     </Row>
                                 }
                             })
                     }}
+                    <Row>
+                        <ActionButton on:click=pdf_button_click>"Get PDF"</ActionButton>
+                    </Row>
                 </Suspense>
             </Authenticated>
         </AuthLoaded>
-    }
+    }.into_any()
 }
