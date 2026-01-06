@@ -186,6 +186,15 @@ fn create_sports_comparisons() -> Vec<ComparisonData> {
 
 #[allow(unused)]
 fn make_comp_list() -> Vec<ComparisonData> {
+    let gpa_3 = ComparisonData::new(
+        "gpa_3",
+        "weighted_gpa",
+        ComparisonType::Number(NumberComparison::GreaterThanOrEqual),
+        ValueType::Number(Some(3.0.to_string())),
+        "GPA Limits",
+        "GPA >= 3.0",
+    );
+
     let test_comp = ComparisonData::new(
         "math_sat_comp",
         "math_sat",
@@ -205,7 +214,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
             ))),
         )),
         ValueType::Number(Some(25.to_string())),
-        "Community Involvement",
+        "Community Service",
         "25 service hours",
     );
 
@@ -219,7 +228,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
             ))),
         )),
         ValueType::Number(Some(20.to_string())),
-        "Community Involvement",
+        "Community Service",
         "20 service hours",
     );
 
@@ -233,8 +242,8 @@ fn make_comp_list() -> Vec<ComparisonData> {
             ))),
         )),
         ValueType::Number(Some(30.to_string())),
-        "Community Involvement",
-        "30 service hours",
+        "Community Service",
+        "30+ service hours",
     );
 
     let residency_southbury = ComparisonData::new(
