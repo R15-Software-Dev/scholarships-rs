@@ -6,7 +6,7 @@ use leptos::ev::{DragEvent, Event};
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos::wasm_bindgen::JsCast;
-use web_sys::{DataTransfer, File, FileList, HtmlAnchorElement, HtmlInputElement};
+use web_sys::{File, FileList, HtmlAnchorElement, HtmlInputElement};
 
 /// # File Upload Component
 ///
@@ -366,7 +366,7 @@ pub fn FileUpload(
                     id=input_id.clone()
                     type="file"
                     class="hidden"
-                    prop:multiple=(!limit_upload)
+                    prop:multiple=!limit_upload
                     prop:accept=accept_attr
                     on:change=on_change_input
                 />
