@@ -70,13 +70,22 @@ pub fn Chip(
 /// passed to the `on_change` prop for each individual `Chip` component.
 #[component]
 pub fn ChipsList(
+    /// The member in the data map that this input affects.
     #[prop(into)] data_member: String,
+    /// The data map that contains the list of values. This will be edited as the input changes.
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
+    /// The list of strings that should be displayed in the list.
     #[prop(into)] displayed_text: Signal<Vec<String>>,
+    /// The list of values that should be displayed in the list.
     #[prop(into)] values: Signal<Vec<String>>,
+    /// Indicates if the input should be disabled.
     #[prop(optional, into)] disabled: Signal<bool>,
+    /// The label for the header of the input.
     #[prop(optional, into)] label: String,
-    #[prop(optional, into)] required: Signal<bool>
+    /// Indicates if this input is required.
+    #[prop(optional, into)] required: Signal<bool>,
+    /// Determines if this list behaves like a checkbox or radio list.
+    #[prop(default = true.into(), into)] allows_multiple: Signal<bool>,
 ) -> impl IntoView {
     let controller = use_selectable_list(
         data_member.clone(),
@@ -88,41 +97,49 @@ pub fn ChipsList(
         <div class="flex flex-col">
             <div class="m-1.5 mt-0 mb-0">
                 <span class="font-bold">{label}</span>
-                {displayed_text.get().into_iter().zip(values.get())
-                    .into_iter()
-                    .map(|(text, value)| {
-                        let value = RwSignal::new(value);
+                <div class="flex flex-row flex-wrap gap-2 mb-1">
+                    {move || displayed_text.get().into_iter().zip(values.get())
+                        .into_iter()
+                        .map(|(text, value)| {
+                            let value = RwSignal::new(value);
 
-                        let checked = Signal::derive(move || {
-                            controller.selected_list.get().contains(&value.get())
-                        });
-
-                        let on_change = move || {
-                            // Update the data list by checking if the value is present in it. If so,
-                            // remove it. If not, add it.
-                            controller.selected_list.update(|list| {
-                                let value = value.get();
-                                if list.contains(&value) {
-                                    list.retain(|val| *val != value);
-                                } else {
-                                    list.push(value.clone());
-                                }
+                            let checked = Signal::derive(move || {
+                                controller.selected_list.get().contains(&value.get())
                             });
-                            controller.dirty.set(true);
-                        };
 
-                        view! {
-                            <Chip
-                                checked=checked
-                                on_change=on_change
-                                value=value
-                                display_text=text
-                                name=data_member.clone()
-                                disabled=disabled
-                            />
-                        }
-                    })
-                    .collect_view()}
+                            let on_change = move || {
+                                // Update the data list by checking if the value is present in it. If so,
+                                // remove it. If not, add it.
+                                let value = value.get();
+                                let list = controller.selected_list.get();
+
+                                if list.contains(&value) {
+                                    allows_multiple.get()
+                                        .then(|| controller.selected_list.update(|list| list.retain(|v| v != &value)))
+                                        .or_else(|| Some(controller.selected_list.set(Vec::new())));
+                                } else {
+                                    allows_multiple.get()
+                                        .then(|| controller.selected_list.update(|list| list.push(value.clone())))
+                                        .or_else(|| Some(controller.selected_list.set(vec![value.clone()])));
+                                }
+
+                                controller.dirty.set(true);
+                            };
+
+                            view! {
+                                <Chip
+                                    checked=checked
+                                    on_change=on_change
+                                    value=value
+                                    display_text=text
+                                    name=data_member.clone()
+                                    disabled=disabled
+                                />
+                            }
+                        })
+                        .collect_view()
+                    }
+                </div>
             </div>
             <Show when=move || controller.show_errors.get()>
                 <div class="text-red-600 text-sm mr-1.5 ml-1.5">

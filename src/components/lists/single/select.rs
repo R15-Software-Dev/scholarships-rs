@@ -98,7 +98,7 @@ pub fn Select(
                             value=""
                             disabled
                             hidden
-                            selected=raw_value.get().is_empty()
+                            selected={move || raw_value.get().is_empty()}
                         >"Select one..."</option>
                         {move || {
                             value_list.iter().map(

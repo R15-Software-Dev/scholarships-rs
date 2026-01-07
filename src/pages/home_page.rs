@@ -8,7 +8,7 @@ use std::process::{Command, Stdio};
 #[cfg(feature = "ssr")]
 use std::io::Write;
 
-use crate::common::ExpandableInfo;
+use crate::common::{ComparisonData, ExpandableInfo};
 use crate::pages::UnauthenticatedPage;
 use crate::pages::utils::get_user_claims;
 use crate::components::{ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row, Select, TextFieldType, ValidatedForm};
@@ -22,6 +22,7 @@ use leptos::task::spawn_local;
 use leptos::web_sys::HtmlAnchorElement;
 use leptos::wasm_bindgen::JsCast;
 use std::collections::HashMap;
+use crate::pages::api::get_comparisons_categorized;
 
 /// # Get Student Info
 /// Gets a student's information given their `subject`.
@@ -208,6 +209,28 @@ pub fn HomePage() -> impl IntoView {
         });
     };
     //#endregion
+
+    let comparison_resource = Resource::new(
+        move || user_subject.get(),
+        async move |_| get_comparisons_categorized().await
+    );
+
+    let comparison_info = RwSignal::new(HashMap::<String, Vec<ComparisonData>>::new());
+
+    Effect::new(move || {
+        match comparison_resource.get() {
+            Some(Ok(comparisons)) => {
+                log!("Found comparison info: {:?}", comparisons);
+                comparison_info.set(comparisons);
+            }
+            Some(Err(err)) => {
+                log!("Error while getting comparisons: {:?}", err);
+            }
+            _ => {
+                log!("An unknown error occurred.");
+            }
+        }
+    });
 
     view! {
         <AuthLoaded fallback=Loading>

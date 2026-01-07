@@ -8,9 +8,8 @@ use leptos_router::hooks::{use_navigate, use_params};
 use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
 use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, ValidatedForm};
 use super::UnauthenticatedPage;
-use crate::common::ComparisonData;
 use crate::pages::utils::get_user_claims;
-use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship};
+use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized};
 
 
 /// # Scholarship Info Page
@@ -245,7 +244,7 @@ fn ScholarshipList(
                         }}
                     </div>
                     <div>
-                        <div class="p-2 bg-red-800 rounded-md text-center text-white hover:bg-red-900 transition-all"
+                        <div class="p-2 bg-red-800 rounded-md text-center text-white hover:bg-red-900 transition-all cursor-pointer"
                             on:click=create_on_click>
                             "Create New"
                         </div>
@@ -383,7 +382,7 @@ fn ScholarshipForm(
         }
     });
     
-    let comparison_list: Resource<Vec<ComparisonData>> = Resource::new(
+    let comparison_list = Resource::new(
         move || scholarship_id.get(),  // There's no input to this function.
         async move |_| {
             get_comparison_info().await
@@ -393,6 +392,19 @@ fn ScholarshipForm(
                 })
         }
     );
+
+    let comparison_lists = Resource::new(
+        move || scholarship_id.get().is_some(),
+        async move |_| {
+            get_comparisons_categorized().await
+        }
+    );
+
+    Effect::new(move || {
+        if let Some(Ok(map)) = comparison_lists.get() {
+            log!("Available categories: {:?}", map.keys());
+        }
+    });
 
     let scholarship_info = Resource::new(
         move || scholarship_id.get(),
@@ -406,25 +418,67 @@ fn ScholarshipForm(
     );
 
     let form_data = RwSignal::new(HashMap::new());
+    let chips_data = RwSignal::new(HashMap::new());
     
     Effect::new(move || {
         if let Some(Ok(scholarship)) = scholarship_info.get() {
+            // Get the default chips data.
+            let chips_default = if let Some(ValueType::Map(Some(map))) = scholarship.data.get("requirements") {
+                map.clone()
+            } else {
+                HashMap::new()
+            };
+
+            chips_data.set(chips_default);
             form_data.set(scholarship.data);
         }
     });
-    
-    let comparison_ids = Memo::new(move |_| {
-        comparison_list.get().map(|list| list.iter()
-            .map(|comp| comp.clone().id)
+
+    let get_comp_category = move |category: &str| {
+        if let Some(Ok(map)) = comparison_lists.get() {
+            map.get(category).unwrap_or(&Vec::new()).clone()
+        } else {
+            Vec::new()
+        }
+    };
+
+    let get_comp_ids = move |category: &str| {
+        get_comp_category(category)
+            .into_iter()
+            .map(|comp| comp.id)
             .collect::<Vec<String>>()
-        ).unwrap_or_default()
+    };
+
+    let get_comp_text = move |category: &str| {
+        get_comp_category(category)
+            .into_iter()
+            .map(|comp| comp.display_text)
+            .collect::<Vec<String>>()
+    };
+
+    // Get comparison lists.
+    let sports_ids = Signal::derive(move || {
+        get_comp_ids("Sports Participation")
     });
-    
-    let comparison_text = Memo::new(move |_| {
-        comparison_list.get().map(|list| list.iter()
-            .map(|comp| comp.clone().display_text)
-            .collect::<Vec<String>>()
-        ).unwrap_or_default()
+
+    let sports_text = Signal::derive(move || {
+        get_comp_text("Sports Participation")
+    });
+
+    let misc_ids = Signal::derive(move || {
+        get_comp_ids("Miscellaneous")
+    });
+
+    let misc_text = Signal::derive(move || {
+        get_comp_text("Miscellaneous")
+    });
+
+    let comm_ids = Signal::derive(move || {
+        get_comp_ids("Community Involvement")
+    });
+
+    let comm_text = Signal::derive(move || {
+        get_comp_text("Community Involvement")
     });
 
     // We'll collect the scholarship's name, num_awards, amount_per_award, total_awards,
@@ -546,11 +600,30 @@ fn ScholarshipForm(
                                                 </Row>
                                                 <Row>
                                                     <ChipsList
-                                                        label="Scholarship Requirements"
-                                                        data_member="requirements"
-                                                        data_map=form_data
-                                                        values=comparison_ids
-                                                        displayed_text=comparison_text
+                                                        label="Sports Participation"
+                                                        data_member="sports_participation"
+                                                        data_map=chips_data
+                                                        values=sports_ids
+                                                        displayed_text=sports_text
+                                                        allows_multiple=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <ChipsList
+                                                        label="Community Involvement"
+                                                        data_member="community_involvement"
+                                                        data_map=chips_data
+                                                        values=comm_ids
+                                                        displayed_text=comm_text
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <ChipsList
+                                                        label="Miscellaneous"
+                                                        data_member="misc"
+                                                        data_map=chips_data
+                                                        values=misc_ids
+                                                        displayed_text=misc_text
                                                     />
                                                 </Row>
                                             })
