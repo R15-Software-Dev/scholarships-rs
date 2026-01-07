@@ -26,6 +26,21 @@ chrono = "0.4.42"
 
 macros = { path = "./macros" }
 traits = { path = "./traits" }
+gloo-timers = "0.3.0"
+wasm-bindgen-futures = "0.4.50"
+js-sys = "0.3.77"
+
+web-sys = { version = "0.3.77", features = [
+    "File",
+    "FileList",
+    "DataTransfer",
+    "DragEvent",
+    "HtmlInputElement",
+    "HtmlAnchorElement",
+    "Document",
+    "Element",
+    "Window",
+] }
 
 [features]
 hydrate = [
@@ -44,6 +59,7 @@ ssr = [
     "leptos_meta/ssr",
     "leptos_router/ssr",
 ]
+
 
 # Defines a size-optimized profile for the WASM bundle in release mode
 [profile.wasm-release]
