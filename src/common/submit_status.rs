@@ -3,5 +3,5 @@ pub enum SubmitStatus {
     Idle,
     Sending,
     Success,
-    Error(String),
+    Error(()),
 }

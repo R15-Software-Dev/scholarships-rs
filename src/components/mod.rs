@@ -12,8 +12,11 @@ mod row;
 mod select;
 mod text_field;
 mod utils;
+mod validated_form;
+mod lists;
 
 pub use self::{
-    action_button::*, banner::*, checkbox::*, chips::*, dashboard_button::*, file_upload::*,
-    loading::*, multi_entry::*, panel::*, radio::*, row::*, select::*, text_field::*,
+    action_button::*, banner::*, dashboard_button::*, file_upload::*, lists::*,
+    loading::*, multi_entry::*, panel::*, row::*, text_field::*,
+    validated_form::*
 };

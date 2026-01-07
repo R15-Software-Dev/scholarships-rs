@@ -4,10 +4,11 @@ use aws_sdk_dynamodb::{Client, error::ProvideErrorMetadata, types::AttributeValu
 #[cfg(feature = "ssr")]
 use serde_dynamo::{from_item, to_item};
 
-use crate::common::{ExpandableInfo, ValueType};
-use crate::components::{
-    ActionButton, Banner, DashboardButton, OutlinedTextField, Panel, Row, Select,
-};
+#[cfg(feature = "ssr")]
+use crate::common::ValueType;
+
+use crate::common::ExpandableInfo;
+use crate::components::{ActionButton, Banner, DashboardButton, OutlinedTextField, Panel, Row, Select, TextFieldType, ValidatedForm};
 use chrono::{FixedOffset, TimeZone};
 use leptos::Params;
 use leptos::either::{Either, EitherOf3};
@@ -18,7 +19,6 @@ use leptos_router::hooks::{use_navigate, use_params};
 use leptos_router::params::Params;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use traits::{AsReactive, ReactiveCapture};
 
 #[derive(Params, PartialEq)]
 struct LoanerParams {
@@ -245,83 +245,85 @@ pub fn LoanerPage() -> impl IntoView {
 pub fn LoanerBorrowForm() -> impl IntoView {
     // Register server actions.
     let create_entry_action = ServerAction::<CreateBorrowEntry>::new();
-    let navigate = use_navigate();
 
-    let temp = ExpandableInfo::new(uuid::Uuid::new_v4().to_string());
-    let temp_reactive = temp.as_reactive();
-    let elements_disabled = RwSignal::new(false);
+    let data = RwSignal::new(HashMap::new());
+    let elements_disabled = Signal::derive(move || create_entry_action.pending().get());
+
+    let on_submit = move |_| {
+        create_entry_action.dispatch(CreateBorrowEntry {
+            input: ExpandableInfo {
+                subject: uuid::Uuid::new_v4().to_string(),
+                data: data.get(),
+            }
+        });
+    };
 
     view! {
-        <div class="flex flex-col justify-center gap-2 mb-1 py-3 px-2">
-            <h2 class="text-2xl font-bold">"Borrower Information"</h2>
-            <p class="text-lg">"Please fill out the form below."</p>
-        </div>
-        <Row>
-            <OutlinedTextField
-                label="First Name:"
-                placeholder="John"
-                disabled=elements_disabled
-                data_member="first_name"
-                data_map=temp_reactive.data
-            />
-            <OutlinedTextField
-                label="Last Name:"
-                placeholder="Smith"
-                disabled=elements_disabled
-                data_member="last_name"
-                data_map=temp_reactive.data
-            />
-        </Row>
-        <Row>
-            <OutlinedTextField
-                label="Region 15 Email:"
-                placeholder="example@region15.org"
-                disabled=elements_disabled
-                data_member="email"
-                data_map=temp_reactive.data
-            />
-        </Row>
-        <Row>
-            <Select
-                label="Collateral:"
-                value_list=vec![
-                    "Phone".to_string(),
-                    "Earbuds/Headphones".to_string(),
-                    "Keys".to_string(),
-                    "Wallet".to_string(),
-                    "Laptop".to_string(),
-                ]
-                disabled=elements_disabled
-                data_member="collateral"
-                data_map=temp_reactive.data
-            />
-        </Row>
-        <Row>
-            <Select
-                label="Loan Taken:"
-                value_list=vec![
-                    "Chromebook".to_string(),
-                    "Charger".to_string(),
-                    "Headphones".to_string(),
-                ]
-                disabled=elements_disabled
-                data_member="loan"
-                data_map=temp_reactive.data
-            />
-        </Row>
-        <Row>
-            <ActionButton
-                on:click=move |_| {
-                    let captured = temp_reactive.capture();
-                    log!("Loaner record taken.");
-                    log!("{:?}", captured);
-                    create_entry_action.dispatch(CreateBorrowEntry {
-                        input: captured
-                    });
-                    navigate("/loaners", Default::default());
-                }
-            >"Submit"</ActionButton>
-        </Row>
+        <ValidatedForm on_submit=Callback::new(on_submit)>
+            <div class="flex flex-col justify-center gap-2 mb-1 py-3 px-2">
+                <h2 class="text-2xl font-bold">"Borrower Information"</h2>
+                <p class="text-lg">"Please fill out the form below."</p>
+            </div>
+            <Row>
+                <OutlinedTextField
+                    label="First Name:"
+                    placeholder="John"
+                    disabled=elements_disabled
+                    data_member="first_name"
+                    data_map=data
+                    required=true
+                />
+                <OutlinedTextField
+                    label="Last Name:"
+                    placeholder="Smith"
+                    disabled=elements_disabled
+                    data_member="last_name"
+                    data_map=data
+                    required=true
+                />
+            </Row>
+            <Row>
+                <OutlinedTextField
+                    label="Region 15 Email:"
+                    placeholder="example@region15.org"
+                    disabled=elements_disabled
+                    data_member="email"
+                    data_map=data
+                    input_type=TextFieldType::Email
+                    required=true
+                />
+            </Row>
+            <Row>
+                <Select
+                    label="Collateral:"
+                    value_list=vec![
+                        "Phone".to_string(),
+                        "Earbuds/Headphones".to_string(),
+                        "Keys".to_string(),
+                        "Wallet".to_string(),
+                        "Laptop".to_string(),
+                    ]
+                    disabled=elements_disabled
+                    data_member="collateral"
+                    data_map=data
+                    required=true
+                />
+            </Row>
+            <Row>
+                <Select
+                    label="Loan Taken:"
+                    value_list=vec![
+                        "Chromebook".to_string(),
+                        "Charger".to_string(),
+                        "Headphones".to_string(),
+                    ]
+                    disabled=elements_disabled
+                    data_member="loan"
+                    data_map=data
+                    required=true
+                />
+            </Row>
+        </ValidatedForm>
     }
 }
 

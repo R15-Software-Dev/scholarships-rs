@@ -3,7 +3,6 @@ mod lists;
 mod number;
 mod text;
 mod traits;
-mod utils;
 
 pub use self::{base::*, lists::*, number::*, text::*, traits::*};
 
