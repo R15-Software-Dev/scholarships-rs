@@ -299,6 +299,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
     let mut major_comps = Vec::<ComparisonData>::new();
 
     let mut comp_list = vec![
+        gpa_3,
         test_comp,
         service_hours_20,
         service_hours_25,

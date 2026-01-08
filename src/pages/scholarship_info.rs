@@ -3,13 +3,14 @@ use leptos::either::Either;
 use leptos::html::Dialog;
 use leptos::logging::log;
 use leptos::prelude::*;
+use leptos::task::spawn_local;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::{use_navigate, use_params};
 use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
 use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, ValidatedForm};
 use super::UnauthenticatedPage;
 use crate::pages::utils::get_user_claims;
-use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized};
+use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized, create_test_comparisons, CreateTestComparisons};
 
 
 /// # Scholarship Info Page
@@ -457,29 +458,20 @@ fn ScholarshipForm(
     };
 
     // Get comparison lists.
-    let sports_ids = Signal::derive(move || {
-        get_comp_ids("Sports Participation")
-    });
+    let sports_ids = Signal::derive(move || get_comp_ids("Sports Participation"));
+    let sports_text = Signal::derive(move || get_comp_text("Sports Participation"));
 
-    let sports_text = Signal::derive(move || {
-        get_comp_text("Sports Participation")
-    });
+    let misc_ids = Signal::derive(move || get_comp_ids("Miscellaneous"));
+    let misc_text = Signal::derive(move || get_comp_text("Miscellaneous"));
 
-    let misc_ids = Signal::derive(move || {
-        get_comp_ids("Miscellaneous")
-    });
+    let comm_ids = Signal::derive(move || get_comp_ids("Community Service"));
+    let comm_text = Signal::derive(move || get_comp_text("Community Service"));
 
-    let misc_text = Signal::derive(move || {
-        get_comp_text("Miscellaneous")
-    });
+    let res_ids = Signal::derive(move || get_comp_ids("Residency"));
+    let res_text = Signal::derive(move || get_comp_text("Residency"));
 
-    let comm_ids = Signal::derive(move || {
-        get_comp_ids("Community Involvement")
-    });
-
-    let comm_text = Signal::derive(move || {
-        get_comp_text("Community Involvement")
-    });
+    let gpa_ids = Signal::derive(move || get_comp_ids("GPA Limits"));
+    let gpa_text = Signal::derive(move || get_comp_text("GPA Limits"));
 
     // We'll collect the scholarship's name, num_awards, amount_per_award, total_awards,
     // fafsa_required, award_to, transcript_required, recipient_selection, essay_requirement (and prompt)
@@ -494,6 +486,8 @@ fn ScholarshipForm(
             info
         });
     };
+
+    let create_comps = ServerAction::<CreateTestComparisons>::new();
 
     view! {
         <Panel>
@@ -600,21 +594,38 @@ fn ScholarshipForm(
                                                 </Row>
                                                 <Row>
                                                     <ChipsList
+                                                        label="GPA Requirements"
+                                                        data_member="gpa"
+                                                        data_map=chips_data
+                                                        values=gpa_ids
+                                                        displayed_text=gpa_text
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <ChipsList
                                                         label="Sports Participation"
                                                         data_member="sports_participation"
                                                         data_map=chips_data
                                                         values=sports_ids
                                                         displayed_text=sports_text
-                                                        allows_multiple=true
                                                     />
                                                 </Row>
                                                 <Row>
                                                     <ChipsList
-                                                        label="Community Involvement"
-                                                        data_member="community_involvement"
+                                                        label="Community Service"
+                                                        data_member="community_service"
                                                         data_map=chips_data
                                                         values=comm_ids
                                                         displayed_text=comm_text
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <ChipsList
+                                                        label="Residency"
+                                                        data_member="residency"
+                                                        data_map=chips_data
+                                                        values=res_ids
+                                                        displayed_text=res_text
                                                     />
                                                 </Row>
                                                 <Row>
@@ -637,6 +648,11 @@ fn ScholarshipForm(
                                 }).collect_view()
                         }}
                     </ValidatedForm>
+                    <ActionButton
+                        on:click=move |_| {
+                            create_comps.dispatch(CreateTestComparisons {});
+                        }
+                    >"Create Comparisons"</ActionButton>
                 </Suspense>
             </Show>
         </Panel>
