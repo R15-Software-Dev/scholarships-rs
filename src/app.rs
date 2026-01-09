@@ -1,4 +1,4 @@
-use crate::pages::{AboutPage, HomePage, LoanerPage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage};
+use crate::pages::{AboutPage, HomePage, LoanerPage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage, ProviderContactPage};
 use leptos::leptos_dom::log;
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
@@ -105,6 +105,7 @@ pub fn AppWithRoutes() -> impl IntoView {
                 <Route path=path!("/test_page") view=TestPage/>
                 <Route path=path!("/comparison") view=ComparisonTestPage />
                 <Route path=path!("/providers") view=ProviderPortal/>
+                <Route path=path!("/providers/contact") view=ProviderContactPage />
                 <ParentRoute path=path!("/providers/scholarships") view=ScholarshipInfoPage>
                     <Route path=path!(":id") view=ScholarshipInfoPage/>
                     <Route path=path!("") view=ScholarshipInfoPage/>
