@@ -8,7 +8,7 @@ use serde_dynamo::{from_item, to_item};
 use crate::common::ValueType;
 
 use crate::common::ExpandableInfo;
-use crate::components::{ActionButton, Banner, DashboardButton, OutlinedTextField, Panel, Row, Select, TextFieldType, ValidatedForm};
+use crate::components::{ActionButton, Banner, DashboardButton, OutlinedTextField, Panel, Row, Select, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
 use chrono::{FixedOffset, TimeZone};
 use leptos::Params;
 use leptos::either::{Either, EitherOf3};
@@ -212,6 +212,7 @@ pub fn LoanerPage() -> impl IntoView {
     // We'll create the page here - the sidebar contains all the buttons, while the form
     // container either shows forms or shows placeholder text.
     view! {
+        <ToastList>
         <Banner
             title="Chromebook Loaners"
             logo="/PHS_Stacked_Acronym.png"
@@ -238,6 +239,7 @@ pub fn LoanerPage() -> impl IntoView {
                 </div>
             </div>
         </div>
+        </ToastList>
     }
 }
 
@@ -257,6 +259,20 @@ pub fn LoanerBorrowForm() -> impl IntoView {
             }
         });
     };
+    
+    //#region Toast Logic
+    let mut toast_context = expect_context::<ToastContext>();
+    Effect::new(move || {
+        if let Some(Ok(_)) = create_entry_action.value().get() {
+            create_entry_action.clear();
+            toast_context.toast(
+                Toast::new()
+                    .id(uuid::Uuid::new_v4().to_string())
+                    .msg("From the form!")
+            );
+        }
+    });
+    //#endregion
 
     view! {
         <ValidatedForm on_submit=Callback::new(on_submit)>

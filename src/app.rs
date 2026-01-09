@@ -1,5 +1,4 @@
 use crate::pages::{AboutPage, HomePage, LoanerPage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage, ProviderContactPage};
-use leptos::leptos_dom::log;
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge};
@@ -65,15 +64,12 @@ pub fn AppWithRoutes() -> impl IntoView {
     provide_meta_context();
     
     let current_origin = use_origin();
-    log!("Current origin: {}", current_origin);
 
     // Authentication setup
     let parameters = AuthParameters {
         issuer: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Lfjuy5zaM".into(),
         client_id: "10jr2h3vtpu9n7gj46pvg5qo2q".into(),
         redirect_uri: format!("{}/", use_origin()),
-        // redirect_uri: Url::parse(format!("{}", current_origin).as_str()).unwrap().to_string(),
-        // redirect_uri: Url::parse("http://localhost:3000").unwrap().to_string(),
         post_logout_redirect_uri: current_origin,
         scope: Some("openid%20profile%20email".into()),
         audience: None,
@@ -105,7 +101,7 @@ pub fn AppWithRoutes() -> impl IntoView {
                 <Route path=path!("/test_page") view=TestPage/>
                 <Route path=path!("/comparison") view=ComparisonTestPage />
                 <Route path=path!("/providers") view=ProviderPortal/>
-                <Route path=path!("/providers/contact") view=ProviderContactPage />
+                <Route path=path!("/providers/profile") view=ProviderContactPage />
                 <ParentRoute path=path!("/providers/scholarships") view=ScholarshipInfoPage>
                     <Route path=path!(":id") view=ScholarshipInfoPage/>
                     <Route path=path!("") view=ScholarshipInfoPage/>

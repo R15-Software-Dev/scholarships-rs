@@ -9,9 +9,10 @@ mod text_field;
 mod utils;
 mod validated_form;
 mod lists;
+mod toasts;
 
 pub use self::{
     action_button::*, banner::*, dashboard_button::*, lists::*,
     loading::*, multi_entry::*, panel::*, row::*, text_field::*,
-    validated_form::*
+    validated_form::*, toasts::*
 };

@@ -207,21 +207,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
         "Academic Information",
         "Math SAT Score > 650",
     );
-
-    let service_hours_25 = ComparisonData::new(
-        "map_sum_comp",
-        "community_involvement",
-        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
-            "service_hours".to_string(),
-            Box::new(NumberListComparison::Sum(Box::new(
-                NumberComparison::GreaterThanOrEqual,
-            ))),
-        )),
-        ValueType::Number(Some(25.to_string())),
-        "Community Service",
-        "25 service hours",
-    );
-
+    
     let service_hours_20 = ComparisonData::new(
         "service_hours_20",
         "community_involvement",
@@ -233,7 +219,21 @@ fn make_comp_list() -> Vec<ComparisonData> {
         )),
         ValueType::Number(Some(20.to_string())),
         "Community Service",
-        "20 service hours",
+        "20+ service hours",
+    );
+
+    let service_hours_25 = ComparisonData::new(
+        "service_hours_25",
+        "community_involvement",
+        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
+            "service_hours".to_string(),
+            Box::new(NumberListComparison::Sum(Box::new(
+                NumberComparison::GreaterThanOrEqual,
+            ))),
+        )),
+        ValueType::Number(Some(25.to_string())),
+        "Community Service",
+        "25+ service hours",
     );
 
     let service_hours_30 = ComparisonData::new(
@@ -273,7 +273,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
         "attended_bas",
         ComparisonType::Text(TextComparison::Matches),
         ValueType::String(Some("Yes".to_string())),
-        "Miscellaneous",
+        "Additional Eligibility Factors",
         "Attended BAS",
     );
 
@@ -282,7 +282,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
         "middsouth_church",
         ComparisonType::Text(TextComparison::Matches),
         ValueType::String(Some("Yes".to_string())),
-        "Miscellaneous",
+        "Additional Eligibility Factors",
         "Member of Midd-South Church",
     );
 
@@ -291,7 +291,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
         "family_military_service",
         ComparisonType::Text(TextComparison::Matches),
         ValueType::String(Some("Yes".to_string())),
-        "Miscellaneous",
+        "Additional Eligibility Factors",
         "Family with Military Service",
     );
 

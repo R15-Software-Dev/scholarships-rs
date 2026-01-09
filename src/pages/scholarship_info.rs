@@ -3,14 +3,13 @@ use leptos::either::Either;
 use leptos::html::Dialog;
 use leptos::logging::log;
 use leptos::prelude::*;
-use leptos::task::spawn_local;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::{use_navigate, use_params};
 use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
 use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, ValidatedForm};
 use super::UnauthenticatedPage;
 use crate::pages::utils::get_user_claims;
-use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized, create_test_comparisons, CreateTestComparisons};
+use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized, CreateTestComparisons};
 
 
 /// # Scholarship Info Page
@@ -461,8 +460,8 @@ fn ScholarshipForm(
     let sports_ids = Signal::derive(move || get_comp_ids("Sports Participation"));
     let sports_text = Signal::derive(move || get_comp_text("Sports Participation"));
 
-    let misc_ids = Signal::derive(move || get_comp_ids("Miscellaneous"));
-    let misc_text = Signal::derive(move || get_comp_text("Miscellaneous"));
+    let misc_ids = Signal::derive(move || get_comp_ids("Additional Eligibility Factors"));
+    let misc_text = Signal::derive(move || get_comp_text("Additional Eligibility Factors"));
 
     let comm_ids = Signal::derive(move || get_comp_ids("Community Service"));
     let comm_text = Signal::derive(move || get_comp_text("Community Service"));
@@ -539,7 +538,7 @@ fn ScholarshipForm(
                                                 </Row>
                                                 <Row>
                                                     <OutlinedTextField
-                                                        label="Total amount of all awards:"
+                                                        label="Total amount of all award(s): (estimates are acceptable)"
                                                         placeholder="Enter an amount..."
                                                         disabled=elements_disabled
                                                         data_member="total_awards"
@@ -553,7 +552,7 @@ fn ScholarshipForm(
                                                         data_map=form_data
                                                         items=vec!["Yes".to_string(), "No".to_string()]
                                                         disabled=elements_disabled
-                                                        label="Do you require student financial information?"
+                                                        label="Do you require student FAFSA information?"
                                                     />
                                                 </Row>
                                                 <Row>
@@ -630,7 +629,7 @@ fn ScholarshipForm(
                                                 </Row>
                                                 <Row>
                                                     <ChipsList
-                                                        label="Miscellaneous"
+                                                        label="Additional Eligibility Factors"
                                                         data_member="misc"
                                                         data_map=chips_data
                                                         values=misc_ids
