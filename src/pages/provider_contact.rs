@@ -3,7 +3,7 @@ use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use crate::common::ValueType;
-use crate::components::{Banner, Loading, OutlinedTextField, Panel, Row, TextFieldType, ValidatedForm};
+use crate::components::{Banner, Loading, OutlinedTextField, Panel, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
 use crate::pages::UnauthenticatedPage;
 use crate::pages::utils::get_user_claims;
 
@@ -120,86 +120,101 @@ pub fn ProviderContactPage() -> impl IntoView {
         submit_action.pending().get()
     });
 
+    let mut toasts_context = expect_context::<ToastContext>();
+    Effect::new(move || {
+        submit_action.value().get().is_some()
+            .then(|| {
+                toasts_context.toast(
+                    Toast::new()
+                        .id(uuid::Uuid::new_v4())
+                        .header("Submission Successful")
+                        .msg("You can go back or continue editing your responses.")
+                );
+            });
+    });
+    
     // Display contact form.
     view! {
-        <Banner
-            title="R15 Scholarships"
-            logo="/PHS_Stacked_Acronym.png"
-            path="/"
-        />
+        <Banner title="R15 Scholarships" logo="/PHS_Stacked_Acronym.png" path="/" />
         <AuthLoaded fallback=Loading>
             <Authenticated unauthenticated=UnauthenticatedPage>
                 <Suspense fallback=Loading>
-                    <Panel>
-                        <ValidatedForm on_submit=on_submit>
-                            {move || contact_resource.get()
-                                .map(|_| {
-                                    view! {
-                                        <Row>
-                                            <OutlinedTextField
-                                                label="First Name:"
-                                                placeholder="John"
-                                                disabled=elements_disabled
-                                                data_member="first_name"
-                                                data_map=contact_info
-                                                required=true
-                                            />
-                                            <OutlinedTextField
-                                                label="Last Name:"
-                                                placeholder="Smith"
-                                                disabled=elements_disabled
-                                                data_member="last_name"
-                                                data_map=contact_info
-                                                required=true
-                                            />
-                                        </Row>
-                                        <Row>
-                                            <OutlinedTextField
-                                                label="Contact Email:"
-                                                placeholder="student@region15.org"
-                                                disabled=elements_disabled
-                                                data_member="contact_email"
-                                                data_map=contact_info
-                                                input_type=TextFieldType::Email
-                                                required=true
-                                            />
-                                        </Row>
-                                        <Row>
-                                            <OutlinedTextField
-                                                label="Phone Number:"
-                                                placeholder="123-456-7890"
-                                                disabled=elements_disabled
-                                                data_member="phone_number"
-                                                data_map=contact_info
-                                                required=true
-                                            />
-                                        </Row>
-                                        <Row>
-                                            <OutlinedTextField
-                                                label="Street Address:"
-                                                placeholder="123 Fake Street"
-                                                disabled=elements_disabled
-                                                data_member="address"
-                                                data_map=contact_info
-                                                required=true
-                                            />
-                                        </Row>
-                                        <Row>
-                                            <OutlinedTextField
-                                                label="Testing Number"
-                                                placeholder="Just put a number"
-                                                disabled=elements_disabled
-                                                data_member="testing_number"
-                                                data_map=contact_info
-                                                input_type=TextFieldType::Number
-                                                required=true
-                                            />
-                                        </Row>
-                                    }
-                                })
-                            }
-                        </ValidatedForm>
-                    </Panel>
+                    <div class="flex flex-row">
+                        <div class="flex flex-col flex-1" />
+                        <Panel>
+                            <ValidatedForm on_submit=on_submit>
+                                {move || {
+                                    contact_resource
+                                        .get()
+                                        .map(|_| {
+                                            view! {
+                                                <Row>
+                                                    <OutlinedTextField
+                                                        label="First Name:"
+                                                        placeholder="John"
+                                                        disabled=elements_disabled
+                                                        data_member="first_name"
+                                                        data_map=contact_info
+                                                        required=true
+                                                    />
+                                                    <OutlinedTextField
+                                                        label="Last Name:"
+                                                        placeholder="Smith"
+                                                        disabled=elements_disabled
+                                                        data_member="last_name"
+                                                        data_map=contact_info
+                                                        required=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <OutlinedTextField
+                                                        label="Contact Email:"
+                                                        placeholder="student@region15.org"
+                                                        disabled=elements_disabled
+                                                        data_member="contact_email"
+                                                        data_map=contact_info
+                                                        input_type=TextFieldType::Email
+                                                        required=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <OutlinedTextField
+                                                        label="Phone Number:"
+                                                        placeholder="123-456-7890"
+                                                        disabled=elements_disabled
+                                                        data_member="phone_number"
+                                                        data_map=contact_info
+                                                        required=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <OutlinedTextField
+                                                        label="Street Address:"
+                                                        placeholder="123 Fake Street"
+                                                        disabled=elements_disabled
+                                                        data_member="address"
+                                                        data_map=contact_info
+                                                        required=true
+                                                    />
+                                                </Row>
+                                                <Row>
+                                                    <OutlinedTextField
+                                                        label="Testing Number"
+                                                        placeholder="Just put a number"
+                                                        disabled=elements_disabled
+                                                        data_member="testing_number"
+                                                        data_map=contact_info
+                                                        input_type=TextFieldType::Number
+                                                        required=true
+                                                    />
+                                                </Row>
+                                            }
+                                        })
+                                }}
+                            </ValidatedForm>
+                        </Panel>
+                        <div class="flex flex-col flex-1" />
+                    </div>
                 </Suspense>
             </Authenticated>
         </AuthLoaded>

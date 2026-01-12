@@ -4,6 +4,7 @@ use crate::components::toasts::toast::Toast;
 #[derive(Clone, Debug)]
 pub struct Toast {
     id: String,
+    header: String,
     message: String,
 }
 
@@ -11,8 +12,14 @@ impl Toast {
     pub fn new() -> Self {
         Toast {
             id: "".to_owned(),
+            header: "".to_owned(),
             message: "".to_owned(),
         }
+    }
+    
+    pub fn header(mut self, header: impl Into<String>) -> Self {
+        self.header = header.into();
+        self
     }
     
     pub fn msg(mut self, msg: impl Into<String>) -> Self {
@@ -61,11 +68,11 @@ pub fn ToastList(
             <For
                 each=move || context.messages.get()
                 key=|toast| toast.id.clone()
-                let(Toast { id, message })
+                let(Toast { id, header, message })
             >
                 <Toast
                     message=message
-                    title="Testing Toast"
+                    title=header
                     on_close=move || {
                         context.messages.update(|list|
                             list.retain(|v| v.id != id)

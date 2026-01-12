@@ -149,7 +149,7 @@ pub fn ValidatedForm(
                 }
                 button_type="submit"
             >
-                "Submit form (but actually)"
+                "Submit"
             </ActionButton>
         </form>
     }
