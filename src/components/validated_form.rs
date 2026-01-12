@@ -1,7 +1,7 @@
 ﻿use leptos::logging::log;
 use leptos::prelude::*;
 use leptos::web_sys::SubmitEvent;
-use crate::components::ActionButton;
+use crate::components::{ActionButton, Header};
 
 /// Indicates the current state of an input.
 #[derive(Default, Debug, Clone)]
@@ -71,7 +71,11 @@ pub fn use_validation_context() -> Option<FormValidationRegistry> {
 /// Example usage in the view macro:
 /// ```
 /// view! {
-///     <ValidatedForm on_submit=Callback::new(move || {/* something here */})>
+///     <ValidatedForm 
+///         on_submit=Callback::new(move || {/* something here */})
+///         title="Example Title"
+///         description="Example description."
+///     >
 ///         {/* As many input components as you want */}
 ///     </ValidatedForm>
 /// }
@@ -102,6 +106,10 @@ pub fn ValidatedForm(
     children: Children,
     /// A callback that runs when the form successfully validates.
     #[prop(into)] on_submit: Callback<()>,
+    /// The title of the included header.
+    #[prop(into)] title: Signal<String>,
+    /// The description for the included header.
+    #[prop(optional, into)] description: Signal<String>,
 ) -> impl IntoView {
     let validators = RwSignal::new(vec![]);
 
@@ -142,6 +150,10 @@ pub fn ValidatedForm(
 
     view! {
         <form novalidate on:submit=submit_success_event>
+            <Header
+                title=title
+                description=description
+            />
             {children()}
             <ActionButton
                 on:click=move |_| {

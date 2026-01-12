@@ -245,7 +245,11 @@ pub fn HomePage() -> impl IntoView {
                                     <Row>
                                         <div class="flex flex-col flex-1" />
                                         <Panel>
-                                            <ValidatedForm on_submit=Callback::new(on_submit)>
+                                            <ValidatedForm 
+                                                on_submit=Callback::new(on_submit)
+                                                title="Home Page Test Form"
+                                                description="This really is just a test."
+                                            >
                                                 <Row>
                                                     <h1 class="text-3xl font-bold">
                                                         "Region 15 Scholarship Application (DEMO)"

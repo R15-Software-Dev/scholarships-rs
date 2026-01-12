@@ -275,11 +275,11 @@ pub fn LoanerBorrowForm() -> impl IntoView {
     //#endregion
 
     view! {
-        <ValidatedForm on_submit=Callback::new(on_submit)>
-            <div class="flex flex-col justify-center gap-2 mb-1 py-3 px-2">
-                <h2 class="text-2xl font-bold">"Borrower Information"</h2>
-                <p class="text-lg">"Please fill out the form below."</p>
-            </div>
+        <ValidatedForm 
+            on_submit=Callback::new(on_submit)
+            title="Borrower Information"
+            description="Please fill out the form below."
+        >
             <Row>
                 <OutlinedTextField
                     label="First Name:"

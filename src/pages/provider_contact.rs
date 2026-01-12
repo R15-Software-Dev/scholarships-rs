@@ -144,7 +144,11 @@ pub fn ProviderContactPage() -> impl IntoView {
                     <div class="flex flex-row">
                         <div class="flex flex-col flex-1" />
                         <Panel>
-                            <ValidatedForm on_submit=on_submit>
+                            <ValidatedForm 
+                                on_submit=on_submit
+                                title="Contact Form"
+                                description="Enter your contact information and click submit."
+                            >
                                 {move || {
                                     contact_resource
                                         .get()

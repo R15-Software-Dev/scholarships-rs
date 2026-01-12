@@ -505,9 +505,11 @@ fn ScholarshipForm(
                 }
             >
                 <Suspense fallback=Loading>
-                    <ValidatedForm on_submit=Callback::new(
-                        on_submit,
-                    )>
+                    <ValidatedForm
+                        on_submit=Callback::new(on_submit)
+                        title="Scholarship Info Form"
+                        description="Create or edit a scholarship. Input all information and click Submit."
+                    >
                         {move || {
                             scholarship_info
                                 .get()
