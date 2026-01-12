@@ -130,6 +130,8 @@ pub fn ProviderContactPage() -> impl IntoView {
                         .header("Submission Successful")
                         .msg("You can go back or continue editing your responses.")
                 );
+                
+                submit_action.clear();
             });
     });
     
