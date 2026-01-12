@@ -57,8 +57,8 @@ pub fn OutlinedTextField(
     #[prop(optional, into)] placeholder: String,
     #[prop(into)] data_member: String, // should this be an RwSignal??
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
-    #[prop(optional)] input_type: TextFieldType,
-    #[prop(into, optional)] disabled: Signal<bool>,
+    #[prop(optional, into)] input_type: Signal<TextFieldType>,
+    #[prop(optional, into)] disabled: Signal<bool>,
     #[prop(optional, into)] name: String,
     #[prop(optional, into)] label: String,
     #[prop(optional, into)] required: Signal<bool>
@@ -69,13 +69,20 @@ pub fn OutlinedTextField(
     let validator_context = use_validation_context()
         .expect("FormValidSignal was not found");
 
-    let raw_value = RwSignal::new(data_map.get_untracked()
-        .get(&data_member)
-        .unwrap_or(&ValueType::String(None))
-        .to_string());
+    let raw_value = Signal::derive({
+        let data_member = data_member.clone();
+        move ||
+            data_map
+                .get()
+                .get(&data_member)
+                .unwrap_or(&ValueType::String(None))
+                .to_string()
+    });
 
     let dirty = RwSignal::new(false);
-    let error = RwSignal::new(validate(required.get_untracked(), &raw_value.get_untracked(), &input_type));
+    let error = Signal::derive(move || 
+        validate(required.get(), &raw_value.get(), &input_type.get())
+    );
     let show_errors = Signal::derive(move || {
         dirty.get() && matches!(error.get(), ValidationState::Invalid(_))
     });
@@ -90,10 +97,10 @@ pub fn OutlinedTextField(
         });
     });
 
-    let str_type = match input_type {
+    let str_type = Signal::derive(move || match input_type.get_untracked() {
         TextFieldType::Number => "number",
         _ => "text"  // This is fine even for emails, as we're doing our own validation.
-    };
+    });
 
     let on_blur = move |_| {
         // Check validity of input's current value. The value will be updated by on_input,
@@ -107,9 +114,7 @@ pub fn OutlinedTextField(
         let data_member = data_member.clone();
         move |e| {
             let to_parse = event_target_value(&e);
-            raw_value.set(to_parse.clone());
-            error.set(validate(required.get(), &to_parse, &input_type));
-            let into_map = match input_type {
+            let into_map = match input_type.get() {
                 TextFieldType::Number => ValueType::Number(Some(to_parse)),
                 _ => ValueType::String(Some(to_parse))
             };
@@ -137,11 +142,7 @@ pub fn OutlinedTextField(
                     disabled={disabled}
                     placeholder={placeholder}
                     prop:name=name
-                    prop:value=move || data_map
-                        .get()  // HashMap
-                        .get(&data_member)  // Option<ValueType>
-                        .unwrap_or(&ValueType::String(None))  // ValueType
-                        .to_string()
+                    prop:value=raw_value
                     on:input=on_input
                     on:blur=on_blur
                 />

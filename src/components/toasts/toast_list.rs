@@ -57,7 +57,7 @@ pub fn ToastList(
     
     view! {
         {children()}
-        <div class="fixed top-1 left-1/2 right-1/2 -translate-x-1/2 min-w-lg">
+        <div class="fixed top-1 left-1/2 right-1/2 -translate-x-1/2 w-full">
             <For
                 each=move || context.messages.get()
                 key=|toast| toast.id.clone()

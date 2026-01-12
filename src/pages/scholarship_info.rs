@@ -6,10 +6,10 @@ use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::{use_navigate, use_params};
 use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
-use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, ValidatedForm};
+use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
 use super::UnauthenticatedPage;
 use crate::pages::utils::get_user_claims;
-use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized, CreateTestComparisons};
+use super::api::{get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized, CreateTestComparisons};
 
 
 /// # Scholarship Info Page
@@ -45,26 +45,28 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
             logo="/PHS_Stacked_Acronym.png"
             path="/"
         />
-        <AuthLoaded fallback=Loading>
-            <Authenticated unauthenticated=UnauthenticatedPage>
-                <div class="flex flex-row align-top items-start">
-                    <div class="flex flex-col flex-1" />
-                    <ScholarshipList 
-                        refresh_token=list_refresh
-                        on_delete=on_delete
-                    />
-                    <Transition fallback=Loading>
-                        <ScholarshipForm
-                            scholarship_id=scholarship_id
-                            on_submit=move || {
-                                list_refresh.update(|n| *n += 1);
-                            }
+        <ToastList>
+            <AuthLoaded fallback=Loading>
+                <Authenticated unauthenticated=UnauthenticatedPage>
+                    <div class="flex flex-row align-top items-start">
+                        <div class="flex flex-col flex-1" />
+                        <ScholarshipList 
+                            refresh_token=list_refresh
+                            on_delete=on_delete
                         />
-                    </Transition>
-                    <div class="flex flex-col flex-1" />
-                </div>
-            </Authenticated>
-        </AuthLoaded>
+                        <Transition fallback=Loading>
+                            <ScholarshipForm
+                                scholarship_id=scholarship_id
+                                on_submit=move || {
+                                    list_refresh.update(|n| *n += 1);
+                                }
+                            />
+                        </Transition>
+                        <div class="flex flex-col flex-1" />
+                    </div>
+                </Authenticated>
+            </AuthLoaded>
+        </ToastList>
     }
 }
 
@@ -349,15 +351,6 @@ fn ScholarshipForm(
     /// submission fails, this function is not run.
     #[prop(into)] on_submit: Callback<()>
 ) -> impl IntoView {
-    // let result_msg = Signal::derive(move || {
-    //     match submit_status.get() {
-    //         SubmitStatus::Idle => "".into(),
-    //         SubmitStatus::Sending => "Sending submission...".into(),
-    //         SubmitStatus::Success => "Success".into(),
-    //         SubmitStatus::Error(msg) => format!("Error: {}", msg),
-    //     }
-    // });
-
     let submit_action = ServerAction::<CreateScholarshipInfo>::new();
 
     let submit_status = RwSignal::new(SubmitStatus::Idle);
@@ -381,17 +374,6 @@ fn ScholarshipForm(
             }
         }
     });
-    
-    let comparison_list = Resource::new(
-        move || scholarship_id.get(),  // There's no input to this function.
-        async move |_| {
-            get_comparison_info().await
-                .unwrap_or_else(|e| {
-                    log!("Failed to get comparison info: {:?}", e);
-                    Vec::new()
-                })
-        }
-    );
 
     let comparison_lists = Resource::new(
         move || scholarship_id.get().is_some(),
@@ -476,6 +458,8 @@ fn ScholarshipForm(
     // fafsa_required, award_to, transcript_required, recipient_selection, essay_requirement (and prompt)
     // award_night_remarks
 
+    let mut toasts = expect_context::<ToastContext>();
+    
     let on_submit = move |_| {
         let mut info = ExpandableInfo::new(scholarship_id.get().unwrap_or_default());
         info.data = form_data.get();
@@ -485,6 +469,20 @@ fn ScholarshipForm(
             info
         });
     };
+    
+    Effect::new(move || {
+        submit_action.value().get().is_some()
+            .then(|| {
+                log!("Displaying toasts!");
+                toasts.toast(
+                    Toast::new()
+                        .id(uuid::Uuid::new_v4())
+                        .msg("Succesfully submitted.")
+                );
+                
+                submit_action.clear();
+            });
+    });
 
     let create_comps = ServerAction::<CreateTestComparisons>::new();
 
