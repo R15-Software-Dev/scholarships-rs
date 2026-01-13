@@ -1,4 +1,4 @@
-use crate::pages::{AboutPage, HomePage, LoanerPage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage, ProviderContactPage};
+use crate::pages::{AboutPage, HomePage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm};
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge};
@@ -108,9 +108,10 @@ pub fn AppWithRoutes() -> impl IntoView {
                         <Route path=path!(":id") view=ScholarshipInfoPage/>
                         <Route path=path!("") view=ScholarshipInfoPage/>
                     </ParentRoute>
-                    <ParentRoute path=path!("loaners") view=LoanerPage>
-                        <Route path=path!("") view=LoanerPage />
-                        <Route path=path!(":form_name") view=LoanerPage />
+                    <ParentRoute path=path!("loaners") view=LoanerShell>
+                        <Route path=path!("") view=LoanerFallback />
+                        <Route path=path!("borrowing") view=LoanerBorrowForm />
+                        <Route path=path!("returning") view=LoanerReturnForm />
                     </ParentRoute>
                 </Routes>
             </ToastList>
