@@ -93,6 +93,12 @@ pub fn use_selectable_list(
 
     validation_context.validators.update(|list| list.push(validator.clone()));
 
+    on_cleanup(move || {
+        validation_context.validators.update(|list| {
+            list.retain(|v| *v.get_untracked().input_name != *validator.get_untracked().input_name)
+        });
+    });
+    
     //#endregion
 
     ListController {
