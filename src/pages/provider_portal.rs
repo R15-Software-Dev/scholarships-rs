@@ -17,7 +17,7 @@ pub fn ProviderPortal() -> impl IntoView {
                             title="Profile"
                             description="Edit user profile"
                             icon="/Person_Black.png"
-                            path="/"
+                            path="/providers/profile"
                             />
                         <DashboardButton
                             title="Create Scholarship"

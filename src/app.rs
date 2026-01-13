@@ -1,9 +1,9 @@
-use crate::pages::{AboutPage, HomePage, LoanerPage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage};
-use leptos::leptos_dom::log;
+use crate::pages::{AboutPage, HomePage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm};
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge};
 use leptos_router::{components::{Route, Router, Routes, ParentRoute}, path};
+use crate::components::ToastList;
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -65,15 +65,12 @@ pub fn AppWithRoutes() -> impl IntoView {
     provide_meta_context();
     
     let current_origin = use_origin();
-    log!("Current origin: {}", current_origin);
 
     // Authentication setup
     let parameters = AuthParameters {
         issuer: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Lfjuy5zaM".into(),
         client_id: "10jr2h3vtpu9n7gj46pvg5qo2q".into(),
         redirect_uri: format!("{}/", use_origin()),
-        // redirect_uri: Url::parse(format!("{}", current_origin).as_str()).unwrap().to_string(),
-        // redirect_uri: Url::parse("http://localhost:3000").unwrap().to_string(),
         post_logout_redirect_uri: current_origin,
         scope: Some("openid%20profile%20email".into()),
         audience: None,
@@ -98,22 +95,26 @@ pub fn AppWithRoutes() -> impl IntoView {
         <Title text="R15 Scholarship App DEV" />
         
         <main>
-            // TODO Create a 404 page
-            <Routes fallback=|| "Page not found.".into_view()>
-                <Route path=path!("") view=HomePage/>
-                <Route path=path!("/about") view=AboutPage/>
-                <Route path=path!("/test_page") view=TestPage/>
-                <Route path=path!("/comparison") view=ComparisonTestPage />
-                <Route path=path!("/providers") view=ProviderPortal/>
-                <ParentRoute path=path!("/providers/scholarships") view=ScholarshipInfoPage>
-                    <Route path=path!(":id") view=ScholarshipInfoPage/>
-                    <Route path=path!("") view=ScholarshipInfoPage/>
-                </ParentRoute>
-                <ParentRoute path=path!("loaners") view=LoanerPage>
-                    <Route path=path!("") view=LoanerPage />
-                    <Route path=path!(":form_name") view=LoanerPage />
-                </ParentRoute>
-            </Routes>
+            <ToastList>
+                // TODO Create a 404 page
+                <Routes fallback=|| "Page not found.".into_view()>
+                    <Route path=path!("") view=HomePage/>
+                    <Route path=path!("/about") view=AboutPage/>
+                    <Route path=path!("/test_page") view=TestPage/>
+                    <Route path=path!("/comparison") view=ComparisonTestPage />
+                    <Route path=path!("/providers") view=ProviderPortal/>
+                    <Route path=path!("/providers/profile") view=ProviderContactPage />
+                    <ParentRoute path=path!("/providers/scholarships") view=ScholarshipInfoPage>
+                        <Route path=path!(":id") view=ScholarshipInfoPage/>
+                        <Route path=path!("") view=ScholarshipInfoPage/>
+                    </ParentRoute>
+                    <ParentRoute path=path!("loaners") view=LoanerShell>
+                        <Route path=path!("") view=LoanerFallback />
+                        <Route path=path!("borrowing") view=LoanerBorrowForm />
+                        <Route path=path!("returning") view=LoanerReturnForm />
+                    </ParentRoute>
+                </Routes>
+            </ToastList>
         </main>
     }
 }

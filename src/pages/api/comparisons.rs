@@ -1,8 +1,12 @@
+use std::collections::HashMap;
 #[cfg(feature = "ssr")]
 use crate::pages::utils::server_utils::create_dynamo_client;
 
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::error::ProvideErrorMetadata;
+
+#[cfg(feature = "ssr")]
+use leptos::logging::log;
 
 use crate::common::{
     ComparisonData, ComparisonType, MapListComparison, NumberComparison, NumberListComparison,
@@ -186,6 +190,15 @@ fn create_sports_comparisons() -> Vec<ComparisonData> {
 
 #[allow(unused)]
 fn make_comp_list() -> Vec<ComparisonData> {
+    let gpa_3 = ComparisonData::new(
+        "gpa_3",
+        "weighted_gpa",
+        ComparisonType::Number(NumberComparison::GreaterThanOrEqual),
+        ValueType::Number(Some(3.0.to_string())),
+        "GPA Limits",
+        "GPA >= 3.0",
+    );
+
     let test_comp = ComparisonData::new(
         "math_sat_comp",
         "math_sat",
@@ -194,21 +207,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
         "Academic Information",
         "Math SAT Score > 650",
     );
-
-    let service_hours_25 = ComparisonData::new(
-        "map_sum_comp",
-        "community_involvement",
-        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
-            "service_hours".to_string(),
-            Box::new(NumberListComparison::Sum(Box::new(
-                NumberComparison::GreaterThanOrEqual,
-            ))),
-        )),
-        ValueType::Number(Some(25.to_string())),
-        "Community Involvement",
-        "25 service hours",
-    );
-
+    
     let service_hours_20 = ComparisonData::new(
         "service_hours_20",
         "community_involvement",
@@ -219,8 +218,22 @@ fn make_comp_list() -> Vec<ComparisonData> {
             ))),
         )),
         ValueType::Number(Some(20.to_string())),
-        "Community Involvement",
-        "20 service hours",
+        "Community Service",
+        "20+ service hours",
+    );
+
+    let service_hours_25 = ComparisonData::new(
+        "service_hours_25",
+        "community_involvement",
+        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
+            "service_hours".to_string(),
+            Box::new(NumberListComparison::Sum(Box::new(
+                NumberComparison::GreaterThanOrEqual,
+            ))),
+        )),
+        ValueType::Number(Some(25.to_string())),
+        "Community Service",
+        "25+ service hours",
     );
 
     let service_hours_30 = ComparisonData::new(
@@ -233,8 +246,8 @@ fn make_comp_list() -> Vec<ComparisonData> {
             ))),
         )),
         ValueType::Number(Some(30.to_string())),
-        "Community Involvement",
-        "30 service hours",
+        "Community Service",
+        "30+ service hours",
     );
 
     let residency_southbury = ComparisonData::new(
@@ -260,7 +273,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
         "attended_bas",
         ComparisonType::Text(TextComparison::Matches),
         ValueType::String(Some("Yes".to_string())),
-        "Miscellaneous",
+        "Additional Eligibility Factors",
         "Attended BAS",
     );
 
@@ -269,7 +282,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
         "middsouth_church",
         ComparisonType::Text(TextComparison::Matches),
         ValueType::String(Some("Yes".to_string())),
-        "Miscellaneous",
+        "Additional Eligibility Factors",
         "Member of Midd-South Church",
     );
 
@@ -278,7 +291,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
         "family_military_service",
         ComparisonType::Text(TextComparison::Matches),
         ValueType::String(Some("Yes".to_string())),
-        "Miscellaneous",
+        "Additional Eligibility Factors",
         "Family with Military Service",
     );
 
@@ -286,6 +299,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
     let mut major_comps = Vec::<ComparisonData>::new();
 
     let mut comp_list = vec![
+        gpa_3,
         test_comp,
         service_hours_20,
         service_hours_25,
@@ -305,8 +319,6 @@ fn make_comp_list() -> Vec<ComparisonData> {
 
 #[server(CreateTestComparisons, endpoint = "/comparisons/create-test")]
 pub async fn create_test_comparisons() -> Result<(), ServerFnError> {
-    use leptos::logging::log;
-
     let client = create_dynamo_client().await;
 
     log!("Creating test comparisons");
@@ -331,8 +343,6 @@ pub async fn create_test_comparisons() -> Result<(), ServerFnError> {
 
 #[server]
 pub async fn get_comparison_info() -> Result<Vec<ComparisonData>, ServerFnError> {
-    use leptos::logging::log;
-
     let client = create_dynamo_client().await;
 
     log!("Getting all comparisons from the database");
@@ -351,6 +361,46 @@ pub async fn get_comparison_info() -> Result<Vec<ComparisonData>, ServerFnError>
                 Ok(serde_dynamo::from_items(items)?)
             } else {
                 Ok(vec![])
+            }
+        }
+        Err(err) => {
+            let msg = err.message().unwrap_or("An unknown error occurred");
+            Err(ServerFnError::new(msg))
+        }
+    }
+}
+
+#[server]
+pub async fn get_comparisons_categorized() -> Result<HashMap<String, Vec<ComparisonData>>, ServerFnError> {
+    let client = create_dynamo_client().await;
+    log!("Getting all comparisons from the database, by category.");
+
+    match client
+        .scan()
+        .table_name("leptos-comparison-test")
+        .send()
+        .await
+    {
+        Ok(output) => {
+            if let Some(items) = output.items {
+                log!("Found comparisons, categorizing.");
+
+                let items: Vec<ComparisonData> = serde_dynamo::from_items(items)?;
+
+                let categorized = items.iter().fold(
+                    HashMap::<String, Vec<ComparisonData>>::new(), |mut map, comp| {
+                    // Load each comparison into a map, then return that map.
+                        map.entry(comp.category.clone())
+                            .and_modify(|vec| vec.push(comp.clone()))
+                            .or_insert(vec![comp.clone()]);
+
+                        map
+                    }
+                );
+
+                Ok(categorized)
+            } else {
+                Err(ServerFnError::new("Couldn't find any comparisons."))
             }
         }
         Err(err) => {

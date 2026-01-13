@@ -8,7 +8,7 @@ use serde_dynamo::{from_item, to_item};
 use crate::common::ValueType;
 
 use crate::common::ExpandableInfo;
-use crate::components::{ActionButton, Banner, DashboardButton, OutlinedTextField, Panel, Row, Select, TextFieldType, ValidatedForm};
+use crate::components::{ActionButton, Banner, DashboardButton, OutlinedTextField, Panel, Row, Select, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
 use chrono::{FixedOffset, TimeZone};
 use leptos::Params;
 use leptos::either::{Either, EitherOf3};
@@ -19,6 +19,13 @@ use leptos_router::hooks::{use_navigate, use_params};
 use leptos_router::params::Params;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use leptos_router::components::Outlet;
+use leptos_animate::animate;
+use crate::common::animations::pop_in_out;
+// Loaner page creates a single page that contains the borrowing/returning buttons
+// and a panel for a form. At first, it will show a fallback view. At the borrowing
+// path it will show the borrow form, and at the returning path it will show the
+// return form.
 
 #[derive(Params, PartialEq)]
 struct LoanerParams {
@@ -191,7 +198,7 @@ async fn create_borrow_entry(input: ExpandableInfo) -> Result<(), ServerFnError>
 /// create a true admin page for this, simply to be able to survey and override/remove information
 /// from the lists.
 #[component]
-pub fn LoanerPage() -> impl IntoView {
+pub fn LoanerShell() -> impl IntoView {
     // Check URL params. Depending on what string is visible here, we'll display a different form.
     let params = use_params::<LoanerParams>();
     let form_passed = move || {
@@ -201,12 +208,6 @@ pub fn LoanerPage() -> impl IntoView {
             .ok()
             .and_then(|params| params.form_name.clone())
             .unwrap_or_default()
-    };
-
-    let form_view = move || match form_passed().as_str() {
-        "borrowing" => EitherOf3::A(LoanerBorrowForm),
-        "returning" => EitherOf3::B(LoanerReturnForm),
-        _ => EitherOf3::C("Choose something from the left.".into_view()),
     };
 
     // We'll create the page here - the sidebar contains all the buttons, while the form
@@ -234,7 +235,9 @@ pub fn LoanerPage() -> impl IntoView {
                     />
                 </div>
                 <div class="flex flex-2">
-                    <Panel>{form_view}</Panel>
+                    <Panel>
+                        <Outlet />
+                    </Panel>
                 </div>
             </div>
         </div>
@@ -242,7 +245,26 @@ pub fn LoanerPage() -> impl IntoView {
 }
 
 #[component]
+pub fn LoanerFallback() -> impl IntoView {
+    view! {
+        <div
+            class="flex flex-col items-center justify-center"
+            use:animate=pop_in_out()
+        >
+            <div class="text-3xl font-bold mb-2">
+                "Chromebook Loaner Form"
+            </div>
+            <div class="text-lg">
+                "Select an option from the left to begin."
+            </div>
+        </div>
+    }
+}
+
+#[component]
 pub fn LoanerBorrowForm() -> impl IntoView {
+    let navigate = use_navigate();
+
     // Register server actions.
     let create_entry_action = ServerAction::<CreateBorrowEntry>::new();
 
@@ -258,12 +280,29 @@ pub fn LoanerBorrowForm() -> impl IntoView {
         });
     };
 
+    //#region Toast Logic
+    let mut toast_context = expect_context::<ToastContext>();
+    Effect::new(move || {
+        if let Some(Ok(_)) = create_entry_action.value().get() {
+            create_entry_action.clear();
+            toast_context.toast(
+                Toast::new()
+                    .id(uuid::Uuid::new_v4().to_string())
+                    .header("Borrower Added!")
+                    .msg("You can take your loaner now.")
+            );
+            navigate("/loaners", Default::default());
+        }
+    });
+    //#endregion
+
     view! {
-        <ValidatedForm on_submit=Callback::new(on_submit)>
-            <div class="flex flex-col justify-center gap-2 mb-1 py-3 px-2">
-                <h2 class="text-2xl font-bold">"Borrower Information"</h2>
-                <p class="text-lg">"Please fill out the form below."</p>
-            </div>
+        <ValidatedForm
+            use:animate=pop_in_out()
+            on_submit=Callback::new(on_submit)
+            title="Borrower Information"
+            description="Please fill out the form below."
+        >
             <Row>
                 <OutlinedTextField
                     label="First Name:"
@@ -330,7 +369,7 @@ pub fn LoanerBorrowForm() -> impl IntoView {
 #[component]
 pub fn LoanerReturnForm() -> impl IntoView {
     let navigate = use_navigate();
-    
+
     // Register server actions
     let check_in_action = ServerAction::<CheckInLoaner>::new();
 
@@ -352,12 +391,19 @@ pub fn LoanerReturnForm() -> impl IntoView {
 
     // Create an effect to run after check-in - refreshes the list with another scan request.
     // This could be beneficial if we ever decided to make multiple loaner kiosks (think SAT days)
+    let mut toasts = expect_context::<ToastContext>();
     Effect::new(move || {
         if let Some(Ok(_)) = check_in_action.value().get() {
             // Return to the main page.
             if let Some(dialog) = dialog_ref.get() {
                 dialog.close();
             }
+            toasts.toast(
+                Toast::new()
+                    .id(uuid::Uuid::new_v4())
+                    .header("Check in successful!")
+                    .msg("Don't forget to take your collateral.")
+            );
             navigate("/loaners", Default::default());
             check_in_action.clear();
         }
@@ -383,6 +429,7 @@ pub fn LoanerReturnForm() -> impl IntoView {
 
     view! {
         <dialog
+            use:animate=pop_in_out()
             class="p-3 m-auto rounded-md shadow-lg/33 backdrop:backdrop-blur-xs backdrop:transition-backdrop-filter"
             node_ref=dialog_ref>
             <h2 class="text-2xl font-bold">"Confirmation"</h2>
@@ -398,12 +445,16 @@ pub fn LoanerReturnForm() -> impl IntoView {
             <ActionButton on:click=close_dialog disabled=dialog_disabled>"Close"</ActionButton>
             <ActionButton on:click=dialog_check_in disabled=dialog_disabled>"Check In"</ActionButton>
         </dialog>
-        <div class="flex flex-col justify-center gap-2 mb-3 py-3 px-2">
-            <h2 class="text-2xl font-bold">"Student List"</h2>
-            <p class="text-lg">"Please select your name from the list."</p>
-        </div>
-        <Suspense fallback=move || "Loading...".into_view()>
-            <div class="flex flex-col gap-2 m-2">
+
+        <div
+            class="flex flex-col gap-2 m-2"
+            use:animate=pop_in_out()
+        >
+            <div class="flex flex-col justify-center gap-2 mb-3 py-3 px-2">
+                <h2 class="text-2xl font-bold">"Student List"</h2>
+                <p class="text-lg">"Please select your name from the list."</p>
+            </div>
+            <Suspense fallback=move || "Loading...".into_view()>
                 {move || {
                     match return_list_resource.get() {
                         Some(loaner_list) => {
@@ -445,7 +496,7 @@ pub fn LoanerReturnForm() -> impl IntoView {
                         None => Either::Right("No loaners found.".into_view())
                     }
                 }}
-            </div>
-        </Suspense>
+            </Suspense>
+        </div>
     }
 }

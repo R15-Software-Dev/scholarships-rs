@@ -6,11 +6,10 @@ use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::{use_navigate, use_params};
 use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
-use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, ValidatedForm};
+use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
 use super::UnauthenticatedPage;
-use crate::common::ComparisonData;
 use crate::pages::utils::get_user_claims;
-use super::api::{get_comparison_info, get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship};
+use super::api::{get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized, CreateTestComparisons};
 
 
 /// # Scholarship Info Page
@@ -41,31 +40,26 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
     // Remember that we only want to show the page after we've got authentication information
     // and if there's data for us to use.
     view! {
-        <Banner
-            title="R15 Scholarships"
-            logo="/PHS_Stacked_Acronym.png"
-            path="/"
-        />
-        <AuthLoaded fallback=Loading>
-            <Authenticated unauthenticated=UnauthenticatedPage>
-                <div class="flex flex-row align-top items-start">
-                    <div class="flex flex-col flex-1" />
-                    <ScholarshipList 
-                        refresh_token=list_refresh
-                        on_delete=on_delete
-                    />
-                    <Transition fallback=Loading>
-                        <ScholarshipForm
-                            scholarship_id=scholarship_id
-                            on_submit=move || {
-                                list_refresh.update(|n| *n += 1);
-                            }
-                        />
-                    </Transition>
-                    <div class="flex flex-col flex-1" />
-                </div>
-            </Authenticated>
-        </AuthLoaded>
+        <Banner title="R15 Scholarships" logo="/PHS_Stacked_Acronym.png" path="/" />
+        <ToastList>
+            <AuthLoaded fallback=Loading>
+                <Authenticated unauthenticated=UnauthenticatedPage>
+                    <div class="flex flex-row align-top items-start">
+                        <div class="flex flex-col flex-1" />
+                        <ScholarshipList refresh_token=list_refresh on_delete=on_delete />
+                        <Transition fallback=Loading>
+                            <ScholarshipForm
+                                scholarship_id=scholarship_id
+                                on_submit=move || {
+                                    list_refresh.update(|n| *n += 1);
+                                }
+                            />
+                        </Transition>
+                        <div class="flex flex-col flex-1" />
+                    </div>
+                </Authenticated>
+            </AuthLoaded>
+        </ToastList>
     }
 }
 
@@ -182,37 +176,41 @@ fn ScholarshipList(
     });
     
     view! {
-        <dialog
-            node_ref=delete_dialog_ref
-            class="m-auto p-2"
-        >
+        <dialog node_ref=delete_dialog_ref class="m-auto p-2">
             <h2 class="text-2xl font-bold">"Confirm Deletion"</h2>
             <p>
                 "Are you sure you want to delete "
                 {move || {
-                    pending_delete.get().map(|s| {
-                        s.data.get("name").unwrap_or(&ValueType::String(None))
-                            .as_string()
-                            .unwrap_or_default()
-                            .unwrap_or("<no name found>".to_string())
-                    })
-                }}
-                "?"
+                    pending_delete
+                        .get()
+                        .map(|s| {
+                            s.data
+                                .get("name")
+                                .unwrap_or(&ValueType::String(None))
+                                .as_string()
+                                .unwrap_or_default()
+                                .unwrap_or("<no name found>".to_string())
+                        })
+                }} "?"
             </p>
             <ActionButton
                 on:click=move |_| {
-                    let subject = pending_delete.get().map(|s| s.subject.clone()).unwrap_or_default();
+                    let subject = pending_delete
+                        .get()
+                        .map(|s| s.subject.clone())
+                        .unwrap_or_default();
                     log!("Deleting scholarship with subject {}", subject);
-                    delete_action.dispatch(DeleteProviderScholarship {
-                        scholarship_id: subject,
-                        provider_id: provider_id.get().unwrap_or_default()
-                    });
+                    delete_action
+                        .dispatch(DeleteProviderScholarship {
+                            scholarship_id: subject,
+                            provider_id: provider_id.get().unwrap_or_default(),
+                        });
                 }
                 disabled=modal_disabled
-            >"Confirm"</ActionButton>
-            <ActionButton
-                on:click=move |_| pending_delete.set(None)
-            >"Cancel"</ActionButton>
+            >
+                "Confirm"
+            </ActionButton>
+            <ActionButton on:click=move |_| pending_delete.set(None)>"Cancel"</ActionButton>
         </dialog>
         <div class="w-75">
             <Panel>
@@ -222,31 +220,42 @@ fn ScholarshipList(
                 <Transition fallback=Loading>
                     <div class="flex flex-col gap-2">
                         {move || {
-                            scholarships.get().map(|result| {
-                                match result {
-                                    Ok(list) => {
-                                        let views = list.iter().map(|entry| {
-                                            view! {
-                                                <ScholarshipListEntry scholarship=entry.clone()
-                                                    on_delete=Callback::new(on_item_delete)/>
-                                            }
-                                        });
-                                        Either::Left(views.collect_view())
+                            scholarships
+                                .get()
+                                .map(|result| {
+                                    match result {
+                                        Ok(list) => {
+                                            let views = list
+                                                .iter()
+                                                .map(|entry| {
+                                                    view! {
+                                                        <ScholarshipListEntry
+                                                            scholarship=entry.clone()
+                                                            on_delete=Callback::new(on_item_delete)
+                                                        />
+                                                    }
+                                                });
+                                            Either::Left(views.collect_view())
+                                        }
+                                        Err(err) => {
+                                            Either::Right(
+                                                view! {
+                                                    <div>
+                                                        <p>"Failed to load scholarship list: "{err.to_string()}</p>
+                                                    </div>
+                                                },
+                                            )
+                                        }
                                     }
-                                    Err(err) => {
-                                        Either::Right(view! {
-                                            <div>
-                                                <p>"Failed to load scholarship list: "{err.to_string()}</p>
-                                            </div>
-                                        })
-                                    }
-                                }
-                            }).collect_view()
+                                })
+                                .collect_view()
                         }}
                     </div>
                     <div>
-                        <div class="p-2 bg-red-800 rounded-md text-center text-white hover:bg-red-900 transition-all"
-                            on:click=create_on_click>
+                        <div
+                            class="p-2 bg-red-800 rounded-md text-center text-white hover:bg-red-900 transition-all cursor-pointer"
+                            on:click=create_on_click
+                        >
                             "Create New"
                         </div>
                     </div>
@@ -306,13 +315,15 @@ fn ScholarshipListEntry(
                 <span>{name}</span>
             </div>
             <div class="flex flex-row">
-                <div class="p-2 flex-1 bg-red-800 border-r border-white rounded-bl-md text-white text-center
+                <div
+                    class="p-2 flex-1 bg-red-800 border-r border-white rounded-bl-md text-white text-center
                     hover:bg-red-900 cursor-pointer transition-all"
                     on:click=edit_click
                 >
                     "Edit"
                 </div>
-                <div class="p-2 flex-1 bg-red-800 border-l border-white rounded-br-md text-white text-center
+                <div
+                    class="p-2 flex-1 bg-red-800 border-l border-white rounded-br-md text-white text-center
                     hover:bg-red-900 cursor-pointer transition-all"
                     on:click=move |_| on_delete.run(scholarship.clone())
                 >
@@ -350,15 +361,6 @@ fn ScholarshipForm(
     /// submission fails, this function is not run.
     #[prop(into)] on_submit: Callback<()>
 ) -> impl IntoView {
-    // let result_msg = Signal::derive(move || {
-    //     match submit_status.get() {
-    //         SubmitStatus::Idle => "".into(),
-    //         SubmitStatus::Sending => "Sending submission...".into(),
-    //         SubmitStatus::Success => "Success".into(),
-    //         SubmitStatus::Error(msg) => format!("Error: {}", msg),
-    //     }
-    // });
-
     let submit_action = ServerAction::<CreateScholarshipInfo>::new();
 
     let submit_status = RwSignal::new(SubmitStatus::Idle);
@@ -382,17 +384,19 @@ fn ScholarshipForm(
             }
         }
     });
-    
-    let comparison_list: Resource<Vec<ComparisonData>> = Resource::new(
-        move || scholarship_id.get(),  // There's no input to this function.
+
+    let comparison_lists = Resource::new(
+        move || scholarship_id.get().is_some(),
         async move |_| {
-            get_comparison_info().await
-                .unwrap_or_else(|e| {
-                    log!("Failed to get comparison info: {:?}", e);
-                    Vec::new()
-                })
+            get_comparisons_categorized().await
         }
     );
+
+    Effect::new(move || {
+        if let Some(Ok(map)) = comparison_lists.get() {
+            log!("Available categories: {:?}", map.keys());
+        }
+    });
 
     let scholarship_info = Resource::new(
         move || scholarship_id.get(),
@@ -406,31 +410,66 @@ fn ScholarshipForm(
     );
 
     let form_data = RwSignal::new(HashMap::new());
+    let chips_data = RwSignal::new(HashMap::new());
     
     Effect::new(move || {
         if let Some(Ok(scholarship)) = scholarship_info.get() {
+            // Get the default chips data.
+            let chips_default = if let Some(ValueType::Map(Some(map))) = scholarship.data.get("requirements") {
+                map.clone()
+            } else {
+                HashMap::new()
+            };
+
+            chips_data.set(chips_default);
             form_data.set(scholarship.data);
         }
     });
-    
-    let comparison_ids = Memo::new(move |_| {
-        comparison_list.get().map(|list| list.iter()
-            .map(|comp| comp.clone().id)
+
+    let get_comp_category = move |category: &str| {
+        if let Some(Ok(map)) = comparison_lists.get() {
+            map.get(category).unwrap_or(&Vec::new()).clone()
+        } else {
+            Vec::new()
+        }
+    };
+
+    let get_comp_ids = move |category: &str| {
+        get_comp_category(category)
+            .into_iter()
+            .map(|comp| comp.id)
             .collect::<Vec<String>>()
-        ).unwrap_or_default()
-    });
-    
-    let comparison_text = Memo::new(move |_| {
-        comparison_list.get().map(|list| list.iter()
-            .map(|comp| comp.clone().display_text)
+    };
+
+    let get_comp_text = move |category: &str| {
+        get_comp_category(category)
+            .into_iter()
+            .map(|comp| comp.display_text)
             .collect::<Vec<String>>()
-        ).unwrap_or_default()
-    });
+    };
+
+    // Get comparison lists.
+    let sports_ids = Signal::derive(move || get_comp_ids("Sports Participation"));
+    let sports_text = Signal::derive(move || get_comp_text("Sports Participation"));
+
+    let misc_ids = Signal::derive(move || get_comp_ids("Additional Eligibility Factors"));
+    let misc_text = Signal::derive(move || get_comp_text("Additional Eligibility Factors"));
+
+    let comm_ids = Signal::derive(move || get_comp_ids("Community Service"));
+    let comm_text = Signal::derive(move || get_comp_text("Community Service"));
+
+    let res_ids = Signal::derive(move || get_comp_ids("Residency"));
+    let res_text = Signal::derive(move || get_comp_text("Residency"));
+
+    let gpa_ids = Signal::derive(move || get_comp_ids("GPA Limits"));
+    let gpa_text = Signal::derive(move || get_comp_text("GPA Limits"));
 
     // We'll collect the scholarship's name, num_awards, amount_per_award, total_awards,
     // fafsa_required, award_to, transcript_required, recipient_selection, essay_requirement (and prompt)
     // award_night_remarks
 
+    let mut toasts = expect_context::<ToastContext>();
+    
     let on_submit = move |_| {
         let mut info = ExpandableInfo::new(scholarship_id.get().unwrap_or_default());
         info.data = form_data.get();
@@ -440,130 +479,200 @@ fn ScholarshipForm(
             info
         });
     };
+    
+    Effect::new(move || {
+        submit_action.value().get().is_some()
+            .then(|| {
+                log!("Displaying toasts!");
+                toasts.toast(
+                    Toast::new()
+                        .id(uuid::Uuid::new_v4())
+                        .msg("Succesfully submitted.")
+                );
+                
+                submit_action.clear();
+            });
+    });
+
+    let create_comps = ServerAction::<CreateTestComparisons>::new();
 
     view! {
         <Panel>
             <Show
                 when=move || scholarship_id.get().is_some()
-                fallback=|| view! { <p>"Choose a scholarship from the right, or create a new one."</p> }
+                fallback=|| {
+                    view! { <p>"Choose a scholarship from the right, or create a new one."</p> }
+                }
             >
                 <Suspense fallback=Loading>
-                    <ValidatedForm on_submit=Callback::new(on_submit)>
+                    <ValidatedForm
+                        on_submit=Callback::new(on_submit)
+                        title="Scholarship Info Form"
+                        description="Create or edit a scholarship. Input all information and click Submit."
+                    >
                         {move || {
-                            scholarship_info.get()
+                            scholarship_info
+                                .get()
                                 .map(|res_scholarship| {
                                     match res_scholarship {
                                         Ok(_) => {
-                                            Either::Left(view! {
-                                                <Row>
-                                                    <h1 class="text-3xl font-bold">
-                                                        "Scholarship Info Form (test)"
-                                                    </h1>
-                                                </Row>
-                                                <Row>
-                                                    <OutlinedTextField
-                                                        label="Scholarship Name"
-                                                        placeholder="Example Scholarship Name"
-                                                        disabled=elements_disabled
-                                                        data_member="name"
-                                                        data_map=form_data
-                                                    />
-                                                </Row>
-                                                <Row>
-                                                    <OutlinedTextField
-                                                        label="Amount per award: (if multiple, enter the highest value)"
-                                                        placeholder="Enter an amount..."
-                                                        disabled=elements_disabled
-                                                        data_member="amount_per_award"
-                                                        data_map=form_data
-                                                        input_type=TextFieldType::Number
-                                                    />
-                                                </Row>
-                                                <Row>
-                                                    <OutlinedTextField
-                                                        label="Total number of awards:"
-                                                        placeholder="Enter an amount..."
-                                                        disabled=elements_disabled
-                                                        data_member="num_awards"
-                                                        data_map=form_data
-                                                        input_type=TextFieldType::Number
-                                                    />
-                                                </Row>
-                                                <Row>
-                                                    <OutlinedTextField
-                                                        label="Total amount of all awards:"
-                                                        placeholder="Enter an amount..."
-                                                        disabled=elements_disabled
-                                                        data_member="total_awards"
-                                                        data_map=form_data
-                                                        input_type=TextFieldType::Number
-                                                    />
-                                                </Row>
-                                                <Row>
-                                                    <RadioList
-                                                        data_member="fafsa_required"
-                                                        data_map=form_data
-                                                        items=vec!["Yes".to_string(), "No".to_string()]
-                                                        disabled=elements_disabled
-                                                        label="Do you require student financial information?"
-                                                    />
-                                                </Row>
-                                                <Row>
-                                                    <RadioList
-                                                        data_member="transcript_required"
-                                                        data_map=form_data
-                                                        items=vec!["Yes".to_string(), "No".to_string()]
-                                                        disabled=elements_disabled
-                                                        label="Do you require a student transcript?"
-                                                    />
-                                                </Row>
-                                                <Row>
-                                                    <RadioList
-                                                        data_member="award_to"
-                                                        data_map=form_data
-                                                        items=vec!["School".to_string(), "Student".to_string()]
-                                                        disabled=elements_disabled
-                                                        label="Will the award be made to the school or the student?"
-                                                    />
-                                                </Row>
-                                                <Row>
-                                                    <RadioList
-                                                        data_member="essay_required"
-                                                        data_map=form_data
-                                                        items=vec!["Yes".to_string(), "No".to_string()]
-                                                        disabled=elements_disabled
-                                                        label="Do you require a student essay?"
-                                                    />
-                                                </Row>
-                                                <Row>
-                                                    <RadioList
-                                                        data_member="essay_prompt"
-                                                        data_map=form_data
-                                                        items=vec!["Test 1", "Test 2", "Test 3"].iter().map(|s| s.to_string()).collect()
-                                                        disabled=elements_disabled
-                                                        label="If so, select a prompt from the list below."
-                                                    />
-                                                </Row>
-                                                <Row>
-                                                    <ChipsList
-                                                        label="Scholarship Requirements"
-                                                        data_member="requirements"
-                                                        data_map=form_data
-                                                        values=comparison_ids
-                                                        displayed_text=comparison_text
-                                                    />
-                                                </Row>
-                                            })
+                                            Either::Left(
+                                                view! {
+                                                    <Row>
+                                                        <h1 class="text-3xl font-bold">
+                                                            "Scholarship Info Form (test)"
+                                                        </h1>
+                                                    </Row>
+                                                    <Row>
+                                                        <OutlinedTextField
+                                                            label="Scholarship Name"
+                                                            placeholder="Example Scholarship Name"
+                                                            disabled=elements_disabled
+                                                            data_member="name"
+                                                            data_map=form_data
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <OutlinedTextField
+                                                            label="Amount per award: (if multiple, enter the highest value)"
+                                                            placeholder="Enter an amount..."
+                                                            disabled=elements_disabled
+                                                            data_member="amount_per_award"
+                                                            data_map=form_data
+                                                            input_type=TextFieldType::Number
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <OutlinedTextField
+                                                            label="Total number of awards:"
+                                                            placeholder="Enter an amount..."
+                                                            disabled=elements_disabled
+                                                            data_member="num_awards"
+                                                            data_map=form_data
+                                                            input_type=TextFieldType::Number
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <OutlinedTextField
+                                                            label="Total amount of all award(s): (estimates are acceptable)"
+                                                            placeholder="Enter an amount..."
+                                                            disabled=elements_disabled
+                                                            data_member="total_awards"
+                                                            data_map=form_data
+                                                            input_type=TextFieldType::Number
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <RadioList
+                                                            data_member="fafsa_required"
+                                                            data_map=form_data
+                                                            items=vec!["Yes".to_string(), "No".to_string()]
+                                                            disabled=elements_disabled
+                                                            label="Do you require student FAFSA information?"
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <RadioList
+                                                            data_member="transcript_required"
+                                                            data_map=form_data
+                                                            items=vec!["Yes".to_string(), "No".to_string()]
+                                                            disabled=elements_disabled
+                                                            label="Do you require a student transcript?"
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <RadioList
+                                                            data_member="award_to"
+                                                            data_map=form_data
+                                                            items=vec!["School".to_string(), "Student".to_string()]
+                                                            disabled=elements_disabled
+                                                            label="Will the award be made to the school or the student?"
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <RadioList
+                                                            data_member="essay_required"
+                                                            data_map=form_data
+                                                            items=vec!["Yes".to_string(), "No".to_string()]
+                                                            disabled=elements_disabled
+                                                            label="Do you require a student essay?"
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <RadioList
+                                                            data_member="essay_prompt"
+                                                            data_map=form_data
+                                                            items=vec!["Test 1", "Test 2", "Test 3"]
+                                                                .iter()
+                                                                .map(|s| s.to_string())
+                                                                .collect()
+                                                            disabled=elements_disabled
+                                                            label="If so, select a prompt from the list below."
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <ChipsList
+                                                            label="GPA Requirements"
+                                                            data_member="gpa"
+                                                            data_map=chips_data
+                                                            values=gpa_ids
+                                                            displayed_text=gpa_text
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <ChipsList
+                                                            label="Sports Participation"
+                                                            data_member="sports_participation"
+                                                            data_map=chips_data
+                                                            values=sports_ids
+                                                            displayed_text=sports_text
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <ChipsList
+                                                            label="Community Service"
+                                                            data_member="community_service"
+                                                            data_map=chips_data
+                                                            values=comm_ids
+                                                            displayed_text=comm_text
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <ChipsList
+                                                            label="Residency"
+                                                            data_member="residency"
+                                                            data_map=chips_data
+                                                            values=res_ids
+                                                            displayed_text=res_text
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <ChipsList
+                                                            label="Additional Eligibility Factors"
+                                                            data_member="misc"
+                                                            data_map=chips_data
+                                                            values=misc_ids
+                                                            displayed_text=misc_text
+                                                        />
+                                                    </Row>
+                                                },
+                                            )
                                         }
                                         Err(err) => {
-                                            Either::Right(view! {
-                                                <p>"Error while getting scholarship: "{err.to_string()}</p>
-                                            })
+                                            Either::Right(
+                                                view! {
+                                                    <p>"Error while getting scholarship: "{err.to_string()}</p>
+                                                },
+                                            )
                                         }
                                     }
-                                }).collect_view()
+                                })
+                                .collect_view()
                         }}
                     </ValidatedForm>
+                    <ActionButton on:click=move |_| {
+                        create_comps.dispatch(CreateTestComparisons {});
+                    }>"Create Comparisons"</ActionButton>
                 </Suspense>
             </Show>
         </Panel>
