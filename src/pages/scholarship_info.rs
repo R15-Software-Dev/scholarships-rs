@@ -416,8 +416,10 @@ fn ScholarshipForm(
         if let Some(Ok(scholarship)) = scholarship_info.get() {
             // Get the default chips data.
             let chips_default = if let Some(ValueType::Map(Some(map))) = scholarship.data.get("requirements") {
+                log!("Found requirements map: {:?}", map);
                 map.clone()
             } else {
+                log!("Couldn't find requirements map in scholarship info. Using empty map.");
                 HashMap::new()
             };
 
@@ -464,15 +466,15 @@ fn ScholarshipForm(
     let gpa_ids = Signal::derive(move || get_comp_ids("GPA Limits"));
     let gpa_text = Signal::derive(move || get_comp_text("GPA Limits"));
 
-    // We'll collect the scholarship's name, num_awards, amount_per_award, total_awards,
-    // fafsa_required, award_to, transcript_required, recipient_selection, essay_requirement (and prompt)
-    // award_night_remarks
+    let major_ids = Signal::derive(move || get_comp_ids("Majors"));
+    let major_text = Signal::derive(move || get_comp_text("Majors"));
 
     let mut toasts = expect_context::<ToastContext>();
     
     let on_submit = move |_| {
         let mut info = ExpandableInfo::new(scholarship_id.get().unwrap_or_default());
         info.data = form_data.get();
+        info.data.insert("requirements".to_string(), ValueType::Map(Some(chips_data.get())));
 
         log!("Map values: {:?}", info.data);
         submit_action.dispatch(CreateScholarshipInfo {
@@ -518,11 +520,6 @@ fn ScholarshipForm(
                                         Ok(_) => {
                                             Either::Left(
                                                 view! {
-                                                    <Row>
-                                                        <h1 class="text-3xl font-bold">
-                                                            "Scholarship Info Form (test)"
-                                                        </h1>
-                                                    </Row>
                                                     <Row>
                                                         <OutlinedTextField
                                                             label="Scholarship Name"
@@ -644,6 +641,15 @@ fn ScholarshipForm(
                                                             data_map=chips_data
                                                             values=res_ids
                                                             displayed_text=res_text
+                                                        />
+                                                    </Row>
+                                                    <Row>
+                                                        <ChipsList
+                                                            label="Majors"
+                                                            data_member="major"
+                                                            data_map=chips_data
+                                                            values=major_ids
+                                                            displayed_text=major_text
                                                         />
                                                     </Row>
                                                     <Row>
