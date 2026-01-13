@@ -17,6 +17,8 @@ use crate::common::ExpandableInfo;
 use leptos::prelude::ServerFnError;
 use leptos::server;
 
+static SCHOLARSHIPS_TABLE: &str = "leptos-scholarship-test";
+
 #[server(GetScholarshipInfo, endpoint = "/scholarship/info/get")]
 pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFnError> {
     let client = create_dynamo_client().await;
@@ -26,7 +28,7 @@ pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFn
     log!("Getting scholarship info using id {:?}", id);
     match client
         .get_item()
-        .table_name("leptos-scholarship-test")
+        .table_name(SCHOLARSHIPS_TABLE)
         .key("subject", AttributeValue::S(id.clone()))
         .send()
         .await
@@ -58,7 +60,7 @@ pub async fn create_scholarship_info(info: ExpandableInfo) -> Result<(), ServerF
 
     match client
         .put_item()
-        .table_name("leptos-scholarship-test")
+        .table_name(SCHOLARSHIPS_TABLE)
         .set_item(Some(serde_dynamo::to_item(&info)?))
         .send()
         .await
@@ -77,7 +79,7 @@ pub async fn get_all_scholarship_info() -> Result<Vec<ExpandableInfo>, ServerFnE
     log!("Getting all scholarship info");
     match client
         .scan()
-        .table_name("leptos-scholarship-test")
+        .table_name(SCHOLARSHIPS_TABLE)
         .send()
         .await
     {
@@ -104,7 +106,7 @@ pub async fn get_provider_scholarships(provider_id: String) -> Result<Vec<Expand
     
     match client
         .scan()
-        .table_name("leptos-scholarship-test")
+        .table_name(SCHOLARSHIPS_TABLE)
         .expression_attribute_values(":id", serde_dynamo::to_attribute_value(ValueType::String(Some(provider_id)))?)
         .filter_expression("provider_id = :id")
         .send()
@@ -139,7 +141,7 @@ pub async fn register_scholarship(provider_id: String, scholarship_name: String)
         let ser_item = serde_dynamo::to_item(&item)?;
         match client
             .put_item()
-            .table_name("leptos-scholarship-test")
+            .table_name(SCHOLARSHIPS_TABLE)
             .set_item(Some(ser_item))
             .condition_expression("attribute_not_exists(subject)")
             .send()
@@ -180,7 +182,7 @@ pub async fn delete_provider_scholarship(provider_id: String, scholarship_id: St
     // otherwise everyone can delete anyone else's scholarships.
     match client
         .delete_item()
-        .table_name("leptos-scholarship-test")
+        .table_name(SCHOLARSHIPS_TABLE)
         .key("subject", AttributeValue::S(scholarship_id))
         .expression_attribute_values(":provider_id", serde_dynamo::to_attribute_value(ValueType::String(Some(provider_id)))?)
         .condition_expression("provider_id = :provider_id")

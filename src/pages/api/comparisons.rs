@@ -15,6 +15,8 @@ use crate::common::{
 use leptos::prelude::ServerFnError;
 use leptos::server;
 
+static COMPARISONS_TABLE: &str = "leptos-comparison-test";
+
 /// Helper function to create all sports comparisons. Only used to create initial
 /// comparison data, and should be removed upon completion of a comparison editor page.
 #[allow(unused)]
@@ -386,7 +388,7 @@ pub async fn create_test_comparisons() -> Result<(), ServerFnError> {
     for comparison in comp_list {
         if let Err(err) = client
             .put_item()
-            .table_name("leptos-comparison-test")
+            .table_name(COMPARISONS_TABLE)
             .set_item(Some(serde_dynamo::to_item(&comparison)?))
             .send()
             .await
@@ -409,7 +411,7 @@ pub async fn get_comparison_info() -> Result<Vec<ComparisonData>, ServerFnError>
     // id and display text, but we'll return the whole thing.
     match client
         .scan()
-        .table_name("leptos-comparison-test")
+        .table_name(COMPARISONS_TABLE)
         .send()
         .await
     {
@@ -435,7 +437,7 @@ pub async fn get_comparisons_categorized() -> Result<HashMap<String, Vec<Compari
 
     match client
         .scan()
-        .table_name("leptos-comparison-test")
+        .table_name(COMPARISONS_TABLE)
         .send()
         .await
     {
