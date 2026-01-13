@@ -10,11 +10,6 @@ use crate::pages::utils::get_user_claims;
 #[cfg(feature = "ssr")]
 use crate::pages::utils::server_utils::create_dynamo_client;
 
-#[cfg(feature = "ssr")]
-fn into_attr_map(map: HashMap<String, ValueType>) -> HashMap<String, aws_sdk_dynamodb::types::AttributeValue> {
-    map.into_iter().map(|(k, v)| (k, v.into())).collect()
-}
-
 #[server]
 async fn get_provider_contact(id: String) -> Result<HashMap<String, ValueType>, ServerFnError> {
     use aws_sdk_dynamodb::types::AttributeValue;
@@ -54,6 +49,7 @@ async fn get_provider_contact(id: String) -> Result<HashMap<String, ValueType>, 
 #[server]
 async fn put_provider_contact(id: String, contact_info: HashMap<String, ValueType>) -> Result<(), ServerFnError> {
     use aws_sdk_dynamodb::error::ProvideErrorMetadata;
+    use crate::pages::utils::server_utils::into_attr_map;
 
     let client = create_dynamo_client().await;
 
