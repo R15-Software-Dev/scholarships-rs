@@ -4,6 +4,7 @@ use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge};
 use leptos_router::{components::{Route, Router, Routes, ParentRoute}, path};
 use crate::components::ToastList;
+use leptos::logging::log;
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
