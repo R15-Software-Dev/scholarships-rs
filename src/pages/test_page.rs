@@ -1,5 +1,5 @@
 use crate::common::{DateInfo, DateRange, DateStatus};
-use crate::components::{DashboardButton, Date};
+use crate::components::{DashboardButton, DateList};
 use leptos::prelude::*;
 
 #[component]
@@ -36,50 +36,33 @@ pub fn TestPage() -> impl IntoView {
                             </div>
                             <div class="p-6 space-y-6">
                                 <div class="bg-white rounded-md p-3 space-y-2">
-                                    <Date
-                                        important_dates=vec!{
+                                    <DateList
+                                        dates=vec![
                                             DateInfo {
                                                 title: "Title".to_string(),
                                                 date: DateRange::Range("February 2nd, 2026".to_string(), "February 10th, 2026".to_string()),
                                                 description: "This is a test".to_string(),
                                                 status: DateStatus::Upcoming
-                                            }
-                                        }
-                                        icon="/Check_Style2.png"
-
-                                    />
-                                    <Date
-                                        important_dates=vec!{
+                                            },
                                             DateInfo {
                                                 title: "Scholarships Due".to_string(),
                                                 date: DateRange::Single("November 4th, 2025".to_string()),
                                                 description: "This is a test".to_string(),
                                                 status: DateStatus::Open
-                                            }
-                                        }
-                                        icon="/Warning_Style2.png"
-                                    />
-                                    <Date
-                                        important_dates=vec!{
+                                            },
                                             DateInfo {
                                                 title: "Scholarships Due".to_string(),
                                                 date: DateRange::Single("November 4th, 2025".to_string()),
                                                 description: "This is a test".to_string(),
                                                 status: DateStatus::Deadline
-                                            }
-                                        }
-                                        icon="/Warning_Style2.png"
-                                    />
-                                    <Date
-                                        important_dates=vec!{
+                                            },
                                             DateInfo {
                                                 title: "Scholarships Due".to_string(),
                                                 date: DateRange::Single("November 4th, 2025".to_string()),
                                                 description: "This is a test".to_string(),
                                                 status: DateStatus::Closed
                                             }
-                                        }
-                                        icon="/Warning_Style2.png"
+                                        ]
                                     />
                                 </div>
                             </div>
