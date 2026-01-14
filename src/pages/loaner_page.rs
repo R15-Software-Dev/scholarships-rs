@@ -328,7 +328,7 @@ pub fn LoanerBorrowForm() -> impl IntoView {
                     disabled=elements_disabled
                     data_member="email"
                     data_map=data
-                    input_type=TextFieldType::Email
+                    input_type=TextFieldType::Email(vec!["region15.org".to_string()])
                     required=true
                 />
             </Row>
