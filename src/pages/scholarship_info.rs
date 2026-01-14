@@ -491,17 +491,23 @@ fn ScholarshipForm(
     };
 
     Effect::new(move || {
-        submit_action.value().get().is_some()
-            .then(|| {
-                log!("Displaying toasts!");
-                toasts.toast(
-                    Toast::new()
-                        .id(uuid::Uuid::new_v4())
-                        .msg("Succesfully submitted.")
-                );
-                
-                submit_action.clear();
-            });
+        match submit_action.value().get() {
+            Some(Ok(_)) => toasts.toast(
+                Toast::new()
+                    .id(uuid::Uuid::new_v4())
+                    .header("Submission Successful")
+                    .msg("You can go back or continue editing your responses.")
+            ),
+            Some(Err(err)) => toasts.toast(
+                Toast::new()
+                    .id(uuid::Uuid::new_v4())
+                    .header("Submission Failed")
+                    .msg(err.to_string())
+            ),
+            _ => {}
+        }
+
+        submit_action.clear();
     });
 
     //#endregion
