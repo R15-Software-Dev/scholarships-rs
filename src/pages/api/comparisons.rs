@@ -15,6 +15,7 @@ use crate::common::{
 use leptos::prelude::ServerFnError;
 use leptos::server;
 
+#[cfg(feature = "ssr")]
 static COMPARISONS_TABLE: &str = "leptos-comparison-test";
 
 /// Helper function to create all sports comparisons. Only used to create initial

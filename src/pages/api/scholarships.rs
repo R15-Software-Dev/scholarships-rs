@@ -17,6 +17,7 @@ use crate::common::ExpandableInfo;
 use leptos::prelude::ServerFnError;
 use leptos::server;
 
+#[cfg(feature = "ssr")]
 static SCHOLARSHIPS_TABLE: &str = "leptos-scholarship-test";
 
 #[server(GetScholarshipInfo, endpoint = "/scholarship/info/get")]
