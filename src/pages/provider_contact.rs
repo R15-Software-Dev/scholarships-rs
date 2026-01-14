@@ -178,7 +178,7 @@ pub fn ProviderContactPage() -> impl IntoView {
                                                         disabled=elements_disabled
                                                         data_member="contact_email"
                                                         data_map=contact_info
-                                                        input_type=TextFieldType::Email
+                                                        input_type=TextFieldType::Email(vec!["*".to_string()])
                                                         required=true
                                                     />
                                                 </Row>

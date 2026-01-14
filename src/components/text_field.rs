@@ -13,9 +13,15 @@ pub enum TextFieldType {
     Text,
     /// A text field that accepts only numbers.
     Number,
-    /// A text field that accepts only Region 15 email addresses.
-    /// TODO Accept more than just Region 15 addresses.
-    Email
+    /// A text field that accepts the specified email domains.
+    /// Values should be given as the string following the '@' in an address, or '*' for any.
+    ///
+    /// Example usage:
+    /// ```
+    /// TextFieldType::Email(vec!["gmail.com".to_string(), "customdomain.org".to_string()]);
+    /// TextFieldType::Email(vec!["*".to_string()]);
+    /// ```
+    Email(Vec<String>)
 }
 
 /// Entry point for validating a text field.
@@ -24,7 +30,7 @@ fn validate(required: bool, value: &str, input_type: &TextFieldType) -> Validati
         ValidationState::Invalid("This field is required.".to_string())
     } else {
         match input_type {
-            TextFieldType::Email => validate_email(value),
+            TextFieldType::Email(domains) => validate_email(value, domains),
             TextFieldType::Number => validate_number(value),
             TextFieldType::Text => ValidationState::Valid
         }
@@ -32,15 +38,18 @@ fn validate(required: bool, value: &str, input_type: &TextFieldType) -> Validati
 }
 
 /// Validates an email address.
-fn validate_email(input: &str) -> ValidationState {
-    // TODO Accept more than just Region 15 addresses.
-    let pattern = regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@region15\.org$").expect("Invalid regex pattern");
+fn validate_email(input: &str, valid_domains: &Vec<String>) -> ValidationState {
+    // Check for wildcard domain. We won't check domains if it's present.
+    let wild = valid_domains.contains(&"*".to_string());
 
-    if pattern.is_match(input) {
-        ValidationState::Valid
-    } else {
-        ValidationState::Invalid("Please provide a valid Region 15 email address.".to_string())
-    }
+    input.split_once('@')
+        .and_then(|(_, domain)| {
+            (wild || valid_domains.contains(&domain.to_string()))
+                .then(|| ValidationState::Valid)
+                .or_else(|| Some(ValidationState::Invalid(
+                    format!("Email address must match one of the following: {}", valid_domains.join(", "))
+                )))
+        }).unwrap_or(ValidationState::Invalid("Invalid email address.".to_string()))
 }
 
 /// Validates a number.

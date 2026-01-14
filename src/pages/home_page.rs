@@ -285,7 +285,9 @@ pub fn HomePage() -> impl IntoView {
                                                         disabled=elements_disabled
                                                         data_member="contact_email"
                                                         data_map=form_data
-                                                        input_type=TextFieldType::Email
+                                                        input_type=TextFieldType::Email(
+                                                            vec!["fakeemail.org".to_string(), "gmail.com".to_string()]
+                                                        )
                                                         required=true
                                                     />
                                                 </Row>
