@@ -42,7 +42,7 @@ pub fn Radio(
                 rotate-45 transform border-3 border-3 rounded-full bg-white
                 border-white transition-opacity duration-150"></span>
             </div>
-            <span>{value.clone()}</span>
+            <span class="px-0.5 py-0.5 flex-1">{value.clone()}</span>
         </label>
     }
 }
@@ -107,7 +107,7 @@ fn RadioOther(
             />
             // This div displays the box for the checkbox, and applies some styling to the child
             // span element.
-            <div class="relative inline-block h-5 w-5 m-1 mr-2 rounded-full border border-gray-300 bg-white
+            <div class="relative inline-block min-h-5 min-w-5 h-5 w-5 m-1 mr-2 rounded-full border border-gray-300 bg-white
                 transition-bg duration-200 peer-checked:bg-red-700 peer-checked:border-red-700
                 [&>span]:opacity-0 peer-checked:[&>span]:opacity-100
                 peer-disabled:bg-gray-600/33 peer-disabled:border-gray-600
@@ -177,7 +177,7 @@ pub fn RadioList(
                 _ => String::new()
             };
 
-            if !items.contains(&default_value) {
+            if !items.contains(&default_value) && !default_value.is_empty() {
                 other_checked.set(true);
                 other_value.set(default_value.clone());
             }
