@@ -6,6 +6,7 @@ mod form_schema;
 mod submit_status;
 mod user;
 mod value_type;
+pub mod animations;
 
 pub use self::{
     comparison::*, date_info::*, expandable_info::*, form_params::*, form_schema::*,

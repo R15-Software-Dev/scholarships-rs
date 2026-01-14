@@ -2,14 +2,14 @@ use leptos::prelude::*;
 
 #[component]
 pub fn ActionButton(
-    #[prop(default = String::from("button"))] button_type: String,
+    #[prop(default = String::from("button"), into)] button_type: String,
     #[prop(optional, into)] disabled: Signal<bool>,
     children: Children,
 ) -> impl IntoView {
     view! {
         <button
-            class="m-1.5 p-2.5 rounded-lg font-semibold text-white transition-all duration-400"
-            class=(["bg-red-700", "hover:bg-red-800"], move || !disabled.get())
+            class="m-1.5 p-2.5 rounded-lg font-semibold text-white transition-all duration-400 cursor-pointer"
+            class=(["bg-red-800", "hover:bg-red-900"], move || !disabled.get())
             class=(["bg-gray-600", "pointer-events-none"], move || disabled.get())
             r#type=button_type
             disabled=move || disabled.get()

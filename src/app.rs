@@ -1,15 +1,9 @@
-use crate::pages::{
-    AboutPage, ComparisonTestPage, HomePage, LoanerPage, ProviderPortal, ScholarshipInfoPage,
-    TestPage,
-};
-use leptos::leptos_dom::log;
+use crate::pages::{AboutPage, HomePage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm};
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge};
-use leptos_router::{
-    components::{ParentRoute, Route, Router, Routes},
-    path,
-};
+use leptos_router::{components::{Route, Router, Routes, ParentRoute}, path};
+use crate::components::ToastList;
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -50,8 +44,7 @@ pub fn App() -> impl IntoView {
 }
 
 fn use_origin() -> String {
-    #[cfg(target_arch = "wasm32")]
-    {
+    #[cfg(target_arch = "wasm32")] {
         use leptos::web_sys;
         // Just get the current URL origin.
         web_sys::window()
@@ -60,9 +53,8 @@ fn use_origin() -> String {
             .origin()
             .unwrap_or("http://localhost:3000/".to_string())
     }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
+    
+    #[cfg(not(target_arch = "wasm32"))] {
         // Read the expected origin out of an environment variable.
         std::env::var("LP_SITE_ORIGIN").unwrap_or("http://localhost:3000/".to_string())
     }
@@ -90,7 +82,7 @@ pub fn AppWithRoutes() -> impl IntoView {
 
     let auth = Auth::signal();
     provide_context(auth); // allows use of this signal in lower areas of the tree without
-    // explicitly passing it through the html tree
+                           // explicitly passing it through the html tree
 
     let _ = Auth::init(parameters);
 
@@ -106,22 +98,26 @@ pub fn AppWithRoutes() -> impl IntoView {
         <Title text="R15 Scholarship App DEV" />
 
         <main>
-            // TODO Create a 404 page
-            <Routes fallback=|| "Page not found.".into_view()>
-                <Route path=path!("") view=HomePage/>
-                <Route path=path!("/about") view=AboutPage/>
-                <Route path=path!("/test_page") view=TestPage/>
-                <Route path=path!("/comparison") view=ComparisonTestPage />
-                <Route path=path!("/providers") view=ProviderPortal/>
-                <ParentRoute path=path!("/providers/scholarships") view=ScholarshipInfoPage>
-                    <Route path=path!(":id") view=ScholarshipInfoPage/>
-                    <Route path=path!("") view=ScholarshipInfoPage/>
-                </ParentRoute>
-                <ParentRoute path=path!("loaners") view=LoanerPage>
-                    <Route path=path!("") view=LoanerPage />
-                    <Route path=path!(":form_name") view=LoanerPage />
-                </ParentRoute>
-            </Routes>
+            <ToastList>
+                // TODO Create a 404 page
+                <Routes fallback=|| "Page not found.".into_view()>
+                    <Route path=path!("") view=HomePage/>
+                    <Route path=path!("/about") view=AboutPage/>
+                    <Route path=path!("/test_page") view=TestPage/>
+                    <Route path=path!("/comparison") view=ComparisonTestPage />
+                    <Route path=path!("/providers") view=ProviderPortal/>
+                    <Route path=path!("/providers/profile") view=ProviderContactPage />
+                    <ParentRoute path=path!("/providers/scholarships") view=ScholarshipInfoPage>
+                        <Route path=path!(":id") view=ScholarshipInfoPage/>
+                        <Route path=path!("") view=ScholarshipInfoPage/>
+                    </ParentRoute>
+                    <ParentRoute path=path!("loaners") view=LoanerShell>
+                        <Route path=path!("") view=LoanerFallback />
+                        <Route path=path!("borrowing") view=LoanerBorrowForm />
+                        <Route path=path!("returning") view=LoanerReturnForm />
+                    </ParentRoute>
+                </Routes>
+            </ToastList>
         </main>
     }
 }

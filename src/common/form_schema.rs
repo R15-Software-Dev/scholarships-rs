@@ -1,8 +1,6 @@
 use crate::common::ValueType;
-use crate::components::{CheckboxList, OutlinedTextField, RadioList, Row, Select};
-use leptos::either::EitherOf5;
-use leptos::prelude::RwSignal;
-use leptos::{IntoView, view};
+use crate::components::{CheckboxList, OutlinedTextField, RadioList, Row, Select, TextFieldType};
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -11,83 +9,80 @@ use std::collections::HashMap;
 pub enum InputType {
     /// Represents a text input. Requires a `String` key, `String` label, and `String` placeholder.
     /// The entered value will be returned as a single `String` value.
-    Text(String, String, String),
+    Text(String, String, String, bool),
     /// Represents a number input. Requires a `String` key, `String` label, and a `String` placeholder.
     /// The entered value will be returned as a `String`, and will be parseable into any number type
     /// (i.e. an `i32`, `i64`, etc)
-    Number(String, String, String),
+    Number(String, String, String, bool),
     /// Represents a radio input. Requires a `String` key, `String` label, and a series of `String`
     /// options. The selected value will be returned as a `String`.
-    Radio(String, String, Vec<String>),
+    Radio(String, String, Vec<String>, bool),
     /// Represents a checkbox input. Requires a `String` key, `String` label, and a series of `String`
     /// options. The selected values will be returned as a `Vec<String>`.
-    Checkbox(String, String, Vec<String>),
+    Checkbox(String, String, Vec<String>, bool),
     /// Represents a dropdown input. Requires a `String` key, `String` label, and a series
     /// of `String` options. The selected value will be returned as a `String`.
-    Select(String, String, Vec<String>),
+    Select(String, String, Vec<String>, bool),
 }
 
 impl InputType {
     pub fn into_view(self, data_map: RwSignal<HashMap<String, ValueType>>) -> impl IntoView {
         view! {
             {match self {
-                InputType::Text(member, label, placeholder) =>
-                    EitherOf5::A(view! {
+                InputType::Text(member, label, placeholder, required) =>
+                    view! {
                         <Row>
                             <OutlinedTextField
                                 label = label.clone()
                                 placeholder = placeholder.clone()
                                 data_member = member.clone()
                                 data_map = data_map
+                                required = required
                             />
                         </Row>
-                    }),
-                InputType::Number(member, label, placeholder) =>
-                    EitherOf5::B(view! {
+                    }.into_any(),
+                InputType::Number(member, label, placeholder, required) =>
+                    view! {
                         <OutlinedTextField
                             label = label.clone()
                             placeholder = placeholder.clone()
                             data_member = member.clone()
                             data_map = data_map
-                            input_type = "number"
+                            input_type = TextFieldType::Number
+                            required = required
                         />
-                    }),
-                InputType::Checkbox(member, label, options) =>
-                    EitherOf5::C(view! {
+                    }.into_any(),
+                InputType::Checkbox(member, label, options, required) =>
+                    view! {
                         <CheckboxList
                             label = label.clone()
                             items = options.clone()
                             data_member = member.clone()
                             data_map = data_map
+                            required = required
                         />
-                    }),
-                InputType::Radio(member, label, options) =>
-                    EitherOf5::D(view! {
+                    }.into_any(),
+                InputType::Radio(member, label, options, required) =>
+                    view! {
                         <RadioList
                             label = label.clone()
                             data_member = member.clone()
                             data_map = data_map
                             items = options.clone()
+                            required = required
                         />
-                    }),
-                InputType::Select(member, label, options) =>
-                    EitherOf5::E(view! {
+                    }.into_any(),
+                InputType::Select(member, label, options, required) =>
+                    view! {
                         <Select
                             label = label.clone()
                             value_list = options.clone()
                             data_member = member.clone()
                             data_map = data_map
+                            required = required
                         />
-                    })
+                    }.into_any()
             }}
-        }
-    }
-
-    pub fn into_view_rows(self, data_map: RwSignal<HashMap<String, ValueType>>) -> impl IntoView {
-        view! {
-            <Row>
-                {self.into_view(data_map)}
-            </Row>
         }
     }
 }
@@ -104,19 +99,21 @@ impl InputType {
 /// ```
 #[macro_export]
 macro_rules! input {
-    ($variant:ident, $key:expr, $label:expr, [$($option:expr),* $(,)?]) => {
+    ($variant:ident, $key:expr, $label:expr, $required:expr, [$($option:expr),* $(,)?]) => {
         $crate::common::InputType::$variant(
             $key.to_string(),
             $label.to_string(),
-            vec![$($option.to_string()), *]
+            vec![$($option.to_string()), *],
+            $required
         )
     };
 
-    ($variant:ident, $key:expr, $label:expr, $placeholder:expr) => {
+    ($variant:ident, $key:expr, $label:expr, $required:expr, $placeholder:expr) => {
         $crate::common::InputType::$variant(
             $key.to_string(),
             $label.to_string(),
-            $placeholder.to_string()
+            $placeholder.to_string(),
+            $required
         )
     };
 }
