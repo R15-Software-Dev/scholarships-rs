@@ -41,11 +41,11 @@ pub fn Checkbox(
     #[prop(into)] value: Signal<String>,
     /// The name of the checkbox. This is used to group checkboxes together, so every checkbox
     /// in a group should have the same name.
-    #[prop(into)] name: String,
+    #[prop(into)] name: Signal<String>,
     /// A [`Signal`] indicating whether the checkbox is disabled.
     #[prop(into)] disabled: Signal<bool>,
 ) -> impl IntoView {
-    let id = create_unique_id(&name, &value.get_untracked());
+    let id = create_unique_id(&name.get(), &value.get_untracked());
 
     view! {
         <label for=id class="flex items-center">
@@ -104,7 +104,7 @@ pub fn Checkbox(
 #[component]
 pub fn CheckboxList(
     /// The data member that this list should edit/display from the `data_map`.
-    #[prop(into)] data_member: String,
+    #[prop(into)] data_member: Signal<String>,
     /// A [`Signal`] allowing access to a data store.
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     /// The available choices for this list.
@@ -159,7 +159,7 @@ pub fn CheckboxList(
                                 on_change=on_change
                                 // The actual selected values are tracked by this element, not by the checkboxes themselves.
                                 value=item
-                                name=data_member.clone()
+                                name=data_member
                                 disabled=disabled
                             />
                         }

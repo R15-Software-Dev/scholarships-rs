@@ -96,14 +96,20 @@ pub fn RadioList(
         dirty.get() && matches!(error.get(), ValidationState::Invalid(_))
     });
 
-    let input_state = InputState::new(
+    let input_state = RwSignal::new(InputState::new(
         data_member.get_untracked(),
         error.clone(),
         dirty.clone()
-    );
+    ));
 
-    validation_context.validators.update(|list| list.push(RwSignal::new(input_state)));
+    validation_context.validators.update(|list| list.push(input_state));
 
+    on_cleanup(move || {
+        validation_context.validators.update(|list| {
+            list.retain(|v| *v.get_untracked().input_name != *input_state.get_untracked().input_name)
+        });
+    });
+    
     //#endregion
     //#region Render Logic
 

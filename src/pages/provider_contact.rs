@@ -10,6 +10,9 @@ use crate::pages::utils::get_user_claims;
 #[cfg(feature = "ssr")]
 use crate::pages::utils::server_utils::create_dynamo_client;
 
+#[cfg(feature = "ssr")]
+static PROVIDER_CONTACT_TABLE: &str = "leptos-provider-contacts";
+
 #[server]
 async fn get_provider_contact(id: String) -> Result<HashMap<String, ValueType>, ServerFnError> {
     use aws_sdk_dynamodb::types::AttributeValue;
@@ -21,7 +24,7 @@ async fn get_provider_contact(id: String) -> Result<HashMap<String, ValueType>, 
 
     match client
         .get_item()
-        .table_name("leptos-provider-contacts")
+        .table_name(PROVIDER_CONTACT_TABLE)
         .key("subject", AttributeValue::S(id))
         .send()
         .await
@@ -58,7 +61,7 @@ async fn put_provider_contact(id: String, contact_info: HashMap<String, ValueTyp
 
     match client
         .put_item()
-        .table_name("leptos-provider-contacts")
+        .table_name(PROVIDER_CONTACT_TABLE)
         .set_item(Some(item))
         .send()
         .await

@@ -27,14 +27,14 @@ use super::utils::use_selectable_list;
 pub fn Chip(
     #[prop(into)] display_text: Signal<String>,
     #[prop(into)] value: Signal<String>,
-    #[prop(into)] name: String,
+    #[prop(into)] name: Signal<String>,
     #[prop(into)] on_change: Callback<(), ()>,
     #[prop()] checked: Signal<bool>,
     #[prop(optional, into)] disabled: Signal<bool>,
 ) -> impl IntoView {
     // Generate a unique id - ensure that the value doesn't contain spaces.
     // Without this id, checkbox/radio inputs can interfere with each other.
-    let id = create_unique_id(&name, &value.get_untracked());
+    let id = create_unique_id(&name.get(), &value.get_untracked());
 
     view! {
         <label for=id>
@@ -71,7 +71,7 @@ pub fn Chip(
 #[component]
 pub fn ChipsList(
     /// The member in the data map that this input affects.
-    #[prop(into)] data_member: String,
+    #[prop(into)] data_member: Signal<String>,
     /// The data map that contains the list of values. This will be edited as the input changes.
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     /// The list of strings that should be displayed in the list.
@@ -132,7 +132,7 @@ pub fn ChipsList(
                                     on_change=on_change
                                     value=value
                                     display_text=text
-                                    name=data_member.clone()
+                                    name=data_member
                                     disabled=disabled
                                 />
                             }

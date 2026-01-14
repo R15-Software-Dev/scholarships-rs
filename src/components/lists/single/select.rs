@@ -53,12 +53,18 @@ pub fn Select(
     let dirty = RwSignal::new(false);
     let show_errors = Signal::derive(move || dirty.get() && matches!(error.get(), ValidationState::Invalid(_)));
 
-    let input_state = InputState::new(data_member.get(), error.clone(), dirty.clone());
+    let input_state = RwSignal::new(InputState::new(data_member.get(), error.clone(), dirty.clone()));
 
     let validation_context = use_validation_context()
         .expect("Could not find FormValidationRegistry context");
 
-    validation_context.validators.update(|list| list.push(RwSignal::new(input_state)));
+    validation_context.validators.update(|list| list.push(input_state));
+
+    on_cleanup(move || {
+        validation_context.validators.update(|list| {
+            list.retain(|v| *v.get_untracked().input_name != *input_state.get_untracked().input_name)
+        });
+    });
 
     //#endregion
     //#region Event Logic

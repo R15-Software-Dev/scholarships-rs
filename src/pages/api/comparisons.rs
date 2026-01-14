@@ -15,6 +15,8 @@ use crate::common::{
 use leptos::prelude::ServerFnError;
 use leptos::server;
 
+static COMPARISONS_TABLE: &str = "leptos-comparison-test";
+
 /// Helper function to create all sports comparisons. Only used to create initial
 /// comparison data, and should be removed upon completion of a comparison editor page.
 #[allow(unused)]
@@ -188,6 +190,64 @@ fn create_sports_comparisons() -> Vec<ComparisonData> {
     ]
 }
 
+fn create_major_comparison(
+    id: impl Into<String>,
+    display_text: impl Into<String>,
+) -> ComparisonData {
+    let display = display_text.into();
+    ComparisonData::new(
+        id,
+        "major",
+        ComparisonType::Text(TextComparison::Contains),
+        ValueType::String(Some(display.clone())),
+        "Majors",
+        display,
+    )
+}
+
+fn create_major_comparisons() -> Vec<ComparisonData> {
+    let display_texts = vec![
+        "Music",
+        "Education",
+        "Special Education",
+        "Speech Pathology",
+        "School Psychology",
+        "School Counseling",
+        "Occupational Therapy",
+        "Physical Therapy",
+        "Nursing",
+        "Allied Health",
+        "Fine/Performing Arts",
+        "Writing/Communication",
+        "History",
+        "Government",
+        "Political Science",
+        "Social Work",
+        "Sports Medicine",
+        "Athletic Training",
+        "Horticulture",
+        "Conservation Studies",
+        "Ecology",
+        "Environmental Studies",
+        "Urban Planning",
+        "Landscaping",
+        "Legal Studies",
+        "Criminal Justice",
+    ];
+
+    let ids = display_texts
+        .iter()
+        .map(|text|
+            format!("{}_{}", "major", text.to_lowercase().replace(" ", "_").replace("/", "_"))
+        )
+        .collect::<Vec<String>>();
+
+    ids.iter().zip(display_texts).map(|(id, display_text)| {
+        create_major_comparison(id, display_text)
+    })
+        .collect::<Vec<ComparisonData>>()
+}
+
 #[allow(unused)]
 fn make_comp_list() -> Vec<ComparisonData> {
     let gpa_3 = ComparisonData::new(
@@ -296,7 +356,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
     );
 
     let mut sports_comps = create_sports_comparisons();
-    let mut major_comps = Vec::<ComparisonData>::new();
+    let mut major_comps = create_major_comparisons();
 
     let mut comp_list = vec![
         gpa_3,
@@ -328,7 +388,7 @@ pub async fn create_test_comparisons() -> Result<(), ServerFnError> {
     for comparison in comp_list {
         if let Err(err) = client
             .put_item()
-            .table_name("leptos-comparison-test")
+            .table_name(COMPARISONS_TABLE)
             .set_item(Some(serde_dynamo::to_item(&comparison)?))
             .send()
             .await
@@ -351,7 +411,7 @@ pub async fn get_comparison_info() -> Result<Vec<ComparisonData>, ServerFnError>
     // id and display text, but we'll return the whole thing.
     match client
         .scan()
-        .table_name("leptos-comparison-test")
+        .table_name(COMPARISONS_TABLE)
         .send()
         .await
     {
@@ -377,7 +437,7 @@ pub async fn get_comparisons_categorized() -> Result<HashMap<String, Vec<Compari
 
     match client
         .scan()
-        .table_name("leptos-comparison-test")
+        .table_name(COMPARISONS_TABLE)
         .send()
         .await
     {
