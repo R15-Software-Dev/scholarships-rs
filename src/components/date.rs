@@ -62,7 +62,8 @@ fn render_status(date: DateRange) -> impl IntoView {
         DateStatus::Blank => "hidden border-none",
         DateStatus::Upcoming => "bg-yellow-100 text-yellow-800 border-yellow-100",
         DateStatus::Open => "bg-green-100 text-green-800 border-green-100",
-        DateStatus::Deadline | DateStatus::Closed => "bg-red-100 text-red-800 border-red-100",
+        DateStatus::Deadline => "bg-red-100 text-red-800 border-red-100",
+        DateStatus::Closed => "bg-red-700 text-white border-red-700"
     };
 
     let classes =
