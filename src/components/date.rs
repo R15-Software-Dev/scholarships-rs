@@ -1,4 +1,3 @@
-use chrono::Local;
 use crate::common::{DateInfo, DateRange, DateStatus};
 use leptos::prelude::*;
 
@@ -15,40 +14,8 @@ fn render_dates(dates: DateRange) -> impl IntoView {
     view! { <span>{move || date_text.clone()}</span> }
 }
 
-fn get_date_status(date: &DateRange) -> DateStatus {
-    // We need a threshold - maybe within 5 days, the status is deadline,
-    // further away is open, upcoming is when the range has not started yet,
-    // and closed is past the date.
-    
-    match date {
-        DateRange::Single(_) => DateStatus::Blank,
-        DateRange::Range(start_date, end_date) => {
-            let local = Local::now();
-            // Check the amount of time from now to the start date. Values that are negative
-            // indicate that the start date has already passed.
-            if dbg!(start_date.signed_duration_since(local).num_days()) > 0 {
-                DateStatus::Upcoming
-            } else {
-                // Check the amount of time from now to the end date. The value will be positive if
-                // the end date is in the future. We will be specific to the minute.
-                let duration_until = dbg!(end_date).signed_duration_since(local);
-                let num_days = dbg!(duration_until.num_days());
-                let num_mins = dbg!(duration_until.num_minutes());
-                
-                if num_mins <= 0 {
-                    DateStatus::Closed
-                } else if num_days <= 5 {
-                    DateStatus::Deadline
-                } else {
-                    DateStatus::Open
-                }
-            }
-        }
-    }
-}
-
 fn render_status(date: DateRange) -> impl IntoView {
-    let status = get_date_status(&date);
+    let status = date.get_status();
     
     let status_text = match dbg!(status.clone()) {
         DateStatus::Blank => "",
@@ -141,11 +108,12 @@ fn Date(
 /// ```
 #[component]
 pub fn DateList(
-    #[prop(into)] dates: Vec<DateInfo>,
+    #[prop(into)] dates: Signal<Vec<DateInfo>>,
 ) -> impl IntoView {
     view! {
         {move || {
             dates
+                .get()
                 .iter()
                 .map(|info| {
                     view! { <Date info=info.clone() /> }
