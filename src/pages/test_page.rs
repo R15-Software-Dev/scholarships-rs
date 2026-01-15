@@ -29,13 +29,12 @@ pub fn TestPage() -> impl IntoView {
                             />
                     </section>
                     <section class="space-y-2">
-                        <div class="rounded-lg shadow-lg overflow-hidden">
-                            <div class="bg-red-900 text-white px-4 py-3 shadow-lg \
-                                        shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.3)">
+                        <div class="rounded-lg shadow-lg/25 overflow-hidden">
+                            <div class="bg-red-900 text-white px-4 py-3 shadow-lg">
                                 <h3 class="text-white font-bold">Important Dates</h3>
                             </div>
-                            <div class="p-6 space-y-6">
-                                <div class="bg-white rounded-md p-3 space-y-2">
+                            <div class="p-2">
+                                <div class="flex flex-col p-3 gap-3">
                                     <DateList
                                         dates=vec![
                                             DateInfo {

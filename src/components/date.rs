@@ -21,10 +21,20 @@ fn render_status(status: DateStatus) -> impl IntoView {
         DateStatus::Closed => "Closed",
     };
 
+    let background_class = match status {
+        DateStatus::Upcoming => "bg-yellow-100 text-yellow-800 border-yellow-100",
+        DateStatus::Open => "bg-green-100 text-green-800 border-green-100",
+        DateStatus::Deadline | DateStatus::Closed => "bg-red-100 text-red-800 border-red-100",
+    };
+
+    let classes =
+        format!("inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs
+            font-medium w-fit whitespace-nowrap shrink-0 {}",
+            background_class
+        );
+
     view! {
-        <span class="inline-flex items-center justify-center rounded-md border border-yellow-100
-            bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800 font-medium w-fit whitespace-nowrap
-            shrink-0">
+        <span class=classes>
             {move || status_text}
         </span>
     }
@@ -54,8 +64,8 @@ fn Date(
     #[prop(into)] info: Signal<DateInfo>,
 ) -> impl IntoView {
     view! {
-        <div class="dashboard-button flex items-start gap-3 rounded-lg border-grey-300 p-3
-                   w-full text-left shadow-[inset_0_0_6px_rgba(0,0,0,0.12)]">
+        <div class="flex items-start gap-3 rounded-lg border-grey-300 p-3
+                   w-full text-left shadow-lg">
             // <div class="flex-shrink-0 mt-0.5">
             //     <img src={icon} class="h-4 w-4" alt="icon"/>
             // </div>
