@@ -1,10 +1,9 @@
-use crate::pages::{AboutPage, HomePage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm};
+use crate::pages::{AboutPage, HomePage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage};
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge};
 use leptos_router::{components::{Route, Router, Routes, ParentRoute}, path};
 use crate::components::ToastList;
-use leptos::logging::log;
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -66,15 +65,12 @@ pub fn AppWithRoutes() -> impl IntoView {
     provide_meta_context();
 
     let current_origin = use_origin();
-    log!("Current origin: {}", current_origin);
 
     // Authentication setup
     let parameters = AuthParameters {
         issuer: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Lfjuy5zaM".into(),
         client_id: "10jr2h3vtpu9n7gj46pvg5qo2q".into(),
-        redirect_uri: format!("{}/", use_origin()),
-        // redirect_uri: Url::parse(format!("{}", current_origin).as_str()).unwrap().to_string(),
-        // redirect_uri: Url::parse("http://localhost:3000").unwrap().to_string(),
+        redirect_uri: format!("{}/auth/callback", current_origin),
         post_logout_redirect_uri: current_origin,
         scope: Some("openid%20profile%20email".into()),
         audience: None,
@@ -103,6 +99,7 @@ pub fn AppWithRoutes() -> impl IntoView {
                 // TODO Create a 404 page
                 <Routes fallback=|| "Page not found.".into_view()>
                     <Route path=path!("") view=HomePage />
+                    <Route path=path!("/auth/callback") view=AuthCallbackPage />
                     <Route path=path!("/about") view=AboutPage />
                     <Route path=path!("/test_page") view=TestPage />
                     <Route path=path!("/comparison") view=ComparisonTestPage />
