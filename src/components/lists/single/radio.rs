@@ -121,18 +121,23 @@ pub fn RadioList(
                     .into_iter()
                     .map(|item| {
                         let item = RwSignal::new(item);
-
                         let checked_signal = Signal::derive(move || {
                             selected_value.get() == item.get()
                         });
-
                         let on_change = move || {
-                            // on_change only runs when the radio button is checked, not when unchecked.
-                            // Change the selected value to the new one.
                             selected_value.set(item.get());
-                            error.set(validate(selected_value.get_untracked(), required.get_untracked()));
+                            error
+                                .set(
+                                    validate(
+                                        selected_value.get_untracked(),
+                                        required.get_untracked(),
+                                    ),
+                                );
                             dirty.set(true);
                         };
+
+                        // on_change only runs when the radio button is checked, not when unchecked.
+                        // Change the selected value to the new one.
 
                         view! {
                             <Radio
@@ -152,7 +157,7 @@ pub fn RadioList(
                     {move || {
                         match error.get() {
                             ValidationState::Invalid(msg) => msg,
-                            _ => "There is no error - should not see this message.".to_string()
+                            _ => "There is no error - should not see this message.".to_string(),
                         }
                     }}
                 </div>

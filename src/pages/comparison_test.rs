@@ -57,93 +57,84 @@ pub fn ComparisonTestPage() -> impl IntoView {
                         let student_info = student_resource.get();
                         let comparison_info = comparison_resource.get();
                         let scholarship_info = scholarship_resource.get();
-
                         match (student_info, comparison_info, scholarship_info) {
-                            (Some(student), Some(comparisons), Some(scholarships)) => Either::Right(view! {
-                                <Panel>
-                                    <Row>
-                                        <p>{result_msg}</p>
-                                    </Row>
-                                    <Row>
-                                        <ActionButton on:click=move |_| {
-                                            // Iterate over all scholarships, get the comparison IDs,
-                                            // get ComparisonData from the IDs, then perform the
-                                            // comparisons and return a boolean. Alternatively, return
-                                            // a list of comparisons that complete and a list that don't.
-                                            let comp_member = "requirements".to_string();
-                                            let comparison_results = scholarships.iter().map(|scholarship| {
-                                                let list = match scholarship.data.get(&comp_member) {
-                                                    Some(ValueType::List(Some(list))) => list,
-                                                    _ => {
-                                                        log!("Cannot find requirements, assuming none.");
-                                                        return Ok(Some(scholarship))  // students will always qualify when there are no requirements
+                            (Some(student), Some(comparisons), Some(scholarships)) => {
+                                Either::Right(
+
+                                    view! {
+                                        <Panel>
+                                            <Row>
+                                                <p>{result_msg}</p>
+                                            </Row>
+                                            <Row>
+                                                <ActionButton on:click=move |_| {
+                                                    let comp_member = "requirements".to_string();
+                                                    let comparison_results = scholarships
+                                                        .iter()
+                                                        .map(|scholarship| {
+                                                            let list = match scholarship.data.get(&comp_member) {
+                                                                Some(ValueType::List(Some(list))) => list,
+                                                                _ => {
+                                                                    log!("Cannot find requirements, assuming none.");
+                                                                    return Ok(Some(scholarship));
+                                                                }
+                                                            };
+                                                            let mut final_result = Ok(true);
+                                                            for val in list {
+                                                                let comp_opt = match val {
+                                                                    ValueType::String(Some(comp_id)) => {
+                                                                        comparisons.iter().find(|comp| comp.id == *comp_id)
+                                                                    }
+                                                                    _ => None,
+                                                                };
+                                                                let comparison_outcome = match comp_opt {
+                                                                    Some(comp) => comp.compare(&student),
+                                                                    _ => Err("".to_string()),
+                                                                };
+                                                                match comparison_outcome {
+                                                                    Ok(true) => {}
+                                                                    Ok(false) => final_result = Ok(false),
+                                                                    Err(e) => {
+                                                                        final_result = Err(e);
+                                                                        break;
+                                                                    }
+                                                                }
+                                                            }
+                                                            match final_result {
+                                                                Ok(true) => Ok(Some(scholarship)),
+                                                                Ok(false) => Ok(None),
+                                                                Err(e) => Err(e),
+                                                            }
+                                                        })
+                                                        .collect::<Vec<Result<Option<&ExpandableInfo>, String>>>();
+                                                    let mut strings = Vec::new();
+                                                    strings.push("Scholarship results: \n".to_string());
+                                                    for result in comparison_results {
+                                                        match result {
+                                                            Ok(Some(scholarship_info)) => {
+                                                                let name_member = "name".to_string();
+                                                                let scl_name = scholarship_info
+                                                                    .data
+                                                                    .get(&name_member)
+                                                                    .unwrap()
+                                                                    .as_string()
+                                                                    .unwrap()
+                                                                    .unwrap();
+                                                                strings.push(scl_name);
+                                                            }
+                                                            Ok(None) => {}
+                                                            Err(msg) => strings.push(msg),
+                                                        }
                                                     }
-                                                };
-
-                                                let mut final_result = Ok(true);
-
-                                                // The list should exist, and it should contain a series of strings.
-                                                for val in list {
-                                                    let comp_opt = match val {
-                                                        ValueType::String(Some(comp_id)) => {
-                                                            // Find the comparison
-                                                            comparisons.iter().find(|comp| comp.id == *comp_id)
-                                                        }
-                                                        _ => None
-                                                    };
-
-                                                    let comparison_outcome = match comp_opt {
-                                                        Some(comp) => {
-                                                            // Perform the comparison
-                                                            comp.compare(&student)
-                                                        }
-                                                        _ => Err("".to_string())
-                                                    };
-
-                                                    match comparison_outcome {
-                                                        Ok(true) => {},
-                                                        Ok(false) => final_result = Ok(false),
-                                                        Err(e) => {
-                                                            final_result = Err(e);
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-
-                                                match final_result {
-                                                    Ok(true) => Ok(Some(scholarship)),
-                                                    Ok(false) => Ok(None),
-                                                    Err(e) => Err(e)
-                                                }
-                                            }).collect::<Vec<Result<Option<&ExpandableInfo>, String>>>();
-
-                                            // Build a display string
-                                            let mut strings = Vec::new();
-                                            strings.push("Scholarship results: \n".to_string());
-                                            for result in comparison_results {
-                                                match result {
-                                                    Ok(Some(scholarship_info)) => {
-                                                        // Get the scholarship name.
-                                                        let name_member = "name".to_string();
-                                                        let scl_name = scholarship_info.data.get(&name_member).unwrap()
-                                                            .as_string().unwrap().unwrap();
-                                                        strings.push(scl_name);
-                                                    },
-                                                    Ok(None) => {},
-                                                    Err(msg) => strings.push(msg)
-                                                }
-                                            }
-
-                                            let display_text = strings.join("\n").to_string();
-
-                                            result_msg.set(display_text);
-                                        }>"Test Comparison"</ActionButton>
-                                    </Row>
-                                </Panel>
-                            }),
-                            _ => Either::Left(view! {
-                                <p>"Failed API requests."</p>
-                            })
+                                                    let display_text = strings.join("\n").to_string();
+                                                    result_msg.set(display_text);
+                                                }>"Test Comparison"</ActionButton>
+                                            </Row>
+                                        </Panel>
+                                    },
+                                )
+                            }
+                            _ => Either::Left(view! { <p>"Failed API requests."</p> }),
                         }
                     }}
                 </Suspense>

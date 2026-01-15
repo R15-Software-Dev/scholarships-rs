@@ -8,9 +8,7 @@ fn render_dates(dates: DateRange) -> impl IntoView {
             format!("{} - {}", start_date, end_date),
     };
 
-    view! {
-        <span>{move || date_text.clone()}</span>
-    }
+    view! { <span>{move || date_text.clone()}</span> }
 }
 
 fn render_status(status: DateStatus) -> impl IntoView {
@@ -33,11 +31,7 @@ fn render_status(status: DateStatus) -> impl IntoView {
             background_class
         );
 
-    view! {
-        <span class=classes>
-            {move || status_text}
-        </span>
-    }
+    view! { <span class=classes>{move || status_text}</span> }
 }
 
 /// # Date Component
@@ -65,26 +59,20 @@ fn Date(
 ) -> impl IntoView {
     view! {
         <div class="flex items-start gap-3 rounded-lg border-grey-300 p-3
-                   w-full text-left shadow-lg">
+        w-full text-left shadow-lg">
             // <div class="flex-shrink-0 mt-0.5">
-            //     <img src={icon} class="h-4 w-4" alt="icon"/>
+            // <img src={icon} class="h-4 w-4" alt="icon"/>
             // </div>
             <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
-                        <h3 class="font-bold text-md text-base">
-                            {info.get().title}
-                        </h3>
+                        <h3 class="font-bold text-md text-base">{info.get().title}</h3>
                         <h3 class="text-md text-base mt-1">
                             {move || render_dates(info.get().date)}
                         </h3>
-                        <p class="text-sm text-gray-600">
-                            {info.get().description}
-                        </p>
+                        <p class="text-sm text-gray-600">{info.get().description}</p>
                     </div>
-                    <div class="flex-shrink-0 ml-2">
-                        {move || render_status(info.get().status)}
-                    </div>
+                    <div class="flex-shrink-0 ml-2">{move || render_status(info.get().status)}</div>
                 </div>
             </div>
         </div>
@@ -116,14 +104,12 @@ pub fn DateList(
 ) -> impl IntoView {
     view! {
         {move || {
-            dates.iter()
+            dates
+                .iter()
                 .map(|info| {
-                    view! {
-                        <Date
-                            info=info.clone()
-                        />
-                    }
-                }).collect_view()
+                    view! { <Date info=info.clone() /> }
+                })
+                .collect_view()
         }}
     }
 }

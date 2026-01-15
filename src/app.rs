@@ -32,10 +32,10 @@ pub fn App() -> impl IntoView {
     view! {
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet
-        <Stylesheet id="leptos" href="/pkg/scholarships-rs-wasm.css"/>
+        <Stylesheet id="leptos" href="/pkg/scholarships-rs-wasm.css" />
 
         // sets the document title
-        <Title text="R15 Scholarship App DEV"/>
+        <Title text="R15 Scholarship App DEV" />
 
         // content for this welcome page
         <Router>
@@ -102,15 +102,15 @@ pub fn AppWithRoutes() -> impl IntoView {
             <ToastList>
                 // TODO Create a 404 page
                 <Routes fallback=|| "Page not found.".into_view()>
-                    <Route path=path!("") view=HomePage/>
-                    <Route path=path!("/about") view=AboutPage/>
-                    <Route path=path!("/test_page") view=TestPage/>
+                    <Route path=path!("") view=HomePage />
+                    <Route path=path!("/about") view=AboutPage />
+                    <Route path=path!("/test_page") view=TestPage />
                     <Route path=path!("/comparison") view=ComparisonTestPage />
-                    <Route path=path!("/providers") view=ProviderPortal/>
+                    <Route path=path!("/providers") view=ProviderPortal />
                     <Route path=path!("/providers/profile") view=ProviderContactPage />
                     <ParentRoute path=path!("/providers/scholarships") view=ScholarshipInfoPage>
-                        <Route path=path!(":id") view=ScholarshipInfoPage/>
-                        <Route path=path!("") view=ScholarshipInfoPage/>
+                        <Route path=path!(":id") view=ScholarshipInfoPage />
+                        <Route path=path!("") view=ScholarshipInfoPage />
                     </ParentRoute>
                     <ParentRoute path=path!("loaners") view=LoanerShell>
                         <Route path=path!("") view=LoanerFallback />

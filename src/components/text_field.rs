@@ -144,12 +144,12 @@ pub fn OutlinedTextField(
                 <input
                     node_ref=input_ref
                     class="border-2 m-1.5 p-1.5 mt-0 rounded-md bg-transparent relative flex-1
-                        transition-all duration-150
-                        border-red-700 bg-transparent
-                        disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
-                    r#type={str_type}
-                    disabled={disabled}
-                    placeholder={placeholder}
+                    transition-all duration-150
+                    border-red-700 bg-transparent
+                    disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
+                    r#type=str_type
+                    disabled=disabled
+                    placeholder=placeholder
                     prop:name=name
                     prop:value=raw_value
                     on:input=on_input
@@ -160,7 +160,7 @@ pub fn OutlinedTextField(
                         {move || {
                             match error.get() {
                                 ValidationState::Invalid(msg) => msg,
-                                _ => "There is no error - should not see this message.".to_string()
+                                _ => "There is no error - should not see this message.".to_string(),
                             }
                         }}
                     </div>

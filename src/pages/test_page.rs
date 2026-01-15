@@ -14,19 +14,19 @@ pub fn TestPage() -> impl IntoView {
                             description="Edit user profile"
                             icon="/Person_Black.png"
                             path="/"
-                            />
+                        />
                         <DashboardButton
                             title="Create Scholarship"
                             description="Navigate to Scholarship Creation Page"
                             icon="/Create_Black.png"
                             path="/"
-                            />
+                        />
                         <DashboardButton
                             title="Applicants"
                             description="View Scholarship Applicants"
                             icon="/Form_Black.png"
                             path="/"
-                            />
+                        />
                     </section>
                     <section class="space-y-2">
                         <div class="rounded-lg shadow-lg/25 overflow-hidden">
@@ -35,34 +35,35 @@ pub fn TestPage() -> impl IntoView {
                             </div>
                             <div class="p-2">
                                 <div class="flex flex-col p-3 gap-3">
-                                    <DateList
-                                        dates=vec![
-                                            DateInfo {
-                                                title: "Title".to_string(),
-                                                date: DateRange::Range("February 2nd, 2026".to_string(), "February 10th, 2026".to_string()),
-                                                description: "This is a test".to_string(),
-                                                status: DateStatus::Upcoming
-                                            },
-                                            DateInfo {
-                                                title: "Scholarships Due".to_string(),
-                                                date: DateRange::Single("November 4th, 2025".to_string()),
-                                                description: "This is a test".to_string(),
-                                                status: DateStatus::Open
-                                            },
-                                            DateInfo {
-                                                title: "Scholarships Due".to_string(),
-                                                date: DateRange::Single("November 4th, 2025".to_string()),
-                                                description: "This is a test".to_string(),
-                                                status: DateStatus::Deadline
-                                            },
-                                            DateInfo {
-                                                title: "Scholarships Due".to_string(),
-                                                date: DateRange::Single("November 4th, 2025".to_string()),
-                                                description: "This is a test".to_string(),
-                                                status: DateStatus::Closed
-                                            }
-                                        ]
-                                    />
+                                    <DateList dates=vec![
+                                        DateInfo {
+                                            title: "Title".to_string(),
+                                            date: DateRange::Range(
+                                                "February 2nd, 2026".to_string(),
+                                                "February 10th, 2026".to_string(),
+                                            ),
+                                            description: "This is a test".to_string(),
+                                            status: DateStatus::Upcoming,
+                                        },
+                                        DateInfo {
+                                            title: "Scholarships Due".to_string(),
+                                            date: DateRange::Single("November 4th, 2025".to_string()),
+                                            description: "This is a test".to_string(),
+                                            status: DateStatus::Open,
+                                        },
+                                        DateInfo {
+                                            title: "Scholarships Due".to_string(),
+                                            date: DateRange::Single("November 4th, 2025".to_string()),
+                                            description: "This is a test".to_string(),
+                                            status: DateStatus::Deadline,
+                                        },
+                                        DateInfo {
+                                            title: "Scholarships Due".to_string(),
+                                            date: DateRange::Single("November 4th, 2025".to_string()),
+                                            description: "This is a test".to_string(),
+                                            status: DateStatus::Closed,
+                                        },
+                                    ] />
                                 </div>
                             </div>
                         </div>

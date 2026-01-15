@@ -289,7 +289,7 @@ pub fn HomePage() -> impl IntoView {
                                                         data_member="contact_email"
                                                         data_map=form_data
                                                         input_type=TextFieldType::Email(
-                                                            vec!["fakeemail.org".to_string(), "gmail.com".to_string()]
+                                                            vec!["fakeemail.org".to_string(), "gmail.com".to_string()],
                                                         )
                                                         required=true
                                                     />
@@ -369,8 +369,12 @@ pub fn HomePage() -> impl IntoView {
                                                         data_map=form_data
                                                         data_member="community_involvement"
                                                         schema=vec![
-                                                            input!(Text, "service_name", "Activity Name:", true, "Some service activity..."),
-                                                            input!(Number, "service_hours", "Total Service Hours", true, "20")
+                                                            input!(
+                                                                Text, "service_name", "Activity Name:", true, "Some service activity..."
+                                                            ),
+                                                            input!(
+                                                                Number, "service_hours", "Total Service Hours", true, "20"
+                                                            ),
                                                         ]
                                                     />
                                                 </Row>
@@ -380,8 +384,7 @@ pub fn HomePage() -> impl IntoView {
                                     </Row>
                                 }
                             })
-                    }}
-                    <Row>
+                    }} <Row>
                         <ActionButton on:click=pdf_button_click>"Get PDF"</ActionButton>
                     </Row>
                 </Suspense>
