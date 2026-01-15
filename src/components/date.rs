@@ -1,18 +1,57 @@
+use chrono::Local;
 use crate::common::{DateInfo, DateRange, DateStatus};
 use leptos::prelude::*;
 
 fn render_dates(dates: DateRange) -> impl IntoView {
     let date_text = match dates {
-        DateRange::Single(date) => date,
+        DateRange::Single(date) => format!("{}", date.format("%A %B %d, %I:%M%p")),
         DateRange::Range(start_date, end_date) =>
-            format!("{} - {}", start_date, end_date),
+            format!("{} - {}",
+                start_date.format("%D %I:%M%p"), 
+                end_date.format("%D %I:%M%p")
+            ),
     };
 
     view! { <span>{move || date_text.clone()}</span> }
 }
 
-fn render_status(status: DateStatus) -> impl IntoView {
-    let status_text = match status {
+fn get_date_status(date: &DateRange) -> DateStatus {
+    // We need a threshold - maybe within 5 days, the status is deadline,
+    // further away is open, upcoming is when the range has not started yet,
+    // and closed is past the date.
+    
+    match date {
+        DateRange::Single(_) => DateStatus::Blank,
+        DateRange::Range(start_date, end_date) => {
+            let local = Local::now();
+            // Check the amount of time from now to the start date. Values that are negative
+            // indicate that the start date has already passed.
+            if dbg!(start_date.signed_duration_since(local).num_days()) > 0 {
+                DateStatus::Upcoming
+            } else {
+                // Check the amount of time from now to the end date. The value will be positive if
+                // the end date is in the future. We will be specific to the minute.
+                let duration_until = dbg!(end_date).signed_duration_since(local);
+                let num_days = dbg!(duration_until.num_days());
+                let num_mins = dbg!(duration_until.num_minutes());
+                
+                if num_mins <= 0 {
+                    DateStatus::Closed
+                } else if num_days <= 5 {
+                    DateStatus::Deadline
+                } else {
+                    DateStatus::Open
+                }
+            }
+        }
+    }
+}
+
+fn render_status(date: DateRange) -> impl IntoView {
+    let status = get_date_status(&date);
+    
+    let status_text = match dbg!(status.clone()) {
+        DateStatus::Blank => "",
         DateStatus::Upcoming => "Upcoming",
         DateStatus::Open => "Open",
         DateStatus::Deadline => "Deadline",
@@ -20,6 +59,7 @@ fn render_status(status: DateStatus) -> impl IntoView {
     };
 
     let background_class = match status {
+        DateStatus::Blank => "hidden border-none",
         DateStatus::Upcoming => "bg-yellow-100 text-yellow-800 border-yellow-100",
         DateStatus::Open => "bg-green-100 text-green-800 border-green-100",
         DateStatus::Deadline | DateStatus::Closed => "bg-red-100 text-red-800 border-red-100",
@@ -72,7 +112,7 @@ fn Date(
                         </h3>
                         <p class="text-sm text-gray-600">{info.get().description}</p>
                     </div>
-                    <div class="flex-shrink-0 ml-2">{move || render_status(info.get().status)}</div>
+                    <div class="flex-shrink-0 ml-2">{move || render_status(info.get().date)}</div>
                 </div>
             </div>
         </div>

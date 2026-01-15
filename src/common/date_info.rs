@@ -1,3 +1,4 @@
+use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -8,17 +9,17 @@ pub struct DateInfo {
     pub(crate) date: DateRange,
     #[serde(rename = "desc")]
     pub(crate) description: String,
-    #[serde(rename = "stat")]
-    pub(crate) status: DateStatus,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DateRange {
-    Single(String),
-    Range(String, String),
+    Single(DateTime<FixedOffset>),
+    Range(DateTime<FixedOffset>, DateTime<FixedOffset>),
 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DateStatus {
+    Blank,
     Upcoming,
     Open,
     Deadline,

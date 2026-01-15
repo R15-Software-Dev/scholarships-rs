@@ -1,4 +1,5 @@
-use crate::common::{DateInfo, DateRange, DateStatus};
+use chrono::DateTime;
+use crate::common::{DateInfo, DateRange};
 use crate::components::{DashboardButton, DateList};
 use leptos::prelude::*;
 
@@ -37,32 +38,53 @@ pub fn TestPage() -> impl IntoView {
                                 <div class="flex flex-col p-3 gap-3">
                                     <DateList dates=vec![
                                         DateInfo {
-                                            title: "Title".to_string(),
+                                            title: "Open Example".to_string(),
                                             date: DateRange::Range(
-                                                "February 2nd, 2026".to_string(),
-                                                "February 10th, 2026".to_string(),
+                                                DateTime::parse_from_rfc3339("2026-01-15T07:15:00-05:00")
+                                                    .unwrap_or_default(),
+                                                DateTime::parse_from_rfc3339("2026-01-30T14:05:00-05:00")
+                                                    .unwrap_or_default()
                                             ),
                                             description: "This is a test".to_string(),
-                                            status: DateStatus::Upcoming,
                                         },
                                         DateInfo {
-                                            title: "Scholarships Due".to_string(),
-                                            date: DateRange::Single("November 4th, 2025".to_string()),
-                                            description: "This is a test".to_string(),
-                                            status: DateStatus::Open,
+                                            title: "Closed Example".to_string(),
+                                            date: DateRange::Range(
+                                                DateTime::parse_from_rfc3339("2026-01-01T07:15:00-05:00")
+                                                    .unwrap_or_default(),
+                                                DateTime::parse_from_rfc3339("2026-01-14T14:05:00-05:00")
+                                                    .unwrap_or_default()
+                                            ),
+                                            description: "".to_string(),
                                         },
                                         DateInfo {
-                                            title: "Scholarships Due".to_string(),
-                                            date: DateRange::Single("November 4th, 2025".to_string()),
+                                            title: "Deadline Example".to_string(),
+                                            date: DateRange::Range(
+                                                DateTime::parse_from_rfc3339("2026-01-15T07:15:00-05:00")
+                                                    .unwrap_or_default(),
+                                                DateTime::parse_from_rfc3339("2026-01-20T14:05:00-05:00")
+                                                    .unwrap_or_default()
+                                            ),
                                             description: "This is a test".to_string(),
-                                            status: DateStatus::Deadline,
                                         },
                                         DateInfo {
-                                            title: "Scholarships Due".to_string(),
-                                            date: DateRange::Single("November 4th, 2025".to_string()),
+                                            title: "Upcoming Example".to_string(),
+                                            date: DateRange::Range(
+                                                DateTime::parse_from_rfc3339("2026-01-30T07:15:00-05:00")
+                                                    .unwrap_or_default(),
+                                                DateTime::parse_from_rfc3339("2026-02-20T14:05:00-05:00")
+                                                    .unwrap_or_default()
+                                            ),
                                             description: "This is a test".to_string(),
-                                            status: DateStatus::Closed,
                                         },
+                                        DateInfo {
+                                            title: "Single Date (Blank)".to_string(),
+                                            date: DateRange::Single(
+                                                DateTime::parse_from_rfc3339("2026-01-15T14:05:00-05:00")
+                                                    .unwrap_or_default()
+                                            ),
+                                            description: "".to_string(),
+                                        }
                                     ] />
                                 </div>
                             </div>
