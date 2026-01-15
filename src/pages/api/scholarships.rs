@@ -8,7 +8,7 @@ use leptos::leptos_dom::log;
 #[cfg(feature = "ssr")]
 use uuid::Uuid;
 #[cfg(feature = "ssr")]
-use crate::pages::utils::server_utils::create_dynamo_client;
+use crate::utils::server::{create_dynamo_client, into_attr_map};
 #[cfg(feature = "ssr")]
 use crate::common::ValueType;
 
@@ -51,7 +51,6 @@ pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFn
 
 #[server(CreateScholarshipInfo, endpoint = "/scholarship/info/create")]
 pub async fn create_scholarship_info(info: ExpandableInfo) -> Result<(), ServerFnError> {
-    use crate::pages::utils::server_utils::create_dynamo_client;
     use aws_sdk_dynamodb::error::ProvideErrorMetadata;
 
     let client = create_dynamo_client().await;

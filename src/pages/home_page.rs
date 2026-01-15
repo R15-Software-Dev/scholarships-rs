@@ -10,7 +10,6 @@ use std::io::Write;
 
 use crate::common::{ComparisonData, ExpandableInfo};
 use crate::pages::UnauthenticatedPage;
-use crate::pages::utils::get_user_claims;
 use crate::components::{
     ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
     Select, TextFieldType, ValidatedForm
@@ -26,6 +25,7 @@ use leptos::web_sys::HtmlAnchorElement;
 use leptos::wasm_bindgen::JsCast;
 use std::collections::HashMap;
 use crate::pages::api::get_comparisons_categorized;
+use crate::utils::get_user_claims;
 
 /// # Get Student Info
 /// Gets a student's information given their `subject`.

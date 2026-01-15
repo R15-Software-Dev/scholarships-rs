@@ -8,7 +8,7 @@ use leptos_router::hooks::{use_navigate, use_params};
 use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
 use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
 use super::UnauthenticatedPage;
-use crate::pages::utils::get_user_claims;
+use crate::utils::get_user_claims;
 use super::api::{get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized, CreateTestComparisons};
 
 

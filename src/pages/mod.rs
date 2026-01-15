@@ -7,7 +7,6 @@ mod provider_portal;
 mod scholarship_info;
 mod test_page;
 mod unauthenticated_page;
-mod utils;
 mod provider_contact;
 mod auth_callback;
 

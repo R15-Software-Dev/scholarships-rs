@@ -12,6 +12,7 @@ mod validated_form;
 mod lists;
 mod toasts;
 mod header;
+pub mod login;
 
 pub use self::{
     action_button::*, banner::*, dashboard_button::*, lists::*,

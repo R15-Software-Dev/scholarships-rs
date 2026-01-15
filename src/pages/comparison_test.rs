@@ -3,12 +3,12 @@ use super::api::{get_all_scholarship_info, get_comparison_info};
 use super::home_page::get_submission;
 use crate::common::{ComparisonData, ExpandableInfo, ValueType};
 use crate::components::{ActionButton, Loading, Panel, Row};
-use crate::pages::utils::get_user_claims;
 use leptos::either::Either;
 use leptos::leptos_dom::logging::console_log;
 use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
+use crate::utils::get_user_claims;
 
 #[component]
 pub fn ComparisonTestPage() -> impl IntoView {
