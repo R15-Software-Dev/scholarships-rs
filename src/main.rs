@@ -6,7 +6,12 @@ async fn main() {
     use leptos::prelude::*;
     use leptos_axum::{LeptosRoutes, generate_route_list};
     use scholarships_rs::app::*;
+    use scholarships_rs::utils::server::create_dynamo_client;
+    use std::sync::Arc;
 
+    let dynamo_client = create_dynamo_client().await;
+    let shared_client = Arc::new(dynamo_client);
+    
     let conf = get_configuration(None).unwrap();
     let addr = conf.leptos_options.site_addr;
     let leptos_options = conf.leptos_options;
@@ -14,10 +19,20 @@ async fn main() {
     let routes = generate_route_list(App);
 
     let app = Router::new()
-        .leptos_routes(&leptos_options, routes, {
-            let leptos_options = leptos_options.clone();
-            move || shell(leptos_options.clone())
-        })
+        .leptos_routes_with_context(
+            &leptos_options,
+            routes,
+            {
+                let shared_client = Arc::clone(&shared_client);
+                move || {
+                    provide_context(Arc::clone(&shared_client));
+                }
+            },
+            {
+                let leptos_options = leptos_options.clone();
+                move || shell(leptos_options.clone())
+            }
+        )
         .fallback(leptos_axum::file_and_error_handler(shell))
         .with_state(leptos_options);
 
