@@ -119,27 +119,34 @@ pub fn ProviderContactPage() -> impl IntoView {
     });
 
     let mut toasts_context = expect_context::<ToastContext>();
-    Effect::new(move || {
-        match submit_action.value().get() {
-            Some(Ok(_)) => toasts_context.toast(
-                Toast::new()
+    Effect::watch(
+        move || submit_action.value().get(),
+        move |value, _, _| {
+            log!("Running submit_action effect");
+            let Some(result) = value else {
+                return;
+            };
+            
+            let toast = match result {
+                Ok(_) => Toast::new()
                     .id(uuid::Uuid::new_v4())
                     .header("Submission Successful")
-                    .msg("You can go back or continue editing your responses.")
-            ),
-            Some(Err(err)) => toasts_context.toast(
-                Toast::new()
+                    .msg("You can go back or continue editing your responses."),
+                Err(err) => Toast::new()
                     .id(uuid::Uuid::new_v4())
                     .header("Submission Failed")
                     .msg(err.to_string())
-            ),
-            _ => {}
-        }
-        
-        submit_action.clear();
-    });
-    
-    // Display contact form.
+            };
+
+            untrack(move || {
+                submit_action.clear();
+                toasts_context.toast(toast);
+            });
+        },
+        false
+    );
+
+// Display contact form.
     view! {
         <Banner title="R15 Scholarships" logo="/PHS_Stacked_Acronym.png" path="/" />
         <AuthLoaded fallback=Loading>

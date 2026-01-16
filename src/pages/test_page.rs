@@ -33,8 +33,7 @@ pub fn TestPage() -> impl IntoView {
                                 <h3 class="text-white font-bold">Important Dates</h3>
                             </div>
                             <div class="p-2">
-                                <div class="flex flex-col p-3 gap-3">
-                                </div>
+                                <div class="flex flex-col p-3 gap-3"></div>
                             </div>
                         </div>
                     </section>
