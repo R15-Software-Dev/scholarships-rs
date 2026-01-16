@@ -8,7 +8,7 @@ use std::process::{Command, Stdio};
 #[cfg(feature = "ssr")]
 use std::io::Write;
 
-use crate::common::{ComparisonData, ExpandableInfo};
+use crate::common::ExpandableInfo;
 use crate::pages::UnauthenticatedPage;
 use crate::components::{
     ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
@@ -213,28 +213,6 @@ pub fn HomePage() -> impl IntoView {
     };
     //#endregion
 
-    let comparison_resource = Resource::new(
-        move || user_subject.get(),
-        async move |_| get_comparisons_categorized().await
-    );
-
-    let comparison_info = RwSignal::new(HashMap::<String, Vec<ComparisonData>>::new());
-
-    Effect::new(move || {
-        match comparison_resource.get() {
-            Some(Ok(comparisons)) => {
-                log!("Found comparison info: {:?}", comparisons);
-                comparison_info.set(comparisons);
-            }
-            Some(Err(err)) => {
-                log!("Error while getting comparisons: {:?}", err);
-            }
-            _ => {
-                log!("An unknown error occurred.");
-            }
-        }
-    });
-
     view! {
         <AuthLoaded fallback=Loading>
             <Authenticated unauthenticated=UnauthenticatedPage>
@@ -336,6 +314,7 @@ pub fn HomePage() -> impl IntoView {
                                                         data_member="town"
                                                         data_map=form_data
                                                         required=true
+                                                        other_prompt="Other..."
                                                     />
                                                 </Row>
                                                 <Row>
@@ -384,7 +363,8 @@ pub fn HomePage() -> impl IntoView {
                                     </Row>
                                 }
                             })
-                    }} <Row>
+                    }}
+                    <Row>
                         <ActionButton on:click=pdf_button_click>"Get PDF"</ActionButton>
                     </Row>
                 </Suspense>

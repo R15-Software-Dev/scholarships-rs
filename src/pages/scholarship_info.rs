@@ -361,42 +361,7 @@ fn ScholarshipForm(
     /// submission fails, this function is not run.
     #[prop(into)] on_submit: Callback<()>
 ) -> impl IntoView {
-    let submit_action = ServerAction::<CreateScholarshipInfo>::new();
-
-    let submit_status = RwSignal::new(SubmitStatus::Idle);
-    let elements_disabled = Signal::derive(move || {
-        matches!(submit_action.pending().get(), true)
-    });
-
-    Effect::new(move || {
-        if submit_action.pending().get() {
-            submit_status.set(SubmitStatus::Sending);
-            return;
-        }
-        
-        if let Some(result) = submit_action.value().get() {
-            match result {
-                Ok(()) => {
-                    submit_status.set(SubmitStatus::Success);
-                    on_submit.run(());
-                },
-                Err(_err) => submit_status.set(SubmitStatus::Error(()))
-            }
-        }
-    });
-
-    let comparison_lists = Resource::new(
-        move || scholarship_id.get().is_some(),
-        async move |_| {
-            get_comparisons_categorized().await
-        }
-    );
-
-    Effect::new(move || {
-        if let Some(Ok(map)) = comparison_lists.get() {
-            log!("Available categories: {:?}", map.keys());
-        }
-    });
+    //#region Form Data Setup
 
     let scholarship_info = Resource::new(
         move || scholarship_id.get(),
@@ -425,6 +390,22 @@ fn ScholarshipForm(
 
             chips_data.set(chips_default);
             form_data.set(scholarship.data);
+        }
+    });
+
+    //#endregion
+    //#region Comparison Logic
+
+    let comparison_lists = Resource::new(
+        move || scholarship_id.get().is_some(),
+        async move |_| {
+            get_comparisons_categorized().await
+        }
+    );
+
+    Effect::new(move || {
+        if let Some(Ok(map)) = comparison_lists.get() {
+            log!("Available categories: {:?}", map.keys());
         }
     });
 
@@ -469,6 +450,33 @@ fn ScholarshipForm(
     let major_ids = Signal::derive(move || get_comp_ids("Majors"));
     let major_text = Signal::derive(move || get_comp_text("Majors"));
 
+    //#endregion
+    //#region Submission Logic
+
+    let submit_action = ServerAction::<CreateScholarshipInfo>::new();
+
+    let submit_status = RwSignal::new(SubmitStatus::Idle);
+    let elements_disabled = Signal::derive(move || {
+        matches!(submit_action.pending().get(), true)
+    });
+
+    Effect::new(move || {
+        if submit_action.pending().get() {
+            submit_status.set(SubmitStatus::Sending);
+            return;
+        }
+
+        if let Some(result) = submit_action.value().get() {
+            match result {
+                Ok(()) => {
+                    submit_status.set(SubmitStatus::Success);
+                    on_submit.run(());
+                },
+                Err(_err) => submit_status.set(SubmitStatus::Error(()))
+            }
+        }
+    });
+
     let mut toasts = expect_context::<ToastContext>();
     
     let on_submit = move |_| {
@@ -481,20 +489,28 @@ fn ScholarshipForm(
             info
         });
     };
-    
+
     Effect::new(move || {
-        submit_action.value().get().is_some()
-            .then(|| {
-                log!("Displaying toasts!");
-                toasts.toast(
-                    Toast::new()
-                        .id(uuid::Uuid::new_v4())
-                        .msg("Succesfully submitted.")
-                );
-                
-                submit_action.clear();
-            });
+        match submit_action.value().get() {
+            Some(Ok(_)) => toasts.toast(
+                Toast::new()
+                    .id(uuid::Uuid::new_v4())
+                    .header("Submission Successful")
+                    .msg("You can go back or continue editing your responses.")
+            ),
+            Some(Err(err)) => toasts.toast(
+                Toast::new()
+                    .id(uuid::Uuid::new_v4())
+                    .header("Submission Failed")
+                    .msg(err.to_string())
+            ),
+            _ => {}
+        }
+
+        submit_action.clear();
     });
+
+    //#endregion
 
     let create_comps = ServerAction::<CreateTestComparisons>::new();
 
@@ -588,23 +604,19 @@ fn ScholarshipForm(
                                                     </Row>
                                                     <Row>
                                                         <RadioList
-                                                            data_member="essay_required"
-                                                            data_map=form_data
-                                                            items=vec!["Yes".to_string(), "No".to_string()]
-                                                            disabled=elements_disabled
-                                                            label="Do you require a student essay?"
-                                                        />
-                                                    </Row>
-                                                    <Row>
-                                                        <RadioList
                                                             data_member="essay_prompt"
                                                             data_map=form_data
-                                                            items=vec!["Test 1", "Test 2", "Test 3"]
+                                                            items=vec![
+                                                                "Write an essay describing your major/career direction. Include any abilities, interests, experiences, employment or clubs you have had that have affected your direction. If you are undecided, indicate why.",
+                                                                "Why is community service important? How has it personally affected you and your goals and what role do you hope to play in it in the future?",
+                                                                "How has participation in sports been beneficial to your personal, academic, and emotional growth?"
+                                                            ]
                                                                 .iter()
-                                                                .map(|s| s.to_string())
+                                                                .map(|prompt| prompt.to_string())
                                                                 .collect()
                                                             disabled=elements_disabled
-                                                            label="If so, select a prompt from the list below."
+                                                            label="Select an essay prompt, or leave blank if none is required:"
+                                                            other_prompt="Custom prompt..."
                                                         />
                                                     </Row>
                                                     <Row>
