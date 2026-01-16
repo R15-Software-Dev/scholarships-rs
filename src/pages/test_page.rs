@@ -1,8 +1,5 @@
-use chrono::DateTime;
-use crate::common::{DateInfo, DateRange};
-use crate::components::{ActionButton, DashboardButton, DateList};
+use crate::components::DashboardButton;
 use leptos::prelude::*;
-use crate::pages::api::{get_important_dates, CreateDates};
 
 #[component]
 pub fn TestPage() -> impl IntoView {    
@@ -44,5 +41,5 @@ pub fn TestPage() -> impl IntoView {
                 </div>
             </div>
         </div>
-    }
+    }.into_any()
 }

@@ -108,22 +108,21 @@ fn RadioOther(
             // This div displays the box for the checkbox, and applies some styling to the child
             // span element.
             <div class="relative inline-block min-h-5 min-w-5 h-5 w-5 m-1 mr-2 rounded-full border border-gray-300 bg-white
-                transition-bg duration-200 peer-checked:bg-red-700 peer-checked:border-red-700
-                [&>span]:opacity-0 peer-checked:[&>span]:opacity-100
-                peer-disabled:bg-gray-600/33 peer-disabled:border-gray-600
-                peer-disabled:peer-checked:bg-gray-600">
+            transition-bg duration-200 peer-checked:bg-red-700 peer-checked:border-red-700
+            [&>span]:opacity-0 peer-checked:[&>span]:opacity-100
+            peer-disabled:bg-gray-600/33 peer-disabled:border-gray-600
+            peer-disabled:peer-checked:bg-gray-600">
 
                 // This span is the check icon. It is centered within the div and has a border on the bottom
                 // and right sides, which is then rotated to appear like a checkmark.
-                <span
-                    class="absolute left-1/2 top-1/2 block h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2
-                        rotate-45 transform border-3 border-3 rounded-full bg-white
-                        border-white transition-opacity duration-150"></span>
+                <span class="absolute left-1/2 top-1/2 block h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2
+                rotate-45 transform border-3 border-3 rounded-full bg-white
+                border-white transition-opacity duration-150"></span>
             </div>
             <input
                 node_ref=input_ref
                 class="border-b-2 mb-1.5 px-1.5 py-0.5 rounded-t-xs bg-transparent relative flex-1 transition-all duration-150
-                    border-red-700 disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
+                border-red-700 disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
                 r#type="text"
                 disabled=input_disabled
                 placeholder=placeholder
@@ -243,8 +242,6 @@ pub fn RadioList(
                             selected_value.get() == item.get() && !other_checked.get()
                         });
                         let on_change = move || {
-                            // on_change only runs when the radio button is checked, not when unchecked.
-                            // Change the selected value to the new one.
                             other_checked.set(false);
                             selected_value.set(item.get());
                             error
@@ -256,6 +253,8 @@ pub fn RadioList(
                                 );
                             dirty.set(true);
                         };
+                        // on_change only runs when the radio button is checked, not when unchecked.
+                        // Change the selected value to the new one.
 
                         view! {
                             <Radio
@@ -270,17 +269,17 @@ pub fn RadioList(
                     })
                     .collect::<Vec<_>>()}
 
-                    <Show when=move || !other_prompt.get().is_empty()>
-                        <RadioOther
-                            checked=other_checked
-                            name=data_member
-                            disabled=disabled
-                            value=other_value
-                            on_change=move |_| other_checked.set(true)
-                            placeholder=other_prompt
-                            dirty=dirty
-                        />
-                    </Show>
+                <Show when=move || !other_prompt.get().is_empty()>
+                    <RadioOther
+                        checked=other_checked
+                        name=data_member
+                        disabled=disabled
+                        value=other_value
+                        on_change=move |_| other_checked.set(true)
+                        placeholder=other_prompt
+                        dirty=dirty
+                    />
+                </Show>
             </div>
             <Show when=move || show_errors.get()>
                 <div class="text-red-600 text-sm mr-1.5 ml-1.5">

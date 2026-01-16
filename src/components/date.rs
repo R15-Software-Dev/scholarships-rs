@@ -120,5 +120,5 @@ pub fn DateList(
                 })
                 .collect_view()
         }}
-    }
+    }.into_any()
 }

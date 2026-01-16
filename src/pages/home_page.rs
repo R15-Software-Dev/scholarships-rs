@@ -24,7 +24,6 @@ use leptos::task::spawn_local;
 use leptos::web_sys::HtmlAnchorElement;
 use leptos::wasm_bindgen::JsCast;
 use std::collections::HashMap;
-use crate::pages::api::get_comparisons_categorized;
 use crate::utils::get_user_claims;
 
 /// # Get Student Info
@@ -363,8 +362,7 @@ pub fn HomePage() -> impl IntoView {
                                     </Row>
                                 }
                             })
-                    }}
-                    <Row>
+                    }} <Row>
                         <ActionButton on:click=pdf_button_click>"Get PDF"</ActionButton>
                     </Row>
                 </Suspense>

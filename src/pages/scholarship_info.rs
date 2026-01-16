@@ -609,7 +609,7 @@ fn ScholarshipForm(
                                                             items=vec![
                                                                 "Write an essay describing your major/career direction. Include any abilities, interests, experiences, employment or clubs you have had that have affected your direction. If you are undecided, indicate why.",
                                                                 "Why is community service important? How has it personally affected you and your goals and what role do you hope to play in it in the future?",
-                                                                "How has participation in sports been beneficial to your personal, academic, and emotional growth?"
+                                                                "How has participation in sports been beneficial to your personal, academic, and emotional growth?",
                                                             ]
                                                                 .iter()
                                                                 .map(|prompt| prompt.to_string())
