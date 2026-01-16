@@ -10,8 +10,10 @@ use std::io::Write;
 
 use crate::common::ExpandableInfo;
 use crate::pages::UnauthenticatedPage;
-use crate::pages::utils::get_user_claims;
-use crate::components::{ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row, Select, TextFieldType, ValidatedForm};
+use crate::components::{
+    ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
+    Select, TextFieldType, ValidatedForm
+};
 use crate::input;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
@@ -22,6 +24,7 @@ use leptos::task::spawn_local;
 use leptos::web_sys::HtmlAnchorElement;
 use leptos::wasm_bindgen::JsCast;
 use std::collections::HashMap;
+use crate::utils::get_user_claims;
 
 /// # Get Student Info
 /// Gets a student's information given their `subject`.
@@ -155,7 +158,7 @@ pub fn HomePage() -> impl IntoView {
         async move |subject| get_submission(subject.unwrap_or_default()).await
     );
     let submit_action = ServerAction::<CreateSampleSubmission>::new();
-    
+
     Effect::new(move || {
         match server_resource.get() {
             Some(Ok(submission)) => {
@@ -222,7 +225,7 @@ pub fn HomePage() -> impl IntoView {
                                     <Row>
                                         <div class="flex flex-col flex-1" />
                                         <Panel>
-                                            <ValidatedForm 
+                                            <ValidatedForm
                                                 on_submit=Callback::new(on_submit)
                                                 title="Home Page Test Form"
                                                 description="This really is just a test."
@@ -263,7 +266,7 @@ pub fn HomePage() -> impl IntoView {
                                                         data_member="contact_email"
                                                         data_map=form_data
                                                         input_type=TextFieldType::Email(
-                                                            vec!["fakeemail.org".to_string(), "gmail.com".to_string()]
+                                                            vec!["fakeemail.org".to_string(), "gmail.com".to_string()],
                                                         )
                                                         required=true
                                                     />
@@ -344,8 +347,12 @@ pub fn HomePage() -> impl IntoView {
                                                         data_map=form_data
                                                         data_member="community_involvement"
                                                         schema=vec![
-                                                            input!(Text, "service_name", "Activity Name:", true, "Some service activity..."),
-                                                            input!(Number, "service_hours", "Total Service Hours", true, "20")
+                                                            input!(
+                                                                Text, "service_name", "Activity Name:", true, "Some service activity..."
+                                                            ),
+                                                            input!(
+                                                                Number, "service_hours", "Total Service Hours", true, "20"
+                                                            ),
                                                         ]
                                                     />
                                                 </Row>
@@ -355,8 +362,7 @@ pub fn HomePage() -> impl IntoView {
                                     </Row>
                                 }
                             })
-                    }}
-                    <Row>
+                    }} <Row>
                         <ActionButton on:click=pdf_button_click>"Get PDF"</ActionButton>
                     </Row>
                 </Suspense>

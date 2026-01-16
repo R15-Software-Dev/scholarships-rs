@@ -134,24 +134,25 @@ pub fn CheckboxList(
                             let cloned = item.clone();
                             move || cloned.clone()
                         });
-
                         let checked = Signal::derive(move || {
                             controller.selected_list.get().contains(&item.get())
                         });
-
                         let on_change = move || {
-                            // Update the data list by checking if the value is present in it. If so,
-                            // remove it. If not, add it.
-                            controller.selected_list.update(|list| {
-                                let item = item.get();
-                                if list.contains(&item) {
-                                    list.retain(|val| *val != item);
-                                } else {
-                                    list.push(item);
-                                }
-                            });
+                            controller
+                                .selected_list
+                                .update(|list| {
+                                    let item = item.get();
+                                    if list.contains(&item) {
+                                        list.retain(|val| *val != item);
+                                    } else {
+                                        list.push(item);
+                                    }
+                                });
                             controller.dirty.set(true);
                         };
+
+                        // Update the data list by checking if the value is present in it. If so,
+                        // remove it. If not, add it.
 
                         view! {
                             <Checkbox
@@ -171,7 +172,7 @@ pub fn CheckboxList(
                     {move || {
                         match controller.error.get() {
                             ValidationState::Invalid(msg) => msg,
-                            _ => "There is no error - should not see this message.".to_string()
+                            _ => "There is no error - should not see this message.".to_string(),
                         }
                     }}
                 </div>

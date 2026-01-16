@@ -57,5 +57,5 @@ pub fn DashboardButton(
 
             </div>
         </button>
-    }
+    }.into_any()
 }

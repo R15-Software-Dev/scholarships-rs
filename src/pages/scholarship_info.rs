@@ -8,7 +8,7 @@ use leptos_router::hooks::{use_navigate, use_params};
 use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
 use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
 use super::UnauthenticatedPage;
-use crate::pages::utils::get_user_claims;
+use crate::utils::get_user_claims;
 use super::api::{get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized, CreateTestComparisons};
 
 
@@ -609,7 +609,7 @@ fn ScholarshipForm(
                                                             items=vec![
                                                                 "Write an essay describing your major/career direction. Include any abilities, interests, experiences, employment or clubs you have had that have affected your direction. If you are undecided, indicate why.",
                                                                 "Why is community service important? How has it personally affected you and your goals and what role do you hope to play in it in the future?",
-                                                                "How has participation in sports been beneficial to your personal, academic, and emotional growth?"
+                                                                "How has participation in sports been beneficial to your personal, academic, and emotional growth?",
                                                             ]
                                                                 .iter()
                                                                 .map(|prompt| prompt.to_string())

@@ -1,6 +1,5 @@
-use std::collections::HashMap;
 #[cfg(feature = "ssr")]
-use crate::pages::utils::server_utils::create_dynamo_client;
+use crate::utils::server::create_dynamo_client;
 
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::error::ProvideErrorMetadata;
@@ -12,6 +11,7 @@ use crate::common::{
     ComparisonData, ComparisonType, MapListComparison, NumberComparison, NumberListComparison,
     TextComparison, TextListComparison, ValueType,
 };
+use std::collections::HashMap;
 use leptos::prelude::ServerFnError;
 use leptos::server;
 

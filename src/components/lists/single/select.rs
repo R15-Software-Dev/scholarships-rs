@@ -93,9 +93,9 @@ pub fn Select(
                     <span class="ml-1.5 mb-0 font-bold">{label}</span>
                     <select
                         class="relative flex-1 border-2 m-1.5 mt-0 p-1.5 rounded-md
-                            transition-border duration-150
-                            border-red-700 bg-transparent
-                            disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
+                        transition-border duration-150
+                        border-red-700 bg-transparent
+                        disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
                         on:change:target=on_change
                         disabled=disabled
                     >
@@ -104,15 +104,18 @@ pub fn Select(
                             value=""
                             disabled
                             hidden
-                            selected={move || raw_value.get().is_empty()}
-                        >"Select one..."</option>
+                            selected=move || raw_value.get().is_empty()
+                        >
+                            "Select one..."
+                        </option>
                         {move || {
-                            value_list.iter().map(
-                                move |value| {
+                            value_list
+                                .iter()
+                                .map(move |value| {
                                     let display = value.to_owned();
-                                    view! { <option value={display}>{display.clone()}</option> }
-                                }
-                            ).collect::<Vec<_>>()
+                                    view! { <option value=display>{display.clone()}</option> }
+                                })
+                                .collect::<Vec<_>>()
                         }}
                     </select>
                 </label>
@@ -122,7 +125,7 @@ pub fn Select(
                     {move || {
                         match error.get() {
                             ValidationState::Invalid(msg) => msg,
-                            _ => "There is no error - should not see this message.".to_string()
+                            _ => "There is no error - should not see this message.".to_string(),
                         }
                     }}
                 </div>

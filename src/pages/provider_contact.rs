@@ -1,14 +1,14 @@
-﻿use std::collections::HashMap;
+﻿#[cfg(feature = "ssr")]
+use crate::utils::server::{create_dynamo_client, into_attr_map};
+
+use std::collections::HashMap;
 use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use crate::common::ValueType;
 use crate::components::{Banner, Loading, OutlinedTextField, Panel, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
 use crate::pages::UnauthenticatedPage;
-use crate::pages::utils::get_user_claims;
-
-#[cfg(feature = "ssr")]
-use crate::pages::utils::server_utils::create_dynamo_client;
+use crate::utils::get_user_claims;
 
 #[cfg(feature = "ssr")]
 static PROVIDER_CONTACT_TABLE: &str = "leptos-provider-contacts";
@@ -52,7 +52,6 @@ async fn get_provider_contact(id: String) -> Result<HashMap<String, ValueType>, 
 #[server]
 async fn put_provider_contact(id: String, contact_info: HashMap<String, ValueType>) -> Result<(), ServerFnError> {
     use aws_sdk_dynamodb::error::ProvideErrorMetadata;
-    use crate::pages::utils::server_utils::into_attr_map;
 
     let client = create_dynamo_client().await;
 
@@ -149,7 +148,7 @@ pub fn ProviderContactPage() -> impl IntoView {
                     <div class="flex flex-row">
                         <div class="flex flex-col flex-1" />
                         <Panel>
-                            <ValidatedForm 
+                            <ValidatedForm
                                 on_submit=on_submit
                                 title="Contact Form"
                                 description="Enter your contact information and click submit."

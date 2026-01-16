@@ -32,17 +32,21 @@ pub fn Banner(
 
     view! {
         <div class="mx-auto">
-          <div class="bg-red-900 shadow-lg shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.3),0_4px_6px_-1px_rgba(127,29,29,0.3),0_2px_4px_-1px_rgba(127,29,29,0.2)]">
-            <div class="flex items-center gap-4 p-6">
-              <div class="flex-shrink-0">
-                <img src={logo.clone()} class="h-10 w-10 cursor-pointer" alt="icon" on:click=on_click/>
-              </div>
-              <div class="flex-1">
-                <h2 class="text-white text-lg font-bold">{title.clone()}</h2>
-              </div>
+            <div class="bg-red-900 shadow-lg shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.3),0_4px_6px_-1px_rgba(127,29,29,0.3),0_2px_4px_-1px_rgba(127,29,29,0.2)]">
+                <div class="flex items-center gap-4 p-6">
+                    <div class="flex-shrink-0">
+                        <img
+                            src=logo.clone()
+                            class="h-10 w-10 cursor-pointer"
+                            alt="icon"
+                            on:click=on_click
+                        />
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-white text-2xl font-bold">{title.clone()}</h2>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-
     }
 }

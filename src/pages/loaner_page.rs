@@ -213,11 +213,7 @@ pub fn LoanerShell() -> impl IntoView {
     // We'll create the page here - the sidebar contains all the buttons, while the form
     // container either shows forms or shows placeholder text.
     view! {
-        <Banner
-            title="Chromebook Loaners"
-            logo="/PHS_Stacked_Acronym.png"
-            path="/loaners"
-        />
+        <Banner title="Chromebook Loaners" logo="/PHS_Stacked_Acronym.png" path="/loaners" />
         <div class="flex m-5">
             <div class="flex flex-1 flex-row gap-3">
                 <div id="sidebar" class="flex flex-1 flex-col gap-2">
@@ -247,16 +243,9 @@ pub fn LoanerShell() -> impl IntoView {
 #[component]
 pub fn LoanerFallback() -> impl IntoView {
     view! {
-        <div
-            class="flex flex-col items-center justify-center"
-            use:animate=pop_in_out()
-        >
-            <div class="text-3xl font-bold mb-2">
-                "Chromebook Loaner Form"
-            </div>
-            <div class="text-lg">
-                "Select an option from the left to begin."
-            </div>
+        <div class="flex flex-col items-center justify-center" use:animate=pop_in_out()>
+            <div class="text-3xl font-bold mb-2">"Chromebook Loaner Form"</div>
+            <div class="text-lg">"Select an option from the left to begin."</div>
         </div>
     }
 }
@@ -431,69 +420,85 @@ pub fn LoanerReturnForm() -> impl IntoView {
         <dialog
             use:animate=pop_in_out()
             class="p-3 m-auto rounded-md shadow-lg/33 backdrop:backdrop-blur-xs backdrop:transition-backdrop-filter"
-            node_ref=dialog_ref>
+            node_ref=dialog_ref
+        >
             <h2 class="text-2xl font-bold">"Confirmation"</h2>
             <h4 class="text-xl mb-3">
-                {move || chosen_student.with(|opt_student| {
-                    if let Some(student) = opt_student.as_ref() {
-                        format!("Are you sure want to check in {} {}?", student.first_name, student.last_name)
-                    } else {
-                        "There is no student selected.".to_string()
-                    }
-                })}
+                {move || {
+                    chosen_student
+                        .with(|opt_student| {
+                            if let Some(student) = opt_student.as_ref() {
+                                format!(
+                                    "Are you sure want to check in {} {}?",
+                                    student.first_name,
+                                    student.last_name,
+                                )
+                            } else {
+                                "There is no student selected.".to_string()
+                            }
+                        })
+                }}
             </h4>
-            <ActionButton on:click=close_dialog disabled=dialog_disabled>"Close"</ActionButton>
-            <ActionButton on:click=dialog_check_in disabled=dialog_disabled>"Check In"</ActionButton>
+            <ActionButton on:click=close_dialog disabled=dialog_disabled>
+                "Close"
+            </ActionButton>
+            <ActionButton on:click=dialog_check_in disabled=dialog_disabled>
+                "Check In"
+            </ActionButton>
         </dialog>
 
-        <div
-            class="flex flex-col gap-2 m-2"
-            use:animate=pop_in_out()
-        >
+        <div class="flex flex-col gap-2 m-2" use:animate=pop_in_out()>
             <div class="flex flex-col justify-center gap-2 mb-3 py-3 px-2">
                 <h2 class="text-2xl font-bold">"Student List"</h2>
                 <p class="text-lg">"Please select your name from the list."</p>
             </div>
-            <Suspense fallback=move || "Loading...".into_view()>
+            <Suspense fallback=move || {
+                "Loading...".into_view()
+            }>
                 {move || {
                     match return_list_resource.get() {
                         Some(loaner_list) => {
-                            let list_view = loaner_list.iter().map(|student| {
-                                let on_click = {
-                                    let student_click = student.clone();
-                                    move |_| {
-                                        log!("Running on_click using student {:?}", student_click);
-                                        if let Some(dialog) = dialog_ref.get() {
-                                            chosen_student.set(Some(student_click.clone()));
-                                            dialog.show_modal().expect("Couldn't show modal dialog.");
+                            let list_view = loaner_list
+                                .iter()
+                                .map(|student| {
+                                    let on_click = {
+                                        let student_click = student.clone();
+                                        move |_| {
+                                            log!("Running on_click using student {:?}", student_click);
+                                            if let Some(dialog) = dialog_ref.get() {
+                                                chosen_student.set(Some(student_click.clone()));
+                                                dialog.show_modal().expect("Couldn't show modal dialog.");
+                                            }
                                         }
+                                    };
+                                    let naive_time = chrono::NaiveDateTime::parse_from_str(
+                                            &student.date,
+                                            "%H:%M, %m/%d/%Y",
+                                        )
+                                        .unwrap();
+                                    let time_zone = FixedOffset::west_opt(5 * 3600).unwrap();
+                                    let student_date = time_zone
+                                        .from_utc_datetime(&naive_time)
+                                        .format("%l:%M %p, %m/%d/%Y")
+                                        .to_string();
+                                    log!("Found current date {:?}", student_date);
+
+                                    view! {
+                                        <div
+                                            class="flex flex-row p-3 rounded-md cursor-pointer transition-shadow shadow-sm hover:shadow-lg/33"
+                                            on:click=on_click
+                                        >
+                                            <div class="flex-1">
+                                                {student.first_name.clone()}" "{student.last_name.clone()}
+                                            </div>
+                                            <div class="flex-none">{student_date.clone()}</div>
+                                        </div>
                                     }
-                                };
-
-                                let naive_time = chrono::NaiveDateTime::parse_from_str(&student.date, "%H:%M, %m/%d/%Y")
-                                    .unwrap();
-                                let time_zone = FixedOffset::west_opt(5 * 3600).unwrap();
-                                let student_date = time_zone.from_utc_datetime(&naive_time)
-                                    .format("%l:%M %p, %m/%d/%Y")
-                                    .to_string();
-
-                                log!("Found current date {:?}", student_date);
-
-                                view! {
-                                    <div class="flex flex-row p-3 rounded-md cursor-pointer transition-shadow shadow-sm hover:shadow-lg/33" on:click=on_click>
-                                        <div class="flex-1">
-                                            {student.first_name.clone()}" "{student.last_name.clone()}
-                                        </div>
-                                        <div class="flex-none">
-                                            {student_date.clone()}
-                                        </div>
-                                    </div>
-                                }
-                            }).collect_view();
-
+                                })
+                                .collect_view();
                             Either::Left(list_view)
-                        },
-                        None => Either::Right("No loaners found.".into_view())
+                        }
+                        None => Either::Right("No loaners found.".into_view()),
                     }
                 }}
             </Suspense>

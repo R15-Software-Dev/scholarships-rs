@@ -2,27 +2,44 @@ use crate::components::DashboardButton;
 use leptos::prelude::*;
 
 #[component]
-pub fn TestPage() -> impl IntoView {
+pub fn TestPage() -> impl IntoView {    
     view! {
-        <div class="p-6 space-y-4 max-w-1/3">
-            <DashboardButton
-                title="Home Page"
-                description="Navigate to Home Page"
-                icon="Book.png"
-                path="/"
-            />
-        <DashboardButton
-                title="Home Page"
-                description="Navigate to Home Page"
-                icon="Calendar.png"
-                path="/"
-            />
-        <DashboardButton
-                title="Home Page"
-                description="Navigate to Home Page"
-                icon="Edit.png"
-                path="/"
-            />
+        <div class="mx-auto px-6">
+            <div class="container mx-auto px-6 py-8 space-y-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <section class="space-y-4">
+                        <DashboardButton
+                            title="Profile"
+                            description="Edit user profile"
+                            icon="/Person_Black.png"
+                            path="/"
+                        />
+                        <DashboardButton
+                            title="Create Scholarship"
+                            description="Navigate to Scholarship Creation Page"
+                            icon="/Create_Black.png"
+                            path="/"
+                        />
+                        <DashboardButton
+                            title="Applicants"
+                            description="View Scholarship Applicants"
+                            icon="/Form_Black.png"
+                            path="/"
+                        />
+                    </section>
+                    <section class="space-y-2">
+                        <div class="rounded-lg shadow-lg/25 overflow-hidden">
+                            <div class="bg-red-900 text-white px-4 py-3 shadow-lg">
+                                <h3 class="text-white font-bold">Important Dates</h3>
+                            </div>
+                            <div class="p-2">
+                                <div class="flex flex-col p-3 gap-3">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
         </div>
-    }
+    }.into_any()
 }

@@ -1,8 +1,10 @@
-use crate::pages::{AboutPage, HomePage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm};
+use crate::pages::{AboutPage, HomePage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage};
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
-use leptos_oidc::{Auth, AuthParameters, AuthSignal, Challenge};
-use leptos_router::{components::{Route, Router, Routes, ParentRoute}, path};
+use leptos_oidc::AuthSignal;
+use leptos_router::{components::{Route, Router, Routes, ParentRoute}, path, MatchNestedRoutes};
+use leptos_router::any_nested_route::IntoAnyNestedRoute;
+use crate::components::login::ProviderLoginContext;
 use crate::components::ToastList;
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
@@ -31,10 +33,10 @@ pub fn App() -> impl IntoView {
     view! {
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet
-        <Stylesheet id="leptos" href="/pkg/scholarships-rs-wasm.css"/>
-        
+        <Stylesheet id="leptos" href="/pkg/scholarships-rs-wasm.css" />
+
         // sets the document title
-        <Title text="R15 Scholarship App DEV"/>
+        <Title text="R15 Scholarship App DEV" />
 
         // content for this welcome page
         <Router>
@@ -43,80 +45,62 @@ pub fn App() -> impl IntoView {
     }
 }
 
-fn use_origin() -> String {
-    #[cfg(target_arch = "wasm32")] {
-        use leptos::web_sys;
-        // Just get the current URL origin.
-        web_sys::window()
-            .unwrap()
-            .location()
-            .origin()
-            .unwrap_or("http://localhost:3000/".to_string())
-    }
-    
-    #[cfg(not(target_arch = "wasm32"))] {
-        // Read the expected origin out of an environment variable.
-        std::env::var("LP_SITE_ORIGIN").unwrap_or("http://localhost:3000/".to_string())
-    }
-}
-
 #[component]
 pub fn AppWithRoutes() -> impl IntoView {
     provide_meta_context();
-    
-    let current_origin = use_origin();
-
-    // Authentication setup
-    let parameters = AuthParameters {
-        issuer: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Lfjuy5zaM".into(),
-        client_id: "10jr2h3vtpu9n7gj46pvg5qo2q".into(),
-        redirect_uri: format!("{}/", use_origin()),
-        post_logout_redirect_uri: current_origin,
-        scope: Some("openid%20profile%20email".into()),
-        audience: None,
-        challenge: Challenge::None,
-    };
-
-    let auth = Auth::signal();
-    provide_context(auth); // allows use of this signal in lower areas of the tree without
-                           // explicitly passing it through the html tree
-
-    let _ = Auth::init(parameters);
 
     view! {
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet
         <Stylesheet id="leptos" href="/pkg/scholarships-rs-wasm.css" />
 
-        // <AuthLoading><p>"Authentication is loading"</p></AuthLoading>
-        // <AuthErrorContext><AuthErrorView/></AuthErrorContext>
-
         // sets the document title
         <Title text="R15 Scholarship App DEV" />
-        
+
         <main>
             <ToastList>
                 // TODO Create a 404 page
                 <Routes fallback=|| "Page not found.".into_view()>
-                    <Route path=path!("") view=HomePage/>
-                    <Route path=path!("/about") view=AboutPage/>
-                    <Route path=path!("/test_page") view=TestPage/>
+                    <Route path=path!("") view=HomePage />
+                    <Route path=path!("/about") view=AboutPage />
+                    <Route path=path!("/test_page") view=TestPage />
                     <Route path=path!("/comparison") view=ComparisonTestPage />
-                    <Route path=path!("/providers") view=ProviderPortal/>
-                    <Route path=path!("/providers/profile") view=ProviderContactPage />
-                    <ParentRoute path=path!("/providers/scholarships") view=ScholarshipInfoPage>
-                        <Route path=path!(":id") view=ScholarshipInfoPage/>
-                        <Route path=path!("") view=ScholarshipInfoPage/>
-                    </ParentRoute>
-                    <ParentRoute path=path!("loaners") view=LoanerShell>
-                        <Route path=path!("") view=LoanerFallback />
-                        <Route path=path!("borrowing") view=LoanerBorrowForm />
-                        <Route path=path!("returning") view=LoanerReturnForm />
-                    </ParentRoute>
+                    <ProviderRoutes />
+                    <LoanerRoutes />
                 </Routes>
             </ToastList>
         </main>
     }
+}
+
+#[component(transparent)]
+fn ProviderRoutes() -> impl MatchNestedRoutes + Clone {
+    view! {
+        <ParentRoute path=path!("/providers") view=ProviderLoginContext>
+            <Route path=path!("/callback") view=AuthCallbackPage />
+            <Route path=path!("") view=ProviderPortal />
+            <Route path=path!("/profile") view=ProviderContactPage />
+            <ParentRoute path=path!("/scholarships") view=ScholarshipInfoPage>
+                <Route path=path!(":id") view=ScholarshipInfoPage />
+                <Route path=path!("") view=ScholarshipInfoPage />
+            </ParentRoute>
+        </ParentRoute>
+    }
+        .into_inner()
+        .into_any_nested_route()
+}
+
+#[component(transparent)]
+fn LoanerRoutes() -> impl MatchNestedRoutes + Clone {
+    view! {
+        <ParentRoute path=path!("loaners") view=LoanerShell>
+            <Route path=path!("") view=LoanerFallback />
+            <Route path=path!("borrowing") view=LoanerBorrowForm />
+            <Route path=path!("returning") view=LoanerReturnForm />
+        </ParentRoute>
+    }
+        .into_inner()
+        .into_any_nested_route()
 }
 
 #[component]

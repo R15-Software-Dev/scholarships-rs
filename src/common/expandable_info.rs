@@ -15,7 +15,7 @@ use std::collections::HashMap;
 /// now, the table will simply create a single massive `Map` field that contains all the stored
 /// information in the `HashMap`. We'd prefer to be able to get single values if possible,
 /// especially for interoperability with other applications, should they be created.
-#[derive(Debug, Clone, Serialize, Deserialize, Reactive, )]
+#[derive(Debug, Clone, Serialize, Deserialize, Reactive)]
 pub struct ExpandableInfo {
     /// The main key member. Required and used to get/put the information in a database.
     pub subject: String,
