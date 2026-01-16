@@ -24,7 +24,5 @@ pub fn StudentLoginContext() -> impl IntoView {
         "/students/callback"
     );
     
-    view! {
-        <Outlet />
-    }
+    view! { <Outlet /> }
 }

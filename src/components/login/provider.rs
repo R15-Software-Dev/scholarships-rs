@@ -24,7 +24,5 @@ pub fn ProviderLoginContext() -> impl IntoView {
         "/providers/callback"
     );
 
-    view! {
-        <Outlet />
-    }
+    view! { <Outlet /> }
 }
