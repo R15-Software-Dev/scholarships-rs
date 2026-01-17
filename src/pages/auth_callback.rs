@@ -31,7 +31,7 @@ pub fn AuthCallbackPage() -> impl IntoView {
     
     view! {
         <div class="flex flex-col w-full mx-auto items-center justify-center">
-            <p>"Completing the login process..."</p>
+            <p class="text-xl font-bold mt-10 mx-auto">"Logging you in..."</p>
         </div>
     }
 }

@@ -175,10 +175,27 @@ fn ScholarshipList(
         }
     });
     
+    let modal_on_click_continue = move |_| {
+        let subject = pending_delete
+            .get()
+            .map(|s| s.subject.clone())
+            .unwrap_or_default();
+        log!("Deleting scholarship with subject {}", subject);
+        delete_action
+            .dispatch(DeleteProviderScholarship {
+                scholarship_id: subject,
+                provider_id: provider_id.get().unwrap_or_default(),
+            });
+    };
+    
     view! {
-        <dialog node_ref=delete_dialog_ref class="m-auto p-2">
+        <dialog
+            node_ref=delete_dialog_ref
+            class="m-auto p-5 rounded-lg shadow-xl/50
+            backdrop:backdrop-blur-xs backdrop:transition-backdrop-filter"
+        >
             <h2 class="text-2xl font-bold">"Confirm Deletion"</h2>
-            <p>
+            <p class="mb-3">
                 "Are you sure you want to delete "
                 {move || {
                     pending_delete
@@ -189,28 +206,16 @@ fn ScholarshipList(
                                 .unwrap_or(&ValueType::String(None))
                                 .as_string()
                                 .unwrap_or_default()
-                                .unwrap_or("<no name found>".to_string())
+                                .unwrap_or("this unnamed scholarship".to_string())
                         })
                 }} "?"
             </p>
-            <ActionButton
-                on:click=move |_| {
-                    let subject = pending_delete
-                        .get()
-                        .map(|s| s.subject.clone())
-                        .unwrap_or_default();
-                    log!("Deleting scholarship with subject {}", subject);
-                    delete_action
-                        .dispatch(DeleteProviderScholarship {
-                            scholarship_id: subject,
-                            provider_id: provider_id.get().unwrap_or_default(),
-                        });
-                }
-                disabled=modal_disabled
-            >
-                "Confirm"
-            </ActionButton>
-            <ActionButton on:click=move |_| pending_delete.set(None)>"Cancel"</ActionButton>
+            <div class="flex mx-auto items-center justify-center">
+                <ActionButton on:click=modal_on_click_continue disabled=modal_disabled>
+                    "Yes"
+                </ActionButton>
+                <ActionButton on:click=move |_| pending_delete.set(None)>"No"</ActionButton>
+            </div>
         </dialog>
         <div class="w-75">
             <Panel>
@@ -631,6 +636,7 @@ fn ScholarshipForm(
                                                             data_map=chips_data
                                                             values=gpa_ids
                                                             displayed_text=gpa_text
+                                                            allows_multiple=false
                                                         />
                                                     </Row>
                                                     <Row>
@@ -649,6 +655,7 @@ fn ScholarshipForm(
                                                             data_map=chips_data
                                                             values=comm_ids
                                                             displayed_text=comm_text
+                                                            allows_multiple=false
                                                         />
                                                     </Row>
                                                     <Row>
@@ -658,6 +665,7 @@ fn ScholarshipForm(
                                                             data_map=chips_data
                                                             values=res_ids
                                                             displayed_text=res_text
+                                                            allows_multiple=false
                                                         />
                                                     </Row>
                                                     <Row>

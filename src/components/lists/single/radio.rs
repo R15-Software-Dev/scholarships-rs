@@ -31,7 +31,7 @@ pub fn Radio(
             />
             // This div displays the box for the checkbox, and applies some styling to the child
             // span element.
-            <div class="relative inline-block h-5 w-5 m-1 mr-2 rounded-full border border-gray-300 bg-white
+            <div class="relative inline-block h-5 w-5 m-1 mr-2 rounded-full border border-gray-400 bg-white
             transition-bg duration-200 peer-checked:bg-red-700 peer-checked:border-red-700
             [&>span]:opacity-0 peer-checked:[&>span]:opacity-100
             peer-disabled:bg-gray-600/33 peer-disabled:border-gray-600
@@ -107,7 +107,7 @@ fn RadioOther(
             />
             // This div displays the box for the checkbox, and applies some styling to the child
             // span element.
-            <div class="relative inline-block min-h-5 min-w-5 h-5 w-5 m-1 mr-2 rounded-full border border-gray-300 bg-white
+            <div class="relative inline-block min-h-5 min-w-5 h-5 w-5 m-1 mr-2 rounded-full border border-gray-400 bg-white
             transition-bg duration-200 peer-checked:bg-red-700 peer-checked:border-red-700
             [&>span]:opacity-0 peer-checked:[&>span]:opacity-100
             peer-disabled:bg-gray-600/33 peer-disabled:border-gray-600
