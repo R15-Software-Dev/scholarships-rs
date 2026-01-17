@@ -6,7 +6,7 @@ use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::{use_navigate, use_params};
 use crate::common::{ComparisonData, ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
-use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
+use crate::components::{ActionButton, Banner, ChipsList, Header, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
 use super::UnauthenticatedPage;
 use crate::utils::get_user_claims;
 use super::api::{get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized};
@@ -637,6 +637,11 @@ fn ScholarshipForm(
                                                             other_prompt="Custom prompt..."
                                                         />
                                                     </Row>
+                                                    <Header
+                                                        title="Eligibility Requirements"
+                                                        description="Choose any requirements that this scholarship may have. If there are no extra requirements,
+                                                            leave all options blank, however please note that this will apply all students to your scholarship."
+                                                    />
                                                     <Row>
                                                         <ChipsList
                                                             label="GPA Requirements"

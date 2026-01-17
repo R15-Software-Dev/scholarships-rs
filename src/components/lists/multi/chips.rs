@@ -96,7 +96,7 @@ pub fn ChipsList(
 
     view! {
         <div class="flex flex-col">
-            <div class="m-1.5 mt-0 mb-0">
+            <div class="flex flex-col gap-2 m-1.5 mt-0 mb-0">
                 <span class="font-bold">{label}</span>
                 <div class="flex flex-row flex-wrap gap-2 mb-1">
                     {move || {
