@@ -607,7 +607,7 @@ fn ScholarshipForm(
                                                         <RadioList
                                                             data_member="award_to"
                                                             data_map=form_data
-                                                            items=vec!["School".to_string(), "Student".to_string()]
+                                                            items=vec!["University".to_string(), "Student".to_string()]
                                                             disabled=elements_disabled
                                                             label="Will the award be made to the school or the student?"
                                                         />
