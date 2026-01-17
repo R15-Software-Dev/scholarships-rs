@@ -26,7 +26,7 @@ pub fn Header(
     });
     
     view! {
-        <div class="m-1.5 mb-5">
+        <div class="flex flex-col gap-2 m-1.5 mt-3 mb-5">
             <div class="text-3xl font-bold">
                 {title}
             </div>

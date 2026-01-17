@@ -214,17 +214,6 @@ pub fn ProviderContactPage() -> impl IntoView {
                                                         required=true
                                                     />
                                                 </Row>
-                                                <Row>
-                                                    <OutlinedTextField
-                                                        label="Testing Number"
-                                                        placeholder="Just put a number"
-                                                        disabled=elements_disabled
-                                                        data_member="testing_number"
-                                                        data_map=contact_info
-                                                        input_type=TextFieldType::Number
-                                                        required=true
-                                                    />
-                                                </Row>
                                             }
                                         })
                                 }}

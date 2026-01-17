@@ -1,4 +1,4 @@
-use crate::pages::{AboutPage, HomePage, ProviderPortal, ComparisonTestPage, ScholarshipInfoPage, TestPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage};
+use crate::pages::{ProviderPortal, ScholarshipInfoPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage};
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::AuthSignal;
@@ -61,10 +61,6 @@ pub fn AppWithRoutes() -> impl IntoView {
             <ToastList>
                 // TODO Create a 404 page
                 <Routes fallback=|| "Page not found.".into_view()>
-                    <Route path=path!("") view=HomePage />
-                    <Route path=path!("/about") view=AboutPage />
-                    <Route path=path!("/test_page") view=TestPage />
-                    <Route path=path!("/comparison") view=ComparisonTestPage />
                     <ProviderRoutes />
                     <LoanerRoutes />
                 </Routes>

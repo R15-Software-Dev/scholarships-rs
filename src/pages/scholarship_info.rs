@@ -5,11 +5,11 @@ use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::{use_navigate, use_params};
-use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
-use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
+use crate::common::{ComparisonData, ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
+use crate::components::{ActionButton, Banner, ChipsList, Header, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
 use super::UnauthenticatedPage;
 use crate::utils::get_user_claims;
-use super::api::{get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized, CreateTestComparisons};
+use super::api::{get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized};
 
 
 /// # Scholarship Info Page
@@ -175,10 +175,27 @@ fn ScholarshipList(
         }
     });
     
+    let modal_on_click_continue = move |_| {
+        let subject = pending_delete
+            .get()
+            .map(|s| s.subject.clone())
+            .unwrap_or_default();
+        log!("Deleting scholarship with subject {}", subject);
+        delete_action
+            .dispatch(DeleteProviderScholarship {
+                scholarship_id: subject,
+                provider_id: provider_id.get().unwrap_or_default(),
+            });
+    };
+    
     view! {
-        <dialog node_ref=delete_dialog_ref class="m-auto p-2">
+        <dialog
+            node_ref=delete_dialog_ref
+            class="m-auto p-5 rounded-lg shadow-xl/50
+            backdrop:backdrop-blur-xs backdrop:transition-backdrop-filter"
+        >
             <h2 class="text-2xl font-bold">"Confirm Deletion"</h2>
-            <p>
+            <p class="mb-3">
                 "Are you sure you want to delete "
                 {move || {
                     pending_delete
@@ -189,28 +206,16 @@ fn ScholarshipList(
                                 .unwrap_or(&ValueType::String(None))
                                 .as_string()
                                 .unwrap_or_default()
-                                .unwrap_or("<no name found>".to_string())
+                                .unwrap_or("this unnamed scholarship".to_string())
                         })
                 }} "?"
             </p>
-            <ActionButton
-                on:click=move |_| {
-                    let subject = pending_delete
-                        .get()
-                        .map(|s| s.subject.clone())
-                        .unwrap_or_default();
-                    log!("Deleting scholarship with subject {}", subject);
-                    delete_action
-                        .dispatch(DeleteProviderScholarship {
-                            scholarship_id: subject,
-                            provider_id: provider_id.get().unwrap_or_default(),
-                        });
-                }
-                disabled=modal_disabled
-            >
-                "Confirm"
-            </ActionButton>
-            <ActionButton on:click=move |_| pending_delete.set(None)>"Cancel"</ActionButton>
+            <div class="flex mx-auto items-center justify-center">
+                <ActionButton on:click=modal_on_click_continue disabled=modal_disabled>
+                    "Yes"
+                </ActionButton>
+                <ActionButton on:click=move |_| pending_delete.set(None)>"No"</ActionButton>
+            </div>
         </dialog>
         <div class="w-75">
             <Panel>
@@ -298,7 +303,7 @@ fn ScholarshipListEntry(
     let name = scholarship.data.get("name")
         .unwrap_or(&ValueType::String(None))
         .as_string().unwrap_or_default()
-        .unwrap_or("<no name found>".to_string());
+        .unwrap_or("Unnamed Scholarship".to_string());
     
     // Button click handlers
     let edit_click = {
@@ -402,19 +407,27 @@ fn ScholarshipForm(
             get_comparisons_categorized().await
         }
     );
-
-    Effect::new(move || {
+    
+    let comparison_lists_sorted = Signal::derive(move || {
         if let Some(Ok(map)) = comparison_lists.get() {
-            log!("Available categories: {:?}", map.keys());
+            let mut map = map.clone();
+            map
+                .into_iter()
+                .map(|(cat, mut list)| {
+                    list.sort_by_key(|comp| comp.display_text.clone());
+                    (cat, list)
+                })
+                .collect::<HashMap<String, Vec<ComparisonData>>>()
+        } else {
+            HashMap::new()
         }
     });
 
     let get_comp_category = move |category: &str| {
-        if let Some(Ok(map)) = comparison_lists.get() {
-            map.get(category).unwrap_or(&Vec::new()).clone()
-        } else {
-            Vec::new()
-        }
+        comparison_lists_sorted.get()
+            .get(category)
+            .cloned()
+            .unwrap_or(Vec::new())
     };
 
     let get_comp_ids = move |category: &str| {
@@ -519,8 +532,6 @@ fn ScholarshipForm(
 
     //#endregion
 
-    let create_comps = ServerAction::<CreateTestComparisons>::new();
-
     view! {
         <Panel>
             <Show
@@ -530,19 +541,19 @@ fn ScholarshipForm(
                 }
             >
                 <Suspense fallback=Loading>
-                    <ValidatedForm
-                        on_submit=Callback::new(on_submit)
-                        title="Scholarship Info Form"
-                        description="Create or edit a scholarship. Input all information and click Submit."
-                    >
-                        {move || {
-                            scholarship_info
-                                .get()
-                                .map(|res_scholarship| {
-                                    match res_scholarship {
-                                        Ok(_) => {
-                                            Either::Left(
-                                                view! {
+                    {move || {
+                        scholarship_info
+                            .get()
+                            .map(|res_scholarship| {
+                                match res_scholarship {
+                                    Ok(_) => {
+                                        Either::Left(
+                                            view! {
+                                                <ValidatedForm
+                                                    on_submit=Callback::new(on_submit)
+                                                    title="Scholarship Info Form"
+                                                    description="Create or edit a scholarship. Input all information and click Submit."
+                                                >
                                                     <Row>
                                                         <OutlinedTextField
                                                             label="Scholarship Name"
@@ -604,7 +615,7 @@ fn ScholarshipForm(
                                                         <RadioList
                                                             data_member="award_to"
                                                             data_map=form_data
-                                                            items=vec!["School".to_string(), "Student".to_string()]
+                                                            items=vec!["University".to_string(), "Student".to_string()]
                                                             disabled=elements_disabled
                                                             label="Will the award be made to the school or the student?"
                                                         />
@@ -626,6 +637,11 @@ fn ScholarshipForm(
                                                             other_prompt="Custom prompt..."
                                                         />
                                                     </Row>
+                                                    <Header
+                                                        title="Eligibility Requirements"
+                                                        description="Choose any requirements that this scholarship may have. If there are no extra requirements,
+                                                            leave all options blank, however please note that this will apply all students to your scholarship."
+                                                    />
                                                     <Row>
                                                         <ChipsList
                                                             label="GPA Requirements"
@@ -633,6 +649,7 @@ fn ScholarshipForm(
                                                             data_map=chips_data
                                                             values=gpa_ids
                                                             displayed_text=gpa_text
+                                                            allows_multiple=false
                                                         />
                                                     </Row>
                                                     <Row>
@@ -651,6 +668,7 @@ fn ScholarshipForm(
                                                             data_map=chips_data
                                                             values=comm_ids
                                                             displayed_text=comm_text
+                                                            allows_multiple=false
                                                         />
                                                     </Row>
                                                     <Row>
@@ -660,6 +678,7 @@ fn ScholarshipForm(
                                                             data_map=chips_data
                                                             values=res_ids
                                                             displayed_text=res_text
+                                                            allows_multiple=false
                                                         />
                                                     </Row>
                                                     <Row>
@@ -680,24 +699,21 @@ fn ScholarshipForm(
                                                             displayed_text=misc_text
                                                         />
                                                     </Row>
-                                                },
-                                            )
-                                        }
-                                        Err(err) => {
-                                            Either::Right(
-                                                view! {
-                                                    <p>"Error while getting scholarship: "{err.to_string()}</p>
-                                                },
-                                            )
-                                        }
+                                                </ValidatedForm>
+                                            },
+                                        )
                                     }
-                                })
-                                .collect_view()
-                        }}
-                    </ValidatedForm>
-                    <ActionButton on:click=move |_| {
-                        create_comps.dispatch(CreateTestComparisons {});
-                    }>"Create Comparisons"</ActionButton>
+                                    Err(err) => {
+                                        Either::Right(
+                                            view! {
+                                                <p>"Error while getting scholarship: "{err.to_string()}</p>
+                                            },
+                                        )
+                                    }
+                                }
+                            })
+                            .collect_view()
+                    }}
                 </Suspense>
             </Show>
         </Panel>
