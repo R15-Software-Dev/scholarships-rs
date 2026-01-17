@@ -149,7 +149,11 @@ pub fn ValidatedForm(
     };
 
     view! {
-        <form novalidate on:submit=submit_success_event>
+        <form 
+            class="flex flex-col gap-2"
+            novalidate 
+            on:submit=submit_success_event
+        >
             <Header
                 title=title
                 description=description

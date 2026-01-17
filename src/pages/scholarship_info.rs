@@ -9,7 +9,7 @@ use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueTy
 use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
 use super::UnauthenticatedPage;
 use crate::utils::get_user_claims;
-use super::api::{get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized, CreateTestComparisons};
+use super::api::{get_provider_scholarships, get_scholarship_info, CreateScholarshipInfo, RegisterScholarship, DeleteProviderScholarship, get_comparisons_categorized};
 
 
 /// # Scholarship Info Page
@@ -298,7 +298,7 @@ fn ScholarshipListEntry(
     let name = scholarship.data.get("name")
         .unwrap_or(&ValueType::String(None))
         .as_string().unwrap_or_default()
-        .unwrap_or("<no name found>".to_string());
+        .unwrap_or("Unnamed Scholarship".to_string());
     
     // Button click handlers
     let edit_click = {
@@ -519,8 +519,6 @@ fn ScholarshipForm(
 
     //#endregion
 
-    let create_comps = ServerAction::<CreateTestComparisons>::new();
-
     view! {
         <Panel>
             <Show
@@ -695,9 +693,6 @@ fn ScholarshipForm(
                                 .collect_view()
                         }}
                     </ValidatedForm>
-                    <ActionButton on:click=move |_| {
-                        create_comps.dispatch(CreateTestComparisons {});
-                    }>"Create Comparisons"</ActionButton>
                 </Suspense>
             </Show>
         </Panel>
