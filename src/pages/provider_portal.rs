@@ -20,7 +20,7 @@ pub fn ProviderPortal() -> impl IntoView {
     });
     
     view! {
-        <Banner title="Provider Dashboard" logo="PHS_Stacked_Acronym.png" path="/" />
+        <Banner title="Provider Dashboard" logo="PHS_Stacked_Acronym.png" />
         <AuthLoaded fallback=Loading>
             <Authenticated unauthenticated=UnauthenticatedPage>
                 <div class="mx-auto px-6">

@@ -40,7 +40,7 @@ pub fn ScholarshipInfoPage() -> impl IntoView {
     // Remember that we only want to show the page after we've got authentication information
     // and if there's data for us to use.
     view! {
-        <Banner title="R15 Scholarships" logo="/PHS_Stacked_Acronym.png" path="/" />
+        <Banner title="R15 Scholarships" logo="/PHS_Stacked_Acronym.png" path="/providers" />
         <ToastList>
             <AuthLoaded fallback=Loading>
                 <Authenticated unauthenticated=UnauthenticatedPage>
