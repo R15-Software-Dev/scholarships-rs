@@ -5,7 +5,7 @@ use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::{use_navigate, use_params};
-use crate::common::{ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
+use crate::common::{ComparisonData, ExpandableInfo, ScholarshipFormParams, SubmitStatus, ValueType};
 use crate::components::{ActionButton, Banner, ChipsList, Loading, OutlinedTextField, Panel, RadioList, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
 use super::UnauthenticatedPage;
 use crate::utils::get_user_claims;
@@ -407,19 +407,27 @@ fn ScholarshipForm(
             get_comparisons_categorized().await
         }
     );
-
-    Effect::new(move || {
+    
+    let comparison_lists_sorted = Signal::derive(move || {
         if let Some(Ok(map)) = comparison_lists.get() {
-            log!("Available categories: {:?}", map.keys());
+            let mut map = map.clone();
+            map
+                .into_iter()
+                .map(|(cat, mut list)| {
+                    list.sort_by_key(|comp| comp.display_text.clone());
+                    (cat, list)
+                })
+                .collect::<HashMap<String, Vec<ComparisonData>>>()
+        } else {
+            HashMap::new()
         }
     });
 
     let get_comp_category = move |category: &str| {
-        if let Some(Ok(map)) = comparison_lists.get() {
-            map.get(category).unwrap_or(&Vec::new()).clone()
-        } else {
-            Vec::new()
-        }
+        comparison_lists_sorted.get()
+            .get(category)
+            .cloned()
+            .unwrap_or(Vec::new())
     };
 
     let get_comp_ids = move |category: &str| {
