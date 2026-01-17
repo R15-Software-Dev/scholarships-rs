@@ -541,19 +541,19 @@ fn ScholarshipForm(
                 }
             >
                 <Suspense fallback=Loading>
-                    <ValidatedForm
-                        on_submit=Callback::new(on_submit)
-                        title="Scholarship Info Form"
-                        description="Create or edit a scholarship. Input all information and click Submit."
-                    >
-                        {move || {
-                            scholarship_info
-                                .get()
-                                .map(|res_scholarship| {
-                                    match res_scholarship {
-                                        Ok(_) => {
-                                            Either::Left(
-                                                view! {
+                    {move || {
+                        scholarship_info
+                            .get()
+                            .map(|res_scholarship| {
+                                match res_scholarship {
+                                    Ok(_) => {
+                                        Either::Left(
+                                            view! {
+                                                <ValidatedForm
+                                                    on_submit=Callback::new(on_submit)
+                                                    title="Scholarship Info Form"
+                                                    description="Create or edit a scholarship. Input all information and click Submit."
+                                                >
                                                     <Row>
                                                         <OutlinedTextField
                                                             label="Scholarship Name"
@@ -694,21 +694,21 @@ fn ScholarshipForm(
                                                             displayed_text=misc_text
                                                         />
                                                     </Row>
-                                                },
-                                            )
-                                        }
-                                        Err(err) => {
-                                            Either::Right(
-                                                view! {
-                                                    <p>"Error while getting scholarship: "{err.to_string()}</p>
-                                                },
-                                            )
-                                        }
+                                                </ValidatedForm>
+                                            },
+                                        )
                                     }
-                                })
-                                .collect_view()
-                        }}
-                    </ValidatedForm>
+                                    Err(err) => {
+                                        Either::Right(
+                                            view! {
+                                                <p>"Error while getting scholarship: "{err.to_string()}</p>
+                                            },
+                                        )
+                                    }
+                                }
+                            })
+                            .collect_view()
+                    }}
                 </Suspense>
             </Show>
         </Panel>
