@@ -148,7 +148,7 @@ pub fn ProviderContactPage() -> impl IntoView {
 
 // Display contact form.
     view! {
-        <Banner title="R15 Scholarships" logo="/PHS_Stacked_Acronym.png" path="/" />
+        <Banner title="R15 Scholarships" logo="/PHS_Stacked_Acronym.png" path="/providers" />
         <AuthLoaded fallback=Loading>
             <Authenticated unauthenticated=UnauthenticatedPage>
                 <Suspense fallback=Loading>
