@@ -16,7 +16,7 @@ use leptos::prelude::ServerFnError;
 use leptos::server;
 
 #[cfg(feature = "ssr")]
-static COMPARISONS_TABLE: &str = "leptos-comparison-test";
+static COMPARISONS_TABLE: &str = "leptos-comparisons";
 
 /// Helper function to create all sports comparisons. Only used to create initial
 /// comparison data, and should be removed upon completion of a comparison editor page.

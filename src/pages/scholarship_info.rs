@@ -128,8 +128,7 @@ fn ScholarshipList(
     // Button handlers
     let create_on_click = move |_| {
         create_action.dispatch(RegisterScholarship {
-            provider_id: provider_id.get().unwrap(),
-            scholarship_name: "Testing Scholarship".to_string()
+            provider_id: provider_id.get().unwrap()
         });
     };
 
