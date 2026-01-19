@@ -13,12 +13,15 @@ use aws_sdk_dynamodb::{
 };
 
 #[cfg(feature = "ssr")]
+use crate::utils::server::create_dynamo_client;
+
+#[cfg(feature = "ssr")]
 use std::sync::Arc;
 
 #[server]
 pub async fn create_dates(dates: Vec<DateInfo>) -> Result<(), ServerFnError> {
     // Serialize and put dates into the database.
-    let client = expect_context::<Arc<DynamoClient>>();
+    let client = create_dynamo_client().await;
     
     log!("Creating dates: {:?}", dates);
     
@@ -51,7 +54,7 @@ pub async fn create_dates(dates: Vec<DateInfo>) -> Result<(), ServerFnError> {
 
 #[server]
 pub async fn get_important_dates() -> Result<Vec<DateInfo>, ServerFnError> {
-    let client = expect_context::<Arc<DynamoClient>>();
+    let client = create_dynamo_client().await;
     
     client
         .scan()

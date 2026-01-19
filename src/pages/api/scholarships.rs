@@ -18,9 +18,9 @@ use leptos::prelude::ServerFnError;
 use leptos::server;
 
 #[cfg(feature = "ssr")]
-static SCHOLARSHIPS_TABLE: &str = "leptos-scholarship-test";
+static SCHOLARSHIPS_TABLE: &str = "leptos-scholarships";
 
-#[server(GetScholarshipInfo, endpoint = "/scholarship/info/get")]
+#[server(GetScholarshipInfo)]
 pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFnError> {
     let client = create_dynamo_client().await;
 
@@ -50,7 +50,7 @@ pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFn
     }
 }
 
-#[server(CreateScholarshipInfo, endpoint = "/scholarship/info/create")]
+#[server(CreateScholarshipInfo)]
 pub async fn create_scholarship_info(info: ExpandableInfo) -> Result<(), ServerFnError> {
     use aws_sdk_dynamodb::error::ProvideErrorMetadata;
 
@@ -73,7 +73,7 @@ pub async fn create_scholarship_info(info: ExpandableInfo) -> Result<(), ServerF
     }
 }
 
-#[server(GetAllScholarshipInfo, endpoint = "/scholarship/info/get-all")]
+#[server(GetAllScholarshipInfo)]
 pub async fn get_all_scholarship_info() -> Result<Vec<ExpandableInfo>, ServerFnError> {
     let client = create_dynamo_client().await;
     log!("Getting all scholarship info");
@@ -98,7 +98,7 @@ pub async fn get_all_scholarship_info() -> Result<Vec<ExpandableInfo>, ServerFnE
 }
 
 /// Gets all scholarships that are associated with the given scholarship provider's ID.
-#[server(GetProviderScholarships, "/providers/scholarships/get")]
+#[server(GetProviderScholarships)]
 pub async fn get_provider_scholarships(provider_id: String) -> Result<Vec<ExpandableInfo>, ServerFnError> {
     let client = create_dynamo_client().await;
     
@@ -127,16 +127,15 @@ pub async fn get_provider_scholarships(provider_id: String) -> Result<Vec<Expand
 }
 
 /// Creates a new scholarship with a unique ID, and then returns that ID.
-#[server(RegisterScholarship, "/providers/scholarships/create")]
-pub async fn register_scholarship(provider_id: String, scholarship_name: String) -> Result<String, ServerFnError> {
+#[server(RegisterScholarship)]
+pub async fn register_scholarship(provider_id: String) -> Result<String, ServerFnError> {
     let client = create_dynamo_client().await;
     
     log!("Creating scholarship for provider with ID {:?}", provider_id);
     
-    let mut current_uuid = "testing".to_string();
+    let mut current_uuid = Uuid::new_v4().to_string();
     let mut item = ExpandableInfo::new(current_uuid.clone());
     item.data.insert("provider_id".to_string(), ValueType::String(Some(provider_id)));
-    item.data.insert("scholarship_name".to_string(), ValueType::String(Some(scholarship_name)));
     loop {
         let ser_item = serde_dynamo::to_item(&item)?;
         match client
@@ -172,7 +171,7 @@ pub async fn register_scholarship(provider_id: String, scholarship_name: String)
 }
 
 /// Deletes a provider's scholarship given their provider ID and scholarship ID.
-#[server(DeleteProviderScholarship, "/providers/scholarships/delete")]
+#[server(DeleteProviderScholarship)]
 pub async fn delete_provider_scholarship(provider_id: String, scholarship_id: String) -> Result<(), ServerFnError> {
     let client = create_dynamo_client().await;
     

@@ -43,7 +43,7 @@ pub fn ProviderPortal() -> impl IntoView {
                                     title="Applicants"
                                     description="View Scholarship Applicants"
                                     icon="/Form_Black.png"
-                                    path="/"
+                                    path="/providers/applicants"
                                 />
                             </section>
                             <section class="space-y-4">
