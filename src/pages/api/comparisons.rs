@@ -263,12 +263,12 @@ fn create_major_comparisons() -> Vec<ComparisonData> {
 #[allow(unused)]
 fn make_comp_list() -> Vec<ComparisonData> {
     let gpa_3 = ComparisonData::new(
-        "gpa_3",
+        "gpa_top_third",
         "weighted_gpa",
         ComparisonType::Number(NumberComparison::GreaterThanOrEqual),
-        ValueType::Number(Some(3.0.to_string())),
+        ValueType::Number(Some(6.264.to_string())),
         "GPA Limits",
-        "GPA >= 3.0",
+        "Top Third GPA",
     );
 
     let test_comp = ComparisonData::new(
