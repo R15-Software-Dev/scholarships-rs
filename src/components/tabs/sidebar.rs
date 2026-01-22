@@ -18,10 +18,12 @@ fn SidebarTab(
     });
 
     view! {
-        <A href={move || path.get()}>
-            <div class="p-3 transition-all font-bold"
+        <A href=move || path.get()>
+            <div
+                class="p-3 transition-all font-bold"
                 class=(["bg-transparent", "text-white"], move || !selected.get())
-                class=(["bg-white", "text-black"], move || selected.get())>
+                class=(["bg-white", "text-black"], move || selected.get())
+            >
                 {name}
             </div>
         </A>
@@ -40,12 +42,9 @@ pub fn TabSidebarList(
                 <For
                     each=move || tabs.get()
                     key=|info| info.name.clone()
-                    let(TabInfo {name, path})
+                    let(TabInfo { name, path })
                 >
-                    <SidebarTab
-                        name=name
-                        path=path
-                    />
+                    <SidebarTab name=name path=path />
                 </For>
             </nav>
 

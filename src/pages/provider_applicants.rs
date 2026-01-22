@@ -8,7 +8,9 @@ pub fn ApplicantsPageFallback() -> impl IntoView {
         <div class="flex flex-col gap-4 mt-3 items-center justify-center">
             <h1 class="text-3xl font-bold">"Applicants Page"</h1>
 
-            <p>"This page is under construction! It will show all the students that are eligible for your scholarship(s)."</p>
+            <p>
+                "This page is under construction! It will show all the students that are eligible for your scholarship(s)."
+            </p>
             <p>"Come back soon!"</p>
         </div>
     }

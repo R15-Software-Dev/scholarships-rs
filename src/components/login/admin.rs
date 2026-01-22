@@ -12,7 +12,5 @@ pub fn AdminLoginContext(
         "/providers/callback"
     );
 
-    view! {
-        {children()}
-    }
+    view! { {children()} }
 }

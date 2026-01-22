@@ -639,7 +639,7 @@ fn ScholarshipForm(
                                                     <Header
                                                         title="Eligibility Requirements"
                                                         description="Choose any requirements that this scholarship may have. If there are no extra requirements,
-                                                            leave all options blank, however please note that this will apply all students to your scholarship."
+                                                        leave all options blank, however please note that this will apply all students to your scholarship."
                                                     />
                                                     <Row>
                                                         <ChipsList
