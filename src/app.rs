@@ -1,4 +1,4 @@
-use crate::pages::{ProviderPortal, ScholarshipInfoPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage, ApplicantsPageFallback, TestPage};
+use crate::pages::{ProviderPortal, ScholarshipInfoPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage, ApplicantsPageFallback, AdminShell, AdminTesting, AdminFallback};
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::AuthSignal;
@@ -64,6 +64,7 @@ pub fn AppWithRoutes() -> impl IntoView {
                     // <Route path=path!("/testing") view=TestPage />
                     <ProviderRoutes />
                     <LoanerRoutes />
+                    <AdminRoutes />
                 </Routes>
             </ToastList>
         </main>
@@ -95,6 +96,18 @@ fn LoanerRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("") view=LoanerFallback />
             <Route path=path!("borrowing") view=LoanerBorrowForm />
             <Route path=path!("returning") view=LoanerReturnForm />
+        </ParentRoute>
+    }
+        .into_inner()
+        .into_any_nested_route()
+}
+
+#[component(transparent)]
+fn AdminRoutes() -> impl MatchNestedRoutes + Clone {
+    view! {
+        <ParentRoute path=path!("admin") view=AdminShell>
+            <Route path=path!("home") view=AdminFallback />
+            <Route path=path!("testing") view=AdminTesting />
         </ParentRoute>
     }
         .into_inner()

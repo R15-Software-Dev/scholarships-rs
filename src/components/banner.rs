@@ -22,7 +22,7 @@ pub fn Banner(
     title: String,
     /// The file path or URL of a logo displayed at the top left of the banner.
     #[prop(into)]
-    logo: String,
+    logo: Signal<String>,
     /// The route that the navigates user to a page (home page).
     #[prop(into, optional)]
     path: Signal<String>,
@@ -44,7 +44,7 @@ pub fn Banner(
                 <div class="flex flex-row items-center gap-4 p-6 pb-2">
                     <div class="flex-shrink-0">
                         <img
-                            src=logo.clone()
+                            src=logo
                             class="h-10 w-10 cursor-pointer"
                             alt="icon"
                             on:click=on_click
