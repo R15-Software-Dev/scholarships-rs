@@ -5,7 +5,7 @@ use crate::common::TabInfo;
 
 #[component]
 fn SidebarTab(
-    #[prop(into)] name: Signal<String>,
+    #[prop(into)] text: Signal<String>,
     #[prop(into)] path: Signal<String>
 ) -> impl IntoView {
     let location = use_location();
@@ -24,12 +24,55 @@ fn SidebarTab(
                 class=(["bg-transparent", "text-white"], move || !selected.get())
                 class=(["bg-white", "text-black"], move || selected.get())
             >
-                {name}
+                {text}
             </div>
         </A>
     }
 }
 
+/// # Tab Sidebar Component
+/// 
+/// This component creates a list of tabs that correspond to the given `Vec<TabInfo>`.
+/// There are a few things to note:
+/// 
+///  - This component defines an [`Outlet`], meaning that it is designed to display the route
+///    information on its own. If you intend to use this on a page, the page should not also contain
+///    an `Outlet` component unless it needs to render its own nested children.
+///  - The "selected" appearance for the individual tabs work best when their paths are at the same
+///    depth. For example:
+/// ```
+/// let good_list = vec! [
+///     TabInfo {
+///         ...,
+///         path: "/default/path"
+///     },
+///     TabInfo {
+///         ...,
+///         path: "/good/path"
+///     }
+/// ];
+/// 
+/// let bad_list = vec! [
+///     TabInfo {
+///         ...,
+///         path: "/default/path"
+///     },
+///     TabInfo {
+///         ...,
+///         path: "/bad/path/here"
+///     }
+/// ]
+/// ```
+/// 
+/// Example usage in a view (assuming the good list from above):
+/// ```
+/// view! {
+///     <TabSidebarList
+///         tabs=good_list
+///     />
+///     // Remember, no Outlets!
+/// }
+/// ```
 #[component]
 pub fn TabSidebarList(
     #[prop(into)] tabs: Signal<Vec<TabInfo>>,
@@ -41,10 +84,10 @@ pub fn TabSidebarList(
             <nav class="flex flex-col bg-red-900 w-64 h-full overflow-scroll">
                 <For
                     each=move || tabs.get()
-                    key=|info| info.name.clone()
-                    let(TabInfo { name, path })
+                    key=|info| info.text.clone()
+                    let(TabInfo { text, path })
                 >
-                    <SidebarTab name=name path=path />
+                    <SidebarTab text=text path=path />
                 </For>
             </nav>
 
