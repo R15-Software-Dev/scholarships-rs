@@ -4,7 +4,7 @@ use leptos::prelude::*;
 use crate::common::DateInfo;
 
 #[cfg(feature = "ssr")]
-static DATES_TABLE: &str = "leptos-dates";
+use super::DATES_TABLE;
 
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{

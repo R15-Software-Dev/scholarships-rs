@@ -7,6 +7,9 @@ use aws_sdk_dynamodb::error::ProvideErrorMetadata;
 #[cfg(feature = "ssr")]
 use leptos::logging::log;
 
+#[cfg(feature = "ssr")]
+use super::COMPARISONS_TABLE;
+
 use crate::common::{
     ComparisonData, ComparisonType, MapListComparison, NumberComparison, NumberListComparison,
     TextComparison, TextListComparison, ValueType,
@@ -15,8 +18,6 @@ use std::collections::HashMap;
 use leptos::prelude::ServerFnError;
 use leptos::server;
 
-#[cfg(feature = "ssr")]
-static COMPARISONS_TABLE: &str = "leptos-comparisons";
 
 /// Helper function to create all sports comparisons. Only used to create initial
 /// comparison data, and should be removed upon completion of a comparison editor page.

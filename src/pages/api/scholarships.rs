@@ -18,7 +18,7 @@ use leptos::prelude::ServerFnError;
 use leptos::server;
 
 #[cfg(feature = "ssr")]
-static SCHOLARSHIPS_TABLE: &str = "leptos-scholarships";
+use super::SCHOLARSHIPS_TABLE;
 
 #[server(GetScholarshipInfo)]
 pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFnError> {
