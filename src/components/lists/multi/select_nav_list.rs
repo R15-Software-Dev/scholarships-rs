@@ -5,7 +5,7 @@ use crate::components::utils;
 
 #[derive(Debug, Clone)]
 pub struct NavListInfo {
-    pub text: String,
+    pub text: Vec<String>,
     pub id: String,
     pub slug: String,
 }
@@ -14,11 +14,25 @@ pub struct NavListInfo {
 fn NavListItem(
     #[prop(into)] name: Signal<String>,
     #[prop(into)] value: Signal<String>,
-    #[prop(into)] text: Signal<String>,
+    #[prop(into)] text: Signal<Vec<String>>,
     #[prop(into)] slug: Signal<String>,
     #[prop(into)] selected: Signal<bool>,
     #[prop(into)] on_change: Callback<()>,
 ) -> impl IntoView {
+    let linked_info = Signal::derive(move ||
+        text.get()
+            .get(0)
+            .cloned()
+            .unwrap_or_default()
+    );
+    let other_info = Signal::derive(move ||
+        text.get()
+            .iter()
+            .cloned()
+            .skip(1)
+            .collect::<Vec<String>>()
+    );
+
     view! {
         <div
             class="flex flex-row gap-2 p-1 rounded-lg"
@@ -30,9 +44,16 @@ fn NavListItem(
                 on_change=move || on_change.run(())
                 selected=selected
             />
-            <A href=move || slug.get() {..} class="flex items-center underline hover:text-blue-400">
-                {text}
+            <A href=move || slug.get() {..} class="flex flex-1 items-center underline hover:text-blue-400">
+                {linked_info}
             </A>
+            <For
+                each=move || other_info.get()
+                key=|info| info.clone()
+                let(info)
+            >
+                <p class="flex flex-1 items-center">{info}</p>
+            </For>
         </div>
     }
 }
@@ -80,6 +101,7 @@ fn NavListCheckbox(
 pub fn SelectableNavList(
     #[prop(into)] selected: RwSignal<Vec<String>>,
     #[prop(into)] items: Signal<Vec<NavListInfo>>,
+    #[prop(into)] headers: Signal<Vec<String>>,
     #[prop(into)] name: Signal<String>,
 ) -> impl IntoView {
     let all_selected = RwSignal::new(false);
@@ -106,13 +128,20 @@ pub fn SelectableNavList(
             // Header block - contains evenly spaced headers and the "select all" checkbox.
             // Include a checkbox here that's got the same style as the items. This maintains spacing.
             // All headers *must* be evenly spaced, otherwise the list starts getting confusing.
-            <div class="flex flex-row bg-red-800 rounded-lg p-1">
+            <div class="flex flex-row bg-red-800 rounded-lg p-1 gap-2">
                 <NavListCheckbox
                     selected=all_selected
                     name=name
                     value="select-all"
                     on_change=all_selected_change
                 />
+                <For
+                    each=move || headers.get()
+                    key=|header| header.clone()
+                    let(header_text)
+                >
+                    <div class="flex flex-1 text-white font-bold items-center">{header_text}</div>
+                </For>
             </div>
             // Items block - contains constructed items. These are selectable.
             <For
