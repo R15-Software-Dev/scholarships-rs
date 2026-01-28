@@ -1,7 +1,9 @@
 use leptos::prelude::*;
+use leptos_oidc::{AuthLoaded, Authenticated};
 use crate::common::TabInfo;
-use crate::components::{Banner, TabSidebarList};
+use crate::components::{Banner, Loading, TabSidebarList};
 use crate::components::login::StudentLoginContext;
+use crate::pages::UnauthenticatedPage;
 
 #[component]
 pub fn StudentShell() -> impl IntoView {
@@ -9,12 +11,15 @@ pub fn StudentShell() -> impl IntoView {
     view! {
         <StudentLoginContext>
             <Banner title="R15 Student Scholarship Application" logo="/PHS_Stacked_Acronym.png" />
-            // We'll put the tabs here.
-            <TabSidebarList tabs=vec![
-                TabInfo::new("Home", "/students/home"),
-                TabInfo::new("Demographics", "/students/demographics"),
-                TabInfo::new("Additional Info", "/students/additional"),
-            ] />
+            // <AuthLoaded fallback=Loading>
+            //     <Authenticated unauthenticated=UnauthenticatedPage>
+                    <TabSidebarList tabs=vec![
+                        TabInfo::new("Home", "/students/home"),
+                        TabInfo::new("Demographics", "/students/demographics"),
+                        TabInfo::new("Additional Info", "/students/additional"),
+                    ] />
+            //     </Authenticated>
+            // </AuthLoaded>
         </StudentLoginContext>
     }
 }
