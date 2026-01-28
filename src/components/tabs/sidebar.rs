@@ -91,7 +91,7 @@ pub fn TabSidebarList(
                 </For>
             </nav>
 
-            <div class="flex flex-1">
+            <div class="flex flex-1 overflow-y-scroll">
                 <Outlet />
             </div>
         </div>

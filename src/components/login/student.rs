@@ -1,5 +1,4 @@
 use leptos::prelude::*;
-use leptos_router::components::Outlet;
 use super::setup::provide_auth_context;
 
 ///# Student Login Context Component
@@ -16,7 +15,9 @@ use super::setup::provide_auth_context;
 ///     </StudentLoginContext>
 /// }
 #[component]
-pub fn StudentLoginContext() -> impl IntoView {
+pub fn StudentLoginContext(
+    children: Children,
+) -> impl IntoView {
     provide_auth_context(
         crate::utils::use_origin(),
         "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Lfjuy5zaM",
@@ -24,5 +25,5 @@ pub fn StudentLoginContext() -> impl IntoView {
         "/students/callback"
     );
     
-    view! { <Outlet /> }
+    view! { {children()} }
 }

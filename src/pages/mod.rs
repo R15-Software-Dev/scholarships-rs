@@ -11,9 +11,10 @@ mod provider_contact;
 mod auth_callback;
 mod provider_applicants;
 mod admin;
+mod student;
 
 pub use self::{
     about_page::*, comparison_test::*, home_page::*, loaner_page::*, provider_portal::*,
     test_page::*, unauthenticated_page::*, scholarship_info::*, provider_contact::*,
-    auth_callback::*, provider_applicants::*, admin::*
+    auth_callback::*, provider_applicants::*, admin::*, student::*,
 };
