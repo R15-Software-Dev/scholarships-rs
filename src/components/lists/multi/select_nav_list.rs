@@ -44,14 +44,14 @@ fn NavListItem(
                 on_change=move || on_change.run(())
                 selected=selected
             />
-            <A href=move || slug.get() {..} class="flex flex-1 items-center underline hover:text-blue-400">
+            <A
+                href=move || slug.get()
+                {..}
+                class="flex flex-1 items-center underline hover:text-blue-400"
+            >
                 {linked_info}
             </A>
-            <For
-                each=move || other_info.get()
-                key=|info| info.clone()
-                let(info)
-            >
+            <For each=move || other_info.get() key=|info| info.clone() let(info)>
                 <p class="flex flex-1 items-center">{info}</p>
             </For>
         </div>
@@ -135,11 +135,7 @@ pub fn SelectableNavList(
                     value="select-all"
                     on_change=all_selected_change
                 />
-                <For
-                    each=move || headers.get()
-                    key=|header| header.clone()
-                    let(header_text)
-                >
+                <For each=move || headers.get() key=|header| header.clone() let(header_text)>
                     <div class="flex flex-1 text-white font-bold items-center">{header_text}</div>
                 </For>
             </div>
