@@ -120,6 +120,7 @@ fn AdminRoutes() -> impl MatchNestedRoutes + Clone {
 fn StudentRoutes() -> impl MatchNestedRoutes + Clone {
     view! {
         <ParentRoute path=path!("students") view=StudentShell>
+            <Route path=path!("callback") view=AuthCallbackPage />
             <Route path=path!("home") view=StudentHomePage />
             <Route path=path!("demographics") view=StudentDemographicsPage />
         </ParentRoute>

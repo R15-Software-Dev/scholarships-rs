@@ -11,15 +11,15 @@ pub fn StudentShell() -> impl IntoView {
     view! {
         <StudentLoginContext>
             <Banner title="R15 Student Scholarship Application" logo="/PHS_Stacked_Acronym.png" />
-            // <AuthLoaded fallback=Loading>
-            //     <Authenticated unauthenticated=UnauthenticatedPage>
+            <AuthLoaded fallback=Loading>
+                <Authenticated unauthenticated=UnauthenticatedPage>
                     <TabSidebarList tabs=vec![
                         TabInfo::new("Home", "/students/home"),
                         TabInfo::new("Demographics", "/students/demographics"),
                         TabInfo::new("Additional Info", "/students/additional"),
                     ] />
-            //     </Authenticated>
-            // </AuthLoaded>
+                </Authenticated>
+            </AuthLoaded>
         </StudentLoginContext>
     }
 }
