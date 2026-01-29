@@ -1,6 +1,6 @@
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
-use crate::common::TabInfo;
+use crate::common::{SubTabInfo, TabInfo};
 use crate::components::{Banner, Loading, TabSidebarList};
 use crate::components::login::StudentLoginContext;
 use crate::pages::UnauthenticatedPage;
@@ -14,9 +14,17 @@ pub fn StudentShell() -> impl IntoView {
             <AuthLoaded fallback=Loading>
                 <Authenticated unauthenticated=UnauthenticatedPage>
                     <TabSidebarList tabs=vec![
-                        TabInfo::new("Home", "/students/home"),
-                        TabInfo::new("Demographics", "/students/demographics"),
-                        TabInfo::new("Additional Info", "/students/additional"),
+                        TabInfo::new("Home", "/students/home", None),
+                        TabInfo::new("Demographics", "/students/demographics",
+                            Some(vec![
+                                SubTabInfo::new("Testing", "/students/testing"),
+                                SubTabInfo::new("Testing Again!", "/students/testing/again")
+                            ])),
+                        TabInfo::new("Additional Info", "/students/additional", 
+                            Some(vec![
+                                SubTabInfo::new("Testing", "/students/testing"),
+                                SubTabInfo::new("Testing Again!", "/students/testing/again")
+                            ])),
                     ] />
                 </Authenticated>
             </AuthLoaded>

@@ -1,34 +1,9 @@
 ﻿use leptos::prelude::*;
+use leptos_animate::animate;
+use leptos_animate::animations::classes::{In, Out};
 use leptos_router::components::{Outlet, A};
 use leptos_router::hooks::use_location;
-use crate::common::TabInfo;
-
-#[component]
-fn SidebarTab(
-    #[prop(into)] text: Signal<String>,
-    #[prop(into)] path: Signal<String>
-) -> impl IntoView {
-    let location = use_location();
-
-    let selected = Memo::new(move |_| {
-        let current_path = location.pathname.get();
-
-        // There's extra logic here as well, but for now this works.
-        current_path.starts_with(&path.get())
-    });
-
-    view! {
-        <A href=move || path.get()>
-            <div
-                class="p-3 transition-all font-bold"
-                class=(["bg-transparent", "text-white"], move || !selected.get())
-                class=(["bg-white", "text-black"], move || selected.get())
-            >
-                {text}
-            </div>
-        </A>
-    }
-}
+use crate::common::{SubTabInfo, TabInfo};
 
 /// # Tab Sidebar Component
 /// 
@@ -85,14 +60,85 @@ pub fn TabSidebarList(
                 <For
                     each=move || tabs.get()
                     key=|info| info.text.clone()
-                    let(TabInfo { text, path })
+                    let(TabInfo { text, path, sub_paths })
                 >
-                    <SidebarTab text=text path=path />
+                    <SidebarTab text=text path=path sub_paths=sub_paths />
                 </For>
             </nav>
 
             <div class="flex flex-1 overflow-y-scroll">
                 <Outlet />
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn SidebarTab(
+    #[prop(into)] text: Signal<String>,
+    #[prop(into)] path: Signal<String>,
+    #[prop(into)] sub_paths: Signal<Vec<SubTabInfo>>,
+) -> impl IntoView {
+    let location = use_location();
+
+    let selected = Memo::new(move |_| {
+        let current_path = location.pathname.get();
+
+        // There's extra logic here as well, but for now this works.
+        current_path.starts_with(&path.get())
+    });
+
+    view! {
+        <A href=move || path.get()>
+            <div
+                class="p-3 transition-all font-bold"
+                class=(["bg-transparent", "text-white"], move || !selected.get())
+                class=(["bg-white", "text-black"], move || selected.get())
+            >
+                {text}
+            </div>
+        </A>
+        <For
+            each=move || sub_paths.get()
+            key=|info| info.text.clone()
+            let(SubTabInfo { text, path })
+        >
+            <SidebarSubTab
+                use:animate=(
+                    In::default()
+                    .source("h-0")
+                        .target("h-auto")
+                        .active("transition-all"),
+                    Out::default()
+                        .source("h-auto")
+                        .target("h-0")
+                        .active("transition-all")
+                )
+                text=text path=path visible=selected />
+        </For>
+    }
+}
+
+#[component]
+fn SidebarSubTab(
+    #[prop(into)] text: Signal<String>,
+    #[prop(into)] path: Signal<String>,
+    #[prop(into)] visible: Signal<bool>,
+) -> impl IntoView {
+    let selected = Memo::new(move |_| {
+        visible.get()
+    });
+    
+    view! {
+        <div class="grid transition-all ease-in-out"
+            style:grid-template-rows=move || if visible.get() { "1fr" } else { "0fr" }
+            style:opacity=move || if visible.get() { "1" } else { "0" }
+        >
+            <div
+                class="overflow-hidden p-3 pl-10 transition-all bg-white"
+                class=(["font-bold"], move || selected.get())
+            >
+                {text}
             </div>
         </div>
     }
