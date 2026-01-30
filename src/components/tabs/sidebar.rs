@@ -1,6 +1,4 @@
 ﻿use leptos::prelude::*;
-use leptos_animate::animate;
-use leptos_animate::animations::classes::{In, Out};
 use leptos_router::components::{Outlet, A};
 use leptos_router::hooks::use_location;
 use crate::common::{SubTabInfo, TabInfo};
@@ -87,35 +85,35 @@ fn SidebarTab(
         // There's extra logic here as well, but for now this works.
         current_path.starts_with(&path.get())
     });
-
+    
     view! {
-        <A href=move || path.get()>
-            <div
-                class="p-3 transition-all font-bold"
-                class=(["bg-transparent", "text-white"], move || !selected.get())
-                class=(["bg-white", "text-black"], move || selected.get())
-            >
-                {text}
-            </div>
-        </A>
-        <For
-            each=move || sub_paths.get()
-            key=|info| info.text.clone()
-            let(SubTabInfo { text, path })
+        <div 
+            class="transition-all duration-300"
+            class=(["bg-transparent", "text-white"], move || !selected.get())
+            class=(["bg-white", "text-black"], move || selected.get())
         >
-            <SidebarSubTab
-                use:animate=(
-                    In::default()
-                    .source("h-0")
-                        .target("h-auto")
-                        .active("transition-all"),
-                    Out::default()
-                        .source("h-auto")
-                        .target("h-0")
-                        .active("transition-all")
-                )
-                text=text path=path visible=selected />
-        </For>
+            <A href=move || path.get()>
+                <div
+                    class="p-3 transition-bg font-bold"
+                >
+                    {text}
+                </div>
+            </A>
+            <div
+                class="grid transition-all ease-in-out"
+                style:grid-template-rows=move || if selected.get() { "1fr" } else { "0fr" }
+            >
+                <div class="overflow-hidden min-h-0">
+                    <For
+                        each=move || sub_paths.get()
+                        key=|info| info.text.clone()
+                        let(SubTabInfo { text, path })
+                    >
+                        <SidebarSubTab text=text path=path visible=selected />
+                    </For>
+                </div>
+            </div>
+        </div>
     }
 }
 
@@ -130,16 +128,13 @@ fn SidebarSubTab(
     });
     
     view! {
-        <div class="grid transition-all ease-in-out"
-            style:grid-template-rows=move || if visible.get() { "1fr" } else { "0fr" }
-            style:opacity=move || if visible.get() { "1" } else { "0" }
-        >
+        <A href=move || path.get()>
             <div
-                class="overflow-hidden p-3 pl-10 transition-all bg-white"
+                class="p-3 pl-10 transition-all"
                 class=(["font-bold"], move || selected.get())
             >
                 {text}
             </div>
-        </div>
+        </A>
     }
 }
