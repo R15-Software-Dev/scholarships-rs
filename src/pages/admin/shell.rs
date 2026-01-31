@@ -18,25 +18,8 @@ pub fn AdminShell() -> impl IntoView {
                 TabInfo::new("Home", "/admin/home", None),
                 TabInfo::new("Providers", "/admin/providers", None),
                 TabInfo::new("Scholarships", "/admin/scholarships", None),
+                TabInfo::new("Utilities", "/admin/utilities", None),
             ] />
         </AdminLoginContext>
-    }
-}
-
-#[component]
-pub fn AdminFallback() -> impl IntoView {
-    view! {
-        <div>
-            <p class="mx-auto">"This is a fallback page"</p>
-        </div>
-    }
-}
-
-#[component]
-pub fn AdminTesting() -> impl IntoView {
-    view! {
-        <div>
-            <p class="mx-auto">"This is a testing page"</p>
-        </div>
     }
 }
