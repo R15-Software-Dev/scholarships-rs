@@ -1,4 +1,5 @@
-﻿use leptos::prelude::*;
+﻿use leptos::logging::log;
+use leptos::prelude::*;
 use leptos_router::components::{Outlet, A};
 use leptos_router::hooks::use_location;
 use crate::common::{SubTabInfo, TabInfo};
@@ -48,6 +49,7 @@ use crate::common::{SubTabInfo, TabInfo};
 /// ```
 #[component]
 pub fn TabSidebarList(
+    #[prop(into)] base_path: Signal<String>,
     #[prop(into)] tabs: Signal<Vec<TabInfo>>,
 ) -> impl IntoView {
     // Create a series of tabs based on a given list of names and paths.
@@ -60,7 +62,7 @@ pub fn TabSidebarList(
                     key=|info| info.text.clone()
                     let(TabInfo { text, path, sub_paths })
                 >
-                    <SidebarTab text=text path=path sub_paths=sub_paths />
+                    <SidebarTab base_path=base_path text=text path=path sub_paths=sub_paths />
                 </For>
             </nav>
 
@@ -73,19 +75,24 @@ pub fn TabSidebarList(
 
 #[component]
 fn SidebarTab(
+    #[prop(into)] base_path: Signal<String>,
     #[prop(into)] text: Signal<String>,
     #[prop(into)] path: Signal<String>,
     #[prop(into)] sub_paths: Signal<Vec<SubTabInfo>>,
 ) -> impl IntoView {
     let location = use_location();
 
+    let full_path = Memo::new(move |_| {
+        format!("/{}/{}", base_path.get(), path.get())
+    });
+
     let selected = Memo::new(move |_| {
         let current_path = location.pathname.get();
 
         // There's extra logic here as well, but for now this works.
-        current_path.starts_with(&path.get())
+        current_path.starts_with(&full_path.get())
     });
-    
+
     view! {
         <div 
             class="transition-all duration-300"
@@ -109,7 +116,7 @@ fn SidebarTab(
                         key=|info| info.text.clone()
                         let(SubTabInfo { text, path })
                     >
-                        <SidebarSubTab text=text path=path visible=selected />
+                        <SidebarSubTab parent_path=full_path text=text path=path />
                     </For>
                 </div>
             </div>
@@ -119,22 +126,17 @@ fn SidebarTab(
 
 #[component]
 fn SidebarSubTab(
+    #[prop(into)] parent_path: Signal<String>,
     #[prop(into)] text: Signal<String>,
     #[prop(into)] path: Signal<String>,
-    #[prop(into)] visible: Signal<bool>,
 ) -> impl IntoView {
-    let selected = Memo::new(move |_| {
-        visible.get()
+    let full_path = Memo::new(move |_| {
+        format!("{}/{}", parent_path.get(), path.get())
     });
-    
+
     view! {
-        <A href=move || path.get()>
-            <div
-                class="p-3 pl-10 transition-all"
-                class=(["font-bold"], move || selected.get())
-            >
-                {text}
-            </div>
+        <A href=move || full_path.get() {..} class="block p-3 pl-10 transition-all aria-[current]:font-bold">
+            {text}
         </A>
     }
 }

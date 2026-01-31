@@ -13,19 +13,22 @@ pub fn StudentShell() -> impl IntoView {
             <Banner title="R15 Student Scholarship Application" logo="/PHS_Stacked_Acronym.png" />
             <AuthLoaded fallback=Loading>
                 <Authenticated unauthenticated=UnauthenticatedPage>
-                    <TabSidebarList tabs=vec![
-                        TabInfo::new("Home", "/students/home", None),
-                        TabInfo::new("Demographics", "/students/demographics",
-                            Some(vec![
-                                SubTabInfo::new("Testing", "/students/testing"),
-                                SubTabInfo::new("Testing Again!", "/students/testing/again")
-                            ])),
-                        TabInfo::new("Additional Info", "/students/additional", 
-                            Some(vec![
-                                SubTabInfo::new("Testing", "/students/testing"),
-                                SubTabInfo::new("Testing Again!", "/students/testing/again")
-                            ])),
-                    ] />
+                    <TabSidebarList
+                        base_path="students"
+                        tabs=vec![
+                            TabInfo::new("Home", "home", None),
+                            TabInfo::new("Demographics", "demographics", None),
+                            TabInfo::new("Additional Info", "additional",
+                                Some(vec![
+                                    SubTabInfo::new("Academics", "academics"),
+                                    SubTabInfo::new("Athletics", "athletics"),
+                                    SubTabInfo::new("Work Experience", "work-experience"),
+                                    SubTabInfo::new("Extracurriculars", "extracurriculars"),
+                                    SubTabInfo::new("University Info", "university"),
+                                    SubTabInfo::new("Parent Info", "parent-info")
+                                ])),
+                        ]
+                    />
                 </Authenticated>
             </AuthLoaded>
         </StudentLoginContext>

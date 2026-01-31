@@ -1,4 +1,4 @@
-use crate::pages::{ProviderPortal, ScholarshipInfoPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage, ApplicantsPageFallback, AdminShell, AdminHomePage, AdminProviderPage, AdminScholarshipPage, StudentShell, StudentHomePage, StudentDemographicsPage, AdditionalPage, AdminUtilsPage};
+use crate::pages::{ProviderPortal, ScholarshipInfoPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage, ApplicantsPageFallback, AdminShell, AdminHomePage, AdminProviderPage, AdminScholarshipPage, StudentShell, StudentHomePage, StudentDemographicsPage, AdditionalPage, AdminUtilsPage, StudentAthleticsPage};
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::AuthSignal;
@@ -124,7 +124,8 @@ fn StudentRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("callback") view=AuthCallbackPage />
             <Route path=path!("home") view=StudentHomePage />
             <Route path=path!("demographics") view=StudentDemographicsPage />
-            <Route path=path!("additional") view=AdditionalPage />
+            <Route path=path!("additional") view=AdditionalPage/>
+            <Route path=path!("additional/athletics") view=StudentAthleticsPage />
         </ParentRoute>
     }
         .into_inner()

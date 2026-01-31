@@ -14,12 +14,15 @@ pub fn AdminShell() -> impl IntoView {
         <AdminLoginContext>
             <Banner title="R15 Scholarships Admin" logo="/PHS_Stacked_Acronym.png" />
             // We'll put the tabs here.
-            <TabSidebarList tabs=vec![
-                TabInfo::new("Home", "/admin/home", None),
-                TabInfo::new("Providers", "/admin/providers", None),
-                TabInfo::new("Scholarships", "/admin/scholarships", None),
-                TabInfo::new("Utilities", "/admin/utilities", None),
-            ] />
+            <TabSidebarList 
+                base_path="admin"
+                tabs=vec![
+                    TabInfo::new("Home", "home", None),
+                    TabInfo::new("Providers", "providers", None),
+                    TabInfo::new("Scholarships", "scholarships", None),
+                    TabInfo::new("Utilities", "utilities", None),
+                ]
+            />
         </AdminLoginContext>
     }
 }
