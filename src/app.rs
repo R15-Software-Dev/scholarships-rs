@@ -1,4 +1,5 @@
-use crate::pages::{ProviderPortal, ScholarshipInfoPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage, ApplicantsPageFallback, AdminShell, AdminHomePage, AdminProviderPage, AdminScholarshipPage, StudentShell, StudentHomePage, StudentDemographicsPage, AdditionalPage, AdminUtilsPage, StudentAthleticsPage, StudentAcademicsPage};
+use crate::pages::{ProviderPortal, ScholarshipInfoPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage, ApplicantsPageFallback, AdminShell, AdminHomePage, AdminProviderPage, AdminScholarshipPage, AdminUtilsPage};
+use crate::pages::student;
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::AuthSignal;
@@ -120,13 +121,14 @@ fn AdminRoutes() -> impl MatchNestedRoutes + Clone {
 #[component(transparent)]
 fn StudentRoutes() -> impl MatchNestedRoutes + Clone {
     view! {
-        <ParentRoute path=path!("students") view=StudentShell>
+        <ParentRoute path=path!("students") view=student::StudentShell>
             <Route path=path!("callback") view=AuthCallbackPage />
-            <Route path=path!("home") view=StudentHomePage />
-            <Route path=path!("demographics") view=StudentDemographicsPage />
-            <Route path=path!("additional") view=AdditionalPage/>
-            <Route path=path!("additional/academics") view=StudentAcademicsPage />
-            <Route path=path!("additional/athletics") view=StudentAthleticsPage />
+            <Route path=path!("home") view=student::StudentHomePage />
+            <Route path=path!("demographics") view=student::StudentDemographicsPage />
+            <Route path=path!("additional") view=student::AdditionalPage/>
+            <Route path=path!("additional/academics") view=student::StudentAcademicsPage />
+            <Route path=path!("additional/athletics") view=student::StudentAthleticsPage />
+            <Route path=path!("additional/extracurriculars") view=student::StudentExtracurricularsPage />
         </ParentRoute>
     }
         .into_inner()
