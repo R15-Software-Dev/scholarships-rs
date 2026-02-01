@@ -137,10 +137,6 @@ pub fn MultiEntry(
             </div>
 
             <ActionButton on:click = add_entry>"Add entry"</ActionButton>
-            <ActionButton on:click=move |_| {
-                    console_log(format!("Entry list: {:?}", data_reactive.get()).as_str());
-                }
-            >"Print Info"</ActionButton>
         </div>
     }
 }
