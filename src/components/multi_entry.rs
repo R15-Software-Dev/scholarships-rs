@@ -65,6 +65,8 @@ fn new_entry() -> ValueType {
 /// `first_name` and `last_name` keys within that `Entry`.
 #[component]
 pub fn MultiEntry(
+    #[prop(into)] label: Signal<String>,
+    #[prop(optional, into)] description: Signal<String>,
     /// The data member that contains the list of entries within the `data_map`.
     #[prop(into)]
     data_member: String,
@@ -101,7 +103,11 @@ pub fn MultiEntry(
     let add_entry = move |_| data_reactive.update(|list| list.push(new_entry()));
 
     view! {
-        <div class="flex flex-col flex-1">
+        <div class="flex flex-col flex-1 gap-2">
+            <span class="font-bold">{label}</span>
+            <Show when=move || !description.get().is_empty()>
+                <span>{description}</span>
+            </Show>
             <div class="flex flex-col gap-2 p-2">
                 // Render the entries
                 <For

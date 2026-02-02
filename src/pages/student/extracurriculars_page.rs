@@ -21,6 +21,8 @@ pub fn StudentExtracurricularsPage() -> impl IntoView {
                     required=true
                 />
                 <MultiEntry
+                    label="Extracurricular Activities:"
+                    description="Leave blank if not applicable."
                     data_map=data_map
                     data_member="extracurricular"
                     schema=vec![

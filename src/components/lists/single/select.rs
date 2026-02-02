@@ -20,7 +20,7 @@ fn validate(required: bool, value: String) -> ValidationState {
 /// by the `value` prop of the component.
 #[component]
 pub fn Select(
-    #[prop()] value_list: Vec<String>,
+    #[prop(into)] value_list: Signal<Vec<String>>,
     #[prop(into)] data_member: Signal<String>,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop(optional, into)] label: String,
@@ -110,6 +110,7 @@ pub fn Select(
                         </option>
                         {move || {
                             value_list
+                                .get()
                                 .iter()
                                 .map(move |value| {
                                     let display = value.to_owned();

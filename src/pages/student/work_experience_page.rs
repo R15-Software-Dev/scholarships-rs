@@ -12,6 +12,8 @@ pub fn StudentWorkExperiencePage() -> impl IntoView {
         <div class="flex flex-col flex-2 mt-6">
             <ValidatedForm title="Student Work Experience" on_submit=move || {}>
                 <MultiEntry
+                    label="Work Experience:"
+                    description="Leave blank if not applicable."
                     data_map=data_map
                     data_member="extracurricular"
                     schema=vec![

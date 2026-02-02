@@ -12,6 +12,8 @@ pub fn StudentAthleticsPage() -> impl IntoView {
         <div class="flex flex-col flex-2 mt-6">
             <ValidatedForm title="Athletics Information" on_submit=move || {}>
                 <MultiEntry
+                    label="Athletics Activities:"
+                    description="Leave blank if not applicable."
                     data_map=data_map
                     data_member="athletic_participation"
                     schema=vec![
