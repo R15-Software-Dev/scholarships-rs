@@ -1,5 +1,4 @@
-﻿use leptos::logging::log;
-use leptos::prelude::*;
+﻿use leptos::prelude::*;
 use leptos_router::components::{Outlet, A};
 use leptos_router::hooks::use_location;
 use crate::common::{SubTabInfo, TabInfo};
@@ -94,17 +93,13 @@ fn SidebarTab(
     });
 
     view! {
-        <div 
+        <div
             class="transition-all duration-300"
             class=(["bg-transparent", "text-white"], move || !selected.get())
             class=(["bg-white", "text-black"], move || selected.get())
         >
             <A href=move || path.get()>
-                <div
-                    class="p-3 transition-bg font-bold"
-                >
-                    {text}
-                </div>
+                <div class="p-3 transition-bg font-bold">{text}</div>
             </A>
             <div
                 class="grid transition-all ease-in-out"
@@ -135,7 +130,11 @@ fn SidebarSubTab(
     });
 
     view! {
-        <A href=move || full_path.get() {..} class="block p-3 pl-10 transition-all aria-[current]:font-bold">
+        <A
+            href=move || full_path.get()
+            {..}
+            class="block p-3 pl-10 transition-all aria-[current]:font-bold"
+        >
             {text}
         </A>
     }

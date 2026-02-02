@@ -17,7 +17,8 @@ pub fn StudentAthleticsPage() -> impl IntoView {
                     data_map=data_map
                     data_member="athletic_participation"
                     schema=vec![
-                        input!(Select, "sport_name", "Sport Name:", true, [
+                        input!(
+                            Select, "sport_name", "Sport Name:", true, [
                             "Football",
                             "Soccer",
                             "Cheerleading",
@@ -34,14 +35,19 @@ pub fn StudentAthleticsPage() -> impl IntoView {
                             "Softball",
                             "Tennis",
                             "Baseball"
-                        ]),
-                        input!(Checkbox, "grades", "Grades Participated:", true, [
+                        ]
+                        ),
+                        input!(
+                            Checkbox, "grades", "Grades Participated:", true, [
                             "9th",
                             "10th",
                             "11th",
                             "12th"
-                        ]),
-                        input!(Text, "achievements", "Special Achievements:", false, "Example 1, Example 2, etc...")
+                        ]
+                        ),
+                        input!(
+                            Text, "achievements", "Special Achievements:", false, "Example 1, Example 2, etc..."
+                        ),
                     ]
                 />
             </ValidatedForm>

@@ -68,7 +68,9 @@ pub fn AdminUtilsPage() -> impl IntoView {
     view! {
         <div class="mx-auto px-6">
             <div class="flex flex-col gap-4">
-                <div class="self-centered text-lg mt-6">"This utility page provides buttons to initialize the corresponding lists of information."</div>
+                <div class="self-centered text-lg mt-6">
+                    "This utility page provides buttons to initialize the corresponding lists of information."
+                </div>
                 <ActionButton on:click=on_click_comparisons>"Create Comparisons"</ActionButton>
                 <ActionButton on:click=on_click_dates>"Create Dates"</ActionButton>
             </div>

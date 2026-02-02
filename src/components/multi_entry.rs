@@ -113,43 +113,40 @@ pub fn MultiEntry(
                 // Render the entries
                 <Show
                     when=move || !data_reactive.get().is_empty()
-                    fallback=|| view! {
-                        <div class="mx-auto">"You haven't added any entries yet."</div>
+                    fallback=|| {
+                        view! { <div class="mx-auto">"You haven't added any entries yet."</div> }
                     }
                 >
                     <For
                         each=move || data_reactive.get()
-                        key=|entry| get_uuid_from_map(&entry.as_map().unwrap().unwrap())  // Entries MUST be given a unique ID. This is absolutely ridiculous.
+                        // Entries MUST be given a unique ID. This is absolutely ridiculous.
+                        key=|entry| get_uuid_from_map(&entry.as_map().unwrap().unwrap())
                         children=move |mut entry_map| {
+                            let map_signal = RwSignal::new(
+                                entry_map.as_map().unwrap_or_default().unwrap_or_default(),
+                            );
+                            Effect::new(move |_| {
+                                let child_map = map_signal.get();
+                                data_reactive
+                                    .update(|mut list| {
+                                        update_entry_list(&mut list, &child_map);
+                                    });
+                            });
                             // The map_signal is the map used for the internal element. This signal will
                             // keep track of the individual entry's data, and whenever it is changed,
                             // the parent data_map will also be updated to reflect these changes.
-                            let map_signal = RwSignal::new(entry_map
-                                .as_map()
-                                .unwrap_or_default()
-                                .unwrap_or_default());
 
                             // This effect updates the data_reactive list with the map_signal values, every
                             // time the map_signal is changed.
-                            Effect::new(move |_| {
-                                let child_map = map_signal.get();  // HashMap
-                                data_reactive.update(|mut list| {
-                                    update_entry_list(&mut list, &child_map);
-                                });
-                            });
+                            // HashMap
 
-                            view! {
-                                <Entry
-                                    data_map = map_signal
-                                    schema=schema
-                                />
-                            }
+                            view! { <Entry data_map=map_signal schema=schema /> }
                         }
                     />
                 </Show>
             </div>
 
-            <ActionButton on:click = add_entry>"Add entry"</ActionButton>
+            <ActionButton on:click=add_entry>"Add entry"</ActionButton>
         </div>
     }
 }
@@ -194,11 +191,11 @@ fn Entry(
 ) -> impl IntoView {
     view! {
         <div class="flex flex-col flex-1 p-2 rounded-sm transition-shadow shadow-sm hover:shadow-lg/30">
-            {schema.get().iter()
-                .map(|input_type| {
-                    input_type.clone().into_view(data_map.clone())
-                }).collect_view()
-            }
+            {schema
+                .get()
+                .iter()
+                .map(|input_type| { input_type.clone().into_view(data_map.clone()) })
+                .collect_view()}
         </div>
     }
 }

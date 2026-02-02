@@ -18,15 +18,20 @@ pub fn StudentShell() -> impl IntoView {
                         tabs=vec![
                             TabInfo::new("Home", "home", None),
                             TabInfo::new("Demographics", "demographics", None),
-                            TabInfo::new("Additional Info", "additional",
-                                Some(vec![
-                                    SubTabInfo::new("Academics", "academics"),
-                                    SubTabInfo::new("Athletics", "athletics"),
-                                    SubTabInfo::new("Work Experience", "work-experience"),
-                                    SubTabInfo::new("Extracurriculars", "extracurriculars"),
-                                    SubTabInfo::new("University Info", "university"),
-                                    SubTabInfo::new("Parent Info", "parent-info")
-                                ])),
+                            TabInfo::new(
+                                "Additional Info",
+                                "additional",
+                                Some(
+                                    vec![
+                                        SubTabInfo::new("Academics", "academics"),
+                                        SubTabInfo::new("Athletics", "athletics"),
+                                        SubTabInfo::new("Work Experience", "work-experience"),
+                                        SubTabInfo::new("Extracurriculars", "extracurriculars"),
+                                        SubTabInfo::new("University Info", "university"),
+                                        SubTabInfo::new("Parent Info", "parent-info"),
+                                    ],
+                                ),
+                            ),
                         ]
                     />
                 </Authenticated>

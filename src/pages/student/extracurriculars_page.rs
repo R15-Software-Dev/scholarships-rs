@@ -30,7 +30,9 @@ pub fn StudentExtracurricularsPage() -> impl IntoView {
                         input!(Number, "num_hours", "Number of hours completed:", true, "40"),
                         input!(Number, "num_weeks", "Number of weeks participated:", true, "3"),
                         input!(Text, "special_involvement", "Any special involvement:", false, ""),
-                        input!(Checkbox, "grades", "Grades Participated:", true, ["9th", "10th", "11th", "12th"])
+                        input!(
+                            Checkbox, "grades", "Grades Participated:", true, ["9th", "10th", "11th", "12th"]
+                        ),
                     ]
                 />
             </ValidatedForm>
