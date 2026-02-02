@@ -75,8 +75,8 @@ pub fn MultiEntry(
     #[prop()]
     data_map: RwSignal<HashMap<String, ValueType>>,
     /// The type and order of the inputs for each `Entry` component within this `MultiEntry` component.
-    #[prop(optional)]
-    schema: Vec<InputType>,
+    #[prop(optional, into)]
+    schema: Signal<Vec<InputType>>,
 ) -> impl IntoView {
     // Make the values within the list reactive. Each of these values should be a ValueType::Map,
     // so we can pass these directly to the application.
@@ -85,9 +85,8 @@ pub fn MultiEntry(
             .get_untracked()
             .get(&data_member)
             .unwrap_or(&ValueType::List(None))
-            .as_list()
-            .unwrap_or(Some(Vec::<ValueType>::new()))
-            .unwrap_or(Vec::new()),
+            .as_list().ok().flatten()
+            .unwrap_or(Vec::new())
     );
 
     // This effect updates the data_map with any new values from the data_reactive list, every time
@@ -103,42 +102,51 @@ pub fn MultiEntry(
     let add_entry = move |_| data_reactive.update(|list| list.push(new_entry()));
 
     view! {
-        <div class="flex flex-col flex-1 gap-2">
-            <span class="font-bold">{label}</span>
-            <Show when=move || !description.get().is_empty()>
-                <span>{description}</span>
-            </Show>
+        <div class="flex flex-col flex-1">
+            <div class="flex flex-col gap-2 p-2">
+                <span class="font-bold">{label}</span>
+                <Show when=move || !description.get().is_empty()>
+                    <span>{description}</span>
+                </Show>
+            </div>
             <div class="flex flex-col gap-2 p-2">
                 // Render the entries
-                <For
-                    each=move || data_reactive.get()
-                    key=|entry| get_uuid_from_map(&entry.as_map().unwrap().unwrap())  // Entries MUST be given a unique ID. This is absolutely ridiculous.
-                    children=move |mut entry_map| {
-                        // The map_signal is the map used for the internal element. This signal will
-                        // keep track of the individual entry's data, and whenever it is changed,
-                        // the parent data_map will also be updated to reflect these changes.
-                        let map_signal = RwSignal::new(entry_map
-                            .as_map()
-                            .unwrap_or_default()
-                            .unwrap_or_default());
-
-                        // This effect updates the data_reactive list with the map_signal values, every
-                        // time the map_signal is changed.
-                        Effect::new(move |_| {
-                            let child_map = map_signal.get();  // HashMap
-                            data_reactive.update(|mut list| {
-                                update_entry_list(&mut list, &child_map);
-                            });
-                        });
-
-                        view! {
-                            <Entry
-                                data_map = map_signal
-                                schema = schema.clone()
-                            />
-                        }
+                <Show
+                    when=move || !data_reactive.get().is_empty()
+                    fallback=|| view! {
+                        <div class="mx-auto">"You haven't added any entries yet."</div>
                     }
-                />
+                >
+                    <For
+                        each=move || data_reactive.get()
+                        key=|entry| get_uuid_from_map(&entry.as_map().unwrap().unwrap())  // Entries MUST be given a unique ID. This is absolutely ridiculous.
+                        children=move |mut entry_map| {
+                            // The map_signal is the map used for the internal element. This signal will
+                            // keep track of the individual entry's data, and whenever it is changed,
+                            // the parent data_map will also be updated to reflect these changes.
+                            let map_signal = RwSignal::new(entry_map
+                                .as_map()
+                                .unwrap_or_default()
+                                .unwrap_or_default());
+
+                            // This effect updates the data_reactive list with the map_signal values, every
+                            // time the map_signal is changed.
+                            Effect::new(move |_| {
+                                let child_map = map_signal.get();  // HashMap
+                                data_reactive.update(|mut list| {
+                                    update_entry_list(&mut list, &child_map);
+                                });
+                            });
+
+                            view! {
+                                <Entry
+                                    data_map = map_signal
+                                    schema=schema
+                                />
+                            }
+                        }
+                    />
+                </Show>
             </div>
 
             <ActionButton on:click = add_entry>"Add entry"</ActionButton>
@@ -181,12 +189,12 @@ fn Entry(
     data_map: RwSignal<HashMap<String, ValueType>>,
     /// The schema of this entry. Should contain all information about what inputs to use and what
     /// data members those inputs modify.
-    #[prop()]
-    schema: Vec<InputType>,
+    #[prop(into)]
+    schema: Signal<Vec<InputType>>,
 ) -> impl IntoView {
     view! {
         <div class="flex flex-col flex-1 p-2 rounded-sm transition-shadow shadow-sm hover:shadow-lg/30">
-            {schema.iter()
+            {schema.get().iter()
                 .map(|input_type| {
                     input_type.clone().into_view(data_map.clone())
                 }).collect_view()
