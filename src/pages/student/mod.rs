@@ -6,6 +6,7 @@ mod athletics_page;
 mod academics_page;
 mod extracurriculars_page;
 mod work_experience_page;
+mod university_page;
 
 pub use shell::*;
 pub use home_page::*;
@@ -15,3 +16,4 @@ pub use athletics_page::*;
 pub use academics_page::*;
 pub use extracurriculars_page::*;
 pub use work_experience_page::*;
+pub use university_page::*;
