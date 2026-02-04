@@ -1,20 +1,20 @@
-﻿use std::collections::HashMap;
-use leptos::prelude::*;
+﻿use leptos::prelude::*;
 use crate::components::{MultiEntry, ValidatedForm};
 use crate::input;
+use crate::pages::student::form_setup::use_student_form;
 
 #[component]
 pub fn StudentAthleticsPage() -> impl IntoView {
-    let data_map = RwSignal::new(HashMap::new());
+    let controller = use_student_form("athletics");
 
     view! {
         <div class="flex flex-1" />
         <div class="flex flex-col flex-2 mt-6">
-            <ValidatedForm title="Athletics Information" on_submit=move || {}>
+            <ValidatedForm title="Athletics Information" on_submit=controller.submit_action>
                 <MultiEntry
                     label="Athletics Activities:"
                     description="Leave blank if not applicable."
-                    data_map=data_map
+                    data_map=controller.data_map
                     data_member="athletic_participation"
                     schema=vec![
                         input!(

@@ -8,6 +8,7 @@ mod extracurriculars_page;
 mod work_experience_page;
 mod university_page;
 mod family_info_page;
+mod form_setup;
 
 pub use shell::*;
 pub use home_page::*;

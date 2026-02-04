@@ -1,18 +1,18 @@
-﻿use std::collections::HashMap;
-use leptos::prelude::*;
+﻿use leptos::prelude::*;
 use crate::components::{OutlinedTextField, TextFieldType, ValidatedForm};
+use crate::pages::student::form_setup::use_student_form;
 
 #[component]
 pub fn StudentAcademicsPage() -> impl IntoView {
-    let data_map = RwSignal::new(HashMap::new());
+    let controller = use_student_form("academics");
 
     view! {
         <div class="flex flex-1" />
         <div class="flex flex-col flex-2 mt-6">
-            <ValidatedForm title="Academic Information" on_submit=move || {}>
+            <ValidatedForm title="Academic Information" on_submit=controller.submit_action>
                 <OutlinedTextField
                     label="Unweighted GPA:"
-                    data_map=data_map
+                    data_map=controller.data_map
                     data_member="unweighted_gpa"
                     placeholder="4.0"
                     required=true
@@ -20,7 +20,7 @@ pub fn StudentAcademicsPage() -> impl IntoView {
                 />
                 <OutlinedTextField
                     label="Weighted GPA:"
-                    data_map=data_map
+                    data_map=controller.data_map
                     data_member="weighted_gpa"
                     placeholder="4.5"
                     required=true
@@ -28,7 +28,7 @@ pub fn StudentAcademicsPage() -> impl IntoView {
                 />
                 <OutlinedTextField
                     label="Highest SAT Score:"
-                    data_map=data_map
+                    data_map=controller.data_map
                     data_member="sat_score"
                     placeholder="1600"
                     required=false
@@ -36,7 +36,7 @@ pub fn StudentAcademicsPage() -> impl IntoView {
                 />
                 <OutlinedTextField
                     label="Highest ACT Score:"
-                    data_map=data_map
+                    data_map=controller.data_map
                     data_member="act_score"
                     placeholder="36"
                     required=false
@@ -44,7 +44,7 @@ pub fn StudentAcademicsPage() -> impl IntoView {
                 />
                 <OutlinedTextField
                     label="Academic Honors:"
-                    data_map=data_map
+                    data_map=controller.data_map
                     data_member="academic_honors"
                     placeholder="TBD"
                     required=false

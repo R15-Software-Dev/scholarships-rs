@@ -3,6 +3,7 @@ mod scholarships;
 mod dates;
 mod admin;
 mod providers;
+pub mod students;
 
 pub use comparisons::*;
 pub use scholarships::*;
@@ -21,3 +22,6 @@ pub static SCHOLARSHIPS_TABLE: &str = "leptos-scholarships";
 
 #[cfg(feature = "ssr")]
 pub static PROVIDER_CONTACT_TABLE: &str = "leptos-provider-contacts";
+
+#[cfg(feature = "ssr")]
+pub static MAIN_TABLE_NAME: &str = "scholarships-main";
