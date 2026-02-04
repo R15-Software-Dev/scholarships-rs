@@ -385,6 +385,24 @@ fn make_comp_list() -> Vec<ComparisonData> {
         "Additional Eligibility Factors",
         "Participated in Panthers Aquatic Club"
     );
+    
+    let pea_member = ComparisonData::new(
+        "pea_member",
+        "pea_member",
+        ComparisonType::Text(TextComparison::Matches),
+        ValueType::String(Some("Yes".to_string())),
+        "Additional Eligibility Factors",
+        "Has a Parent in the PEA"
+    );
+    
+    let music_program = ComparisonData::new(
+        "music_program",
+        "music_program",
+        ComparisonType::Text(TextComparison::Matches),
+        ValueType::String(Some("Yes".to_string())),
+        "Sports Participation",
+        "PHS Music Program"
+    );
 
     let mut sports_comps = create_sports_comparisons();
     let mut major_comps = create_major_comparisons();
@@ -401,7 +419,9 @@ fn make_comp_list() -> Vec<ComparisonData> {
         midd_south,
         family_military,
         youth_baseball,
-        aquatic_club
+        aquatic_club,
+        pea_member,
+        music_program
     ];
 
     comp_list.append(&mut sports_comps);

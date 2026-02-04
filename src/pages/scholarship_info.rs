@@ -653,7 +653,7 @@ fn ScholarshipForm(
                                                     </Row>
                                                     <Row>
                                                         <ChipsList
-                                                            label="Sports Participation"
+                                                            label="Sports and Activities"
                                                             data_member="sports_participation"
                                                             data_map=chips_data
                                                             values=sports_ids

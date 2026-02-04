@@ -111,7 +111,7 @@ fn AdminRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("home") view=AdminHomePage />
             <Route path=path!("providers") view=AdminProviderPage />
             <Route path=path!("scholarships") view=AdminScholarshipPage />
-            <Route path=path!("utils") view=AdminUtilsPage />
+            <Route path=path!("utilities") view=AdminUtilsPage />
         </ParentRoute>
     }
         .into_inner()
