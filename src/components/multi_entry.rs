@@ -2,6 +2,7 @@ use crate::common::{InputType, ValueType};
 use crate::components::ActionButton;
 use leptos::prelude::*;
 use std::collections::HashMap;
+use leptos::logging::log;
 use uuid::Uuid;
 
 // region Helper Functions
@@ -69,7 +70,7 @@ pub fn MultiEntry(
     #[prop(optional, into)] description: Signal<String>,
     /// The data member that contains the list of entries within the `data_map`.
     #[prop(into)]
-    data_member: String,
+    data_member: Signal<String>,
     /// The data map that contains all the information. Data is found within this map using the
     /// component's `data_member` input.
     #[prop()]
@@ -80,26 +81,31 @@ pub fn MultiEntry(
 ) -> impl IntoView {
     // Make the values within the list reactive. Each of these values should be a ValueType::Map,
     // so we can pass these directly to the application.
-    let data_reactive = RwSignal::new(
-        data_map
-            .get_untracked()
-            .get(&data_member)
-            .unwrap_or(&ValueType::List(None))
-            .as_list().ok().flatten()
-            .unwrap_or(Vec::new())
-    );
-
-    // This effect updates the data_map with any new values from the data_reactive list, every time
-    // the data_reactive list is changed. This allows changes from within the Entry component to
-    // bubble up to the data_map effectively.
-    Effect::new(move |_| {
-        let entry_list = data_reactive.get();
-        data_map.update(|map| {
-            map.insert(data_member.clone(), ValueType::List(Some(entry_list)));
-        });
+    let data_list = Memo::new(move |_| {
+        data_map.with(|map| {
+            map.get(&data_member.get())
+                .and_then(|v| v.as_list().ok().flatten())
+                .unwrap_or_default()
+        })
     });
+    
+    // This effect updates the data_map with any new values from the data_list, every time
+    // the data_list is changed. This allows changes from within the Entry component to
+    // bubble up to the data_map effectively.
+    let update_parent_list = move |list| {
+        log!("Updating parent list using child list {:?}", list);
+        data_map.update(|map| {
+            map.insert(data_member.get(), ValueType::List(Some(list)));
+        });
+    };
 
-    let add_entry = move |_| data_reactive.update(|list| list.push(new_entry()));
+    let add_entry = move |_| data_map.update(|map| {
+        log!("Adding new entry.");
+        let mut list = data_list.get_untracked();
+        
+        list.push(new_entry());
+        map.insert(data_member.get(), ValueType::List(Some(list)));
+    });
 
     view! {
         <div class="flex flex-col flex-1">
@@ -112,33 +118,26 @@ pub fn MultiEntry(
             <div class="flex flex-col gap-2 p-2">
                 // Render the entries
                 <Show
-                    when=move || !data_reactive.get().is_empty()
+                    when=move || !data_list.get().is_empty()
                     fallback=|| {
                         view! { <div class="mx-auto">"You haven't added any entries yet."</div> }
                     }
                 >
                     <For
-                        each=move || data_reactive.get()
+                        each=move || data_list.get()
                         // Entries MUST be given a unique ID. This is absolutely ridiculous.
                         key=|entry| get_uuid_from_map(&entry.as_map().unwrap().unwrap())
                         children=move |mut entry_map| {
                             let map_signal = RwSignal::new(
-                                entry_map.as_map().unwrap_or_default().unwrap_or_default(),
+                                entry_map.as_map().ok().flatten().unwrap_or_default(),
                             );
+            
                             Effect::new(move |_| {
                                 let child_map = map_signal.get();
-                                data_reactive
-                                    .update(|mut list| {
-                                        update_entry_list(&mut list, &child_map);
-                                    });
+                                let mut list = data_list.get_untracked();
+                                update_entry_list(&mut list, &child_map);
+                                update_parent_list(list);
                             });
-                            // The map_signal is the map used for the internal element. This signal will
-                            // keep track of the individual entry's data, and whenever it is changed,
-                            // the parent data_map will also be updated to reflect these changes.
-
-                            // This effect updates the data_reactive list with the map_signal values, every
-                            // time the map_signal is changed.
-                            // HashMap
 
                             view! { <Entry data_map=map_signal schema=schema /> }
                         }

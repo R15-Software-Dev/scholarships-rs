@@ -39,35 +39,33 @@ pub fn Banner(
     };
 
     view! {
-        <div class="mx-auto">
-            <div class="bg-red-900 shadow-lg shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.3),0_4px_6px_-1px_rgba(127,29,29,0.3),0_2px_4px_-1px_rgba(127,29,29,0.2)]">
-                <div class="flex flex-row items-center gap-4 p-6 pb-2">
-                    <div class="flex-shrink-0">
-                        <img
-                            src=logo
-                            class="h-10 w-10 cursor-pointer"
-                            alt="icon"
-                            on:click=on_click
-                        />
-                    </div>
-                    <div class="flex-1">
-                        <h2 class="text-white text-2xl font-bold">{title.clone()}</h2>
-                    </div>
+        <div class="w-screen bg-red-900 shadow-lg shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.3),0_4px_6px_-1px_rgba(127,29,29,0.3),0_2px_4px_-1px_rgba(127,29,29,0.2)]">
+            <div class="flex flex-row items-center gap-4 p-6 pb-2">
+                <div class="flex-shrink-0">
+                    <img
+                        src=logo
+                        class="h-10 w-10 cursor-pointer"
+                        alt="icon"
+                        on:click=on_click
+                    />
                 </div>
-                <div
-                    class="flex flex-row items-center gap-4"
-                    class=("p-2", move || !show_back.get())
-                >
-                    <Show when=move || show_back.get()>
-                        <a
-                            href=path
-                            class="flex flex-row items-center gap-2 m-2 ml-14 text-gray-200 hover:underline"
-                        >
-                            <Icon icon=icondata::FaArrowLeftSolid />
-                            <span>"Back to Dashboard"</span>
-                        </a>
-                    </Show>
+                <div class="flex-1">
+                    <h2 class="text-white text-2xl font-bold">{title.clone()}</h2>
                 </div>
+            </div>
+            <div
+                class="flex flex-row items-center gap-4"
+                class=("p-2", move || !show_back.get())
+            >
+                <Show when=move || show_back.get()>
+                    <a
+                        href=path
+                        class="flex flex-row items-center gap-2 m-2 ml-14 text-gray-200 hover:underline"
+                    >
+                        <Icon icon=icondata::FaArrowLeftSolid />
+                        <span>"Back to Dashboard"</span>
+                    </a>
+                </Show>
             </div>
         </div>
     }

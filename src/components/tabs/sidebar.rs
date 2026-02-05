@@ -54,8 +54,8 @@ pub fn TabSidebarList(
     // Create a series of tabs based on a given list of names and paths.
 
     view! {
-        <div class="flex flex-row h-full w-full fixed">
-            <nav class="flex flex-col bg-red-900 w-64 h-full overflow-scroll">
+        <div class="flex flex-1 flex-row w-full">
+            <nav class="flex flex-col bg-red-900 w-64 overflow-scroll">
                 <For
                     each=move || tabs.get()
                     key=|info| info.text.clone()
@@ -65,7 +65,7 @@ pub fn TabSidebarList(
                 </For>
             </nav>
 
-            <div class="flex flex-1 overflow-y-scroll">
+            <div class="flex flex-1 overflow-scroll">
                 <Outlet />
             </div>
         </div>
