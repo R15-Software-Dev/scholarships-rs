@@ -13,6 +13,7 @@ fn get_uuid_from_map(map: &HashMap<String, ValueType>) -> Option<String> {
     map.get("uuid")?.as_string().unwrap_or(None)
 }
 
+/// Does the same as [`get_uuid_from_map`], but starts from a [`ValueType`] enum.
 fn get_uuid(vt: ValueType) -> Option<String> {
     vt.as_map().ok().flatten().unwrap_or_default()
         .get("uuid")?
