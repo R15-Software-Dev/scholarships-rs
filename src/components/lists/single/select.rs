@@ -3,7 +3,6 @@ use leptos::ev::{Event, Targeted};
 use leptos::prelude::*;
 use leptos::web_sys::HtmlSelectElement;
 use std::collections::HashMap;
-use leptos::logging::log;
 use crate::components::{use_validation_context, InputState, ValidationState};
 
 fn validate(required: bool, value: String) -> ValidationState {
@@ -36,16 +35,6 @@ pub fn Select(
                 .unwrap_or_default()
         })
     });
-    
-    Effect::new(move || {
-        log!("Current select value: {}", value.get());
-    });
-    
-    // Effect::new(move || {
-    //     data_map.update(|map| {
-    //         map.insert(data_member.get(), ValueType::String(Some(raw_value.get())));
-    //     });
-    // });
 
     //#endregion
     //#region Validation Logic
@@ -77,21 +66,6 @@ pub fn Select(
             map.insert(data_member.get(), ValueType::String(Some(value)));
         });
     };
-    
-    // let on_change = move |e: Targeted<Event, HtmlSelectElement>| {
-    //     let value = e.target().value();
-    //     log!("Found value {}", value);
-    //     raw_value.set(value.clone());
-    //     error.set(validate(required.get(), raw_value.get()));
-    //     dirty.set(true);
-    //     data_map.update(|map| {
-    //         if let Some(val) = map.get_mut(&data_member.get()) {
-    //             *val = ValueType::String(Some(value.clone()));
-    //         } else {
-    //             map.insert(data_member.get(), ValueType::String(Some(value)));
-    //         }
-    //     });
-    // };
 
     //#endregion
 
@@ -120,16 +94,6 @@ pub fn Select(
                             key=|value| value.clone()
                             children=move |val| view! { <option value=val>{val.clone()}</option> }
                         />
-                    // {move || {
-                    // value_list
-                    // .get()
-                    // .iter()
-                    // .map(move |value| {
-                    // let display = value.to_owned();
-                    // view! { <option value=display>{display.clone()}</option> }
-                    // })
-                    // .collect::<Vec<_>>()
-                    // }}
                     </select>
                 </label>
             </div>
