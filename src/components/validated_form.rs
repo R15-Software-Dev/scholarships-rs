@@ -149,15 +149,8 @@ pub fn ValidatedForm(
     };
 
     view! {
-        <form 
-            class="flex flex-col gap-2"
-            novalidate 
-            on:submit=submit_success_event
-        >
-            <Header
-                title=title
-                description=description
-            />
+        <form class="flex flex-col gap-2 py-7" novalidate on:submit=submit_success_event>
+            <Header title=title description=description />
             {children()}
             <ActionButton
                 on:click=move |_| {
