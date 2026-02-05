@@ -1,20 +1,20 @@
-﻿use std::collections::HashMap;
-use leptos::prelude::*;
+﻿use leptos::prelude::*;
 use crate::components::{MultiEntry, OutlinedTextField, TextFieldType, ValidatedForm};
 use crate::input;
+use crate::pages::student::form_setup::use_student_form;
 
 #[component]
 pub fn StudentExtracurricularsPage() -> impl IntoView {
-    let data_map = RwSignal::new(HashMap::new());
+    let controller = use_student_form("demographics");
 
     view! {
         <div class="flex flex-1" />
         <div class="flex flex-col flex-2 mt-6">
-            <ValidatedForm title="Extracurricular Information" on_submit=move || {}>
+            <ValidatedForm title="Extracurricular Information" on_submit=controller.submit_action>
                 // Inputs here.
                 <OutlinedTextField
                     label="Total number of service hours:"
-                    data_map=data_map
+                    data_map=controller.data_map
                     data_member="service_hours"
                     placeholder="Any number..."
                     input_type=TextFieldType::Number
@@ -23,7 +23,7 @@ pub fn StudentExtracurricularsPage() -> impl IntoView {
                 <MultiEntry
                     label="Extracurricular Activities:"
                     description="Leave blank if not applicable."
-                    data_map=data_map
+                    data_map=controller.data_map
                     data_member="extracurricular"
                     schema=vec![
                         input!(Text, "activity_name", "Activity Name:", true, "Some activity..."),
