@@ -194,7 +194,7 @@ fn Entry(
 ) -> impl IntoView {
     view! {
         <div class="flex flex-col flex-1 p-2 rounded-sm transition-shadow shadow-sm hover:shadow-lg/30">
-            {schema
+            {move || schema
                 .get()
                 .iter()
                 .map(|input_type| 

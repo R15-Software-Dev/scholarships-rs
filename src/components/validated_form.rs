@@ -5,6 +5,7 @@ use crate::components::{ActionButton, Header};
 
 /// Indicates the current state of an input.
 #[derive(Default, Debug, Clone)]
+#[derive(PartialEq)]
 pub enum ValidationState {
     /// A valid input.
     #[default]
