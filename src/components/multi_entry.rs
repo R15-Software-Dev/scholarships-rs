@@ -3,6 +3,7 @@ use crate::components::ActionButton;
 use leptos::prelude::*;
 use std::collections::HashMap;
 use leptos::logging::log;
+use leptos_icons::Icon;
 use uuid::Uuid;
 
 // region Helper Functions
@@ -10,6 +11,13 @@ use uuid::Uuid;
 /// Gets the UUID from a given `HashMap<String, ValueType>`, wrapped in an `Option`.
 fn get_uuid_from_map(map: &HashMap<String, ValueType>) -> Option<String> {
     map.get("uuid")?.as_string().unwrap_or(None)
+}
+
+fn get_uuid(vt: ValueType) -> Option<String> {
+    vt.as_map().ok().flatten().unwrap_or_default()
+        .get("uuid")?
+        .as_string()
+        .ok().flatten()
 }
 
 /// Updates an Entry within the given `Vec`.
@@ -115,7 +123,7 @@ pub fn MultiEntry(
                     <span>{description}</span>
                 </Show>
             </div>
-            <div class="flex flex-col gap-2 p-2">
+            <div class="flex flex-col gap-6 p-2">
                 // Render the entries
                 <Show
                     when=move || !data_list.get().is_empty()
@@ -126,24 +134,37 @@ pub fn MultiEntry(
                     <For
                         each=move || data_list.get()
                         // Entries MUST be given a unique ID.
-                        key=|entry| get_uuid_from_map(&entry.as_map().unwrap().unwrap())
+                        key=|entry| get_uuid(entry.clone())
                         children=move |mut entry_map| {
                             let map_signal = RwSignal::new(
                                 entry_map.as_map().ok().flatten().unwrap_or_default(),
                             );
-            
                             let unique_id = Memo::new(move |_| {
                                 get_uuid_from_map(&map_signal.get()).unwrap_or_default()
                             });
-            
+                            let on_delete = move || {
+                                let mut list = data_list.get_untracked();
+                                let uuid = unique_id.get_untracked();
+                                list.retain(|map| {
+                                    get_uuid(map.clone()).unwrap_or_default() != uuid
+                                });
+                                update_parent_list(list);
+                            };
                             Effect::new(move |_| {
                                 let child_map = map_signal.get();
                                 let mut list = data_list.get_untracked();
                                 update_entry_list(&mut list, &child_map);
                                 update_parent_list(list);
                             });
-
-                            view! { <Entry data_map=map_signal schema=schema id=unique_id /> }
+            
+                            view! {
+                                <Entry
+                                    data_map=map_signal
+                                    schema=schema
+                                    id=unique_id
+                                    on_delete=on_delete
+                                />
+                            }
                         }
                     />
                 </Show>
@@ -191,18 +212,29 @@ fn Entry(
     #[prop(into)] schema: Signal<Vec<InputType>>,
     /// The unique ID for this entry.
     #[prop(into)] id: Signal<String>,
+    /// The function to run when the delete button is clicked.
+    #[prop(into)] on_delete: Callback<()>,
 ) -> impl IntoView {
     view! {
-        <div class="flex flex-col flex-1 p-2 rounded-sm transition-shadow shadow-sm hover:shadow-lg/30">
-            {move || schema
-                .get()
-                .iter()
-                .map(|input_type| 
-                    input_type
-                        .clone()
-                        .into_view(data_map.clone(), id.get())
-                )
-                .collect_view()}
+        <div class="relative rounded-sm transition-shadow shadow-sm hover:shadow-lg/30">
+            // Delete button
+            <div
+                class="absolute rounded-full w-8 h-8 -top-4 -right-4 flex items-center justify-center bg-gray-100 text-gray-700 hover:text-red-600 transition-all"
+                on:click=move |_| on_delete.run(())
+            >
+                <Icon icon=icondata::FaTrashCanRegular />
+            </div>
+
+            // Input section
+            <div class="flex flex-col flex-1 p-2">
+                {move || {
+                    schema
+                        .get()
+                        .iter()
+                        .map(|input_type| input_type.clone().into_view(data_map.clone(), id.get()))
+                        .collect_view()
+                }}
+            </div>
         </div>
     }
 }
