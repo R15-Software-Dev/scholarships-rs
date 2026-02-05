@@ -26,7 +26,14 @@ pub enum InputType {
 }
 
 impl InputType {
-    pub fn into_view(self, data_map: RwSignal<HashMap<String, ValueType>>) -> impl IntoView {
+    /// Converts an `InputType` into an `impl IntoView`. A name must be specified in the case that
+    /// the component is a checkbox/radio list, which requires a unique name to function properly.
+    /// Many times, the name will be the same as the data member.
+    pub fn into_view(
+        self,
+        data_map: RwSignal<HashMap<String, ValueType>>,
+        name: String,
+    ) -> impl IntoView {
         view! {
             {match self {
                 InputType::Text(member, label, placeholder, required) =>
@@ -56,6 +63,7 @@ impl InputType {
                     view! {
                         <CheckboxList
                             label = label.clone()
+                            name = name.clone()
                             items = options.clone()
                             data_member = member.clone()
                             data_map = data_map

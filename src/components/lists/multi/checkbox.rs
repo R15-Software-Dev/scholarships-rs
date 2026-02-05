@@ -103,6 +103,10 @@ pub fn Checkbox(
 /// ```
 #[component]
 pub fn CheckboxList(
+    /// The name that this list should use. This doesn't need to be specified all the time, but is
+    /// for use in elements that may treat this list as a sub-input (components like the [`MultiEntry`]
+    /// do this)
+    #[prop(optional, into)] name: Signal<String>,
     /// The data member that this list should edit/display from the `data_map`.
     #[prop(into)] data_member: Signal<String>,
     /// A [`Signal`] allowing access to a data store.
@@ -160,7 +164,7 @@ pub fn CheckboxList(
                                 on_change=on_change
                                 // The actual selected values are tracked by this element, not by the checkboxes themselves.
                                 value=item
-                                name=data_member
+                                name=move || format!("{}_{}", name.get(), data_member.get())
                                 disabled=disabled
                             />
                         }

@@ -125,12 +125,16 @@ pub fn MultiEntry(
                 >
                     <For
                         each=move || data_list.get()
-                        // Entries MUST be given a unique ID. This is absolutely ridiculous.
+                        // Entries MUST be given a unique ID.
                         key=|entry| get_uuid_from_map(&entry.as_map().unwrap().unwrap())
                         children=move |mut entry_map| {
                             let map_signal = RwSignal::new(
                                 entry_map.as_map().ok().flatten().unwrap_or_default(),
                             );
+            
+                            let unique_id = Memo::new(move |_| {
+                                get_uuid_from_map(&map_signal.get()).unwrap_or_default()
+                            });
             
                             Effect::new(move |_| {
                                 let child_map = map_signal.get();
@@ -139,7 +143,7 @@ pub fn MultiEntry(
                                 update_parent_list(list);
                             });
 
-                            view! { <Entry data_map=map_signal schema=schema /> }
+                            view! { <Entry data_map=map_signal schema=schema id=unique_id /> }
                         }
                     />
                 </Show>
@@ -181,19 +185,23 @@ fn Entry(
     /// The data map that contains all information. Data is found within this map using the `member`
     /// props. This map should be unique to this entry; in other words, it should be contained and
     /// passed down from within the entry list in the parent `MultiEntry` component.
-    #[prop()]
-    data_map: RwSignal<HashMap<String, ValueType>>,
+    #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     /// The schema of this entry. Should contain all information about what inputs to use and what
     /// data members those inputs modify.
-    #[prop(into)]
-    schema: Signal<Vec<InputType>>,
+    #[prop(into)] schema: Signal<Vec<InputType>>,
+    /// The unique ID for this entry.
+    #[prop(into)] id: Signal<String>,
 ) -> impl IntoView {
     view! {
         <div class="flex flex-col flex-1 p-2 rounded-sm transition-shadow shadow-sm hover:shadow-lg/30">
             {schema
                 .get()
                 .iter()
-                .map(|input_type| { input_type.clone().into_view(data_map.clone()) })
+                .map(|input_type| 
+                    input_type
+                        .clone()
+                        .into_view(data_map.clone(), id.get())
+                )
                 .collect_view()}
         </div>
     }
