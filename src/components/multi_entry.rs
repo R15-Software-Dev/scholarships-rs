@@ -220,7 +220,7 @@ fn Entry(
         <div class="relative rounded-sm transition-shadow shadow-sm hover:shadow-lg/30">
             // Delete button
             <div
-                class="absolute rounded-full w-8 h-8 -top-4 -right-4 flex items-center justify-center bg-gray-100 text-gray-700 hover:text-red-600 transition-all"
+                class="absolute rounded-full w-8 h-8 -top-4 -right-4 flex items-center justify-center bg-gray-100 text-gray-700 hover:text-red-600 transition-all cursor-pointer"
                 on:click=move |_| on_delete.run(())
             >
                 <Icon icon=icondata::FaTrashCanRegular />

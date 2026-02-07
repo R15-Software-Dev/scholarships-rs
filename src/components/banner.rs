@@ -39,7 +39,7 @@ pub fn Banner(
     };
 
     view! {
-        <div class="w-screen bg-red-900 shadow-lg shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.3),0_4px_6px_-1px_rgba(127,29,29,0.3),0_2px_4px_-1px_rgba(127,29,29,0.2)]">
+        <div class="w-screen bg-red-900">
             <div class="flex flex-row items-center gap-4 p-6 pb-2">
                 <div class="flex-shrink-0">
                     <img
