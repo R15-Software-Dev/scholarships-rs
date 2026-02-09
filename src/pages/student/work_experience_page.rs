@@ -1,5 +1,4 @@
-﻿use std::collections::HashMap;
-use leptos::prelude::*;
+﻿use leptos::prelude::*;
 use crate::components::{Loading, MultiEntry, ValidatedForm};
 use crate::input;
 use crate::pages::student::form_setup::use_student_form;
