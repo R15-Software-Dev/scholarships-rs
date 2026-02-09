@@ -157,7 +157,7 @@ pub fn MultiEntry(
                                 update_entry_list(&mut list, &child_map);
                                 update_parent_list(list);
                             });
-            
+
                             view! {
                                 <Entry
                                     data_map=map_signal

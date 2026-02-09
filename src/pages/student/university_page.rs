@@ -10,10 +10,7 @@ pub fn StudentUniversityPage() -> impl IntoView {
     // major, study field, intended career, college_acceptance
     
     view! {
-        <Show
-            when=move || controller.data_resource.get().is_some()
-            fallback=Loading
-        >
+        <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
             <div class="flex flex-1" />
             <div class="flex flex-col flex-2 mt-6">
                 <ValidatedForm title="University Information" on_submit=controller.submit_action>
@@ -56,10 +53,7 @@ pub fn StudentUniversityPage() -> impl IntoView {
                         data_map=controller.data_map
                         data_member="college_acceptance"
                         required=true
-                        value_list=vec![
-                            "Yes".to_string(),
-                            "No".to_string()
-                        ]
+                        value_list=vec!["Yes".to_string(), "No".to_string()]
                     />
                     // TODO Make this a select dropdown.
                     <OutlinedTextField

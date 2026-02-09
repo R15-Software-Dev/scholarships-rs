@@ -42,21 +42,13 @@ pub fn Banner(
         <div class="w-screen bg-red-900">
             <div class="flex flex-row items-center gap-4 p-6 pb-2">
                 <div class="flex-shrink-0">
-                    <img
-                        src=logo
-                        class="h-10 w-10 cursor-pointer"
-                        alt="icon"
-                        on:click=on_click
-                    />
+                    <img src=logo class="h-10 w-10 cursor-pointer" alt="icon" on:click=on_click />
                 </div>
                 <div class="flex-1">
                     <h2 class="text-white text-2xl font-bold">{title.clone()}</h2>
                 </div>
             </div>
-            <div
-                class="flex flex-row items-center gap-4"
-                class=("p-2", move || !show_back.get())
-            >
+            <div class="flex flex-row items-center gap-4" class=("p-2", move || !show_back.get())>
                 <Show when=move || show_back.get()>
                     <a
                         href=path

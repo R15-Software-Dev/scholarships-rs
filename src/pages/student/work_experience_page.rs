@@ -9,10 +9,7 @@ pub fn StudentWorkExperiencePage() -> impl IntoView {
     let controller = use_student_form("workexp");
 
     view! {
-        <Show 
-            when=move || controller.data_resource.get().is_some()
-            fallback=Loading
-        >
+        <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
             <div class="flex flex-1" />
             <div class="flex flex-col flex-2 mt-6">
                 <ValidatedForm title="Student Work Experience" on_submit=controller.submit_action>
@@ -22,7 +19,9 @@ pub fn StudentWorkExperiencePage() -> impl IntoView {
                         data_map=controller.data_map
                         data_member="extracurricular"
                         schema=vec![
-                            input!(Text, "job_title", "Job Title:", true, "Waiter, Cashier, etc..."),
+                            input!(
+                                Text, "job_title", "Job Title:", true, "Waiter, Cashier, etc..."
+                            ),
                             input!(Text, "employer", "Employer:", true, "Your employer's name..."),
                             input!(Number, "start_date", "Start date:", true, "40"),
                             input!(Number, "end_date", "End date:", true, "3"),

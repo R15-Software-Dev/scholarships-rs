@@ -12,10 +12,7 @@ pub fn StudentDemographicsPage() -> impl IntoView {
     let controller = use_student_form("demographics");
     
     view! {
-        <Show
-            when=move || controller.data_resource.get().is_some()
-            fallback=Loading
-        >
+        <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
             <div class="flex flex-1" />
             <div class="flex flex-col flex-2 mt-6">
                 <ValidatedForm title="Student Demographic Form" on_submit=controller.submit_action>
