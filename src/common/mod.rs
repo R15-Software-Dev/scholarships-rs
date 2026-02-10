@@ -7,8 +7,9 @@ mod submit_status;
 mod user;
 mod value_type;
 pub mod animations;
+mod tab_info;
 
 pub use self::{
     comparison::*, date_info::*, expandable_info::*, form_params::*, form_schema::*,
-    submit_status::*, user::*, value_type::*,
+    submit_status::*, user::*, value_type::*, tab_info::*,
 };

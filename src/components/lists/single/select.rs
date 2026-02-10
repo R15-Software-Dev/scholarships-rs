@@ -3,7 +3,6 @@ use leptos::ev::{Event, Targeted};
 use leptos::prelude::*;
 use leptos::web_sys::HtmlSelectElement;
 use std::collections::HashMap;
-use leptos::logging::{log, warn};
 use crate::components::{use_validation_context, InputState, ValidationState};
 
 fn validate(required: bool, value: String) -> ValidationState {
@@ -20,7 +19,7 @@ fn validate(required: bool, value: String) -> ValidationState {
 /// by the `value` prop of the component.
 #[component]
 pub fn Select(
-    #[prop()] value_list: Vec<String>,
+    #[prop(into)] value_list: Signal<Vec<String>>,
     #[prop(into)] data_member: Signal<String>,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop(optional, into)] label: String,
@@ -28,28 +27,19 @@ pub fn Select(
     #[prop(optional, into)] required: Signal<bool>
 ) -> impl IntoView {
     //#region Value Logic
-
-    let default_raw_value = data_map.get_untracked()
-        .get(&data_member.get_untracked())
-        .cloned()
-        .unwrap_or_default()
-        .as_string().unwrap_or_default().unwrap_or_default();
-
-    let raw_value = RwSignal::new(default_raw_value);
-
-    Effect::new(move || {
-        data_map.update(|map| {
-            map.insert(data_member.get(), ValueType::String(Some(raw_value.get())));
-        });
+    
+    let value = Memo::new(move |_| {
+        data_map.with(|map| {
+            map.get(&data_member.get_untracked())
+                .and_then(|v| v.as_string().ok().flatten())
+                .unwrap_or_default()
+        })
     });
 
     //#endregion
     //#region Validation Logic
 
-    let error = RwSignal::new(
-        validate(required.get_untracked(), raw_value.get_untracked())
-    );
-    warn!("Current error state: {:?}", error.get_untracked());
+    let error = Memo::new(move |_| validate(required.get(), value.get()));
     let dirty = RwSignal::new(false);
     let show_errors = Signal::derive(move || dirty.get() && matches!(error.get(), ValidationState::Invalid(_)));
 
@@ -68,19 +58,12 @@ pub fn Select(
 
     //#endregion
     //#region Event Logic
-
+    
     let on_change = move |e: Targeted<Event, HtmlSelectElement>| {
         let value = e.target().value();
-        log!("Found value {}", value);
-        raw_value.set(value.clone());
-        error.set(validate(required.get(), raw_value.get()));
         dirty.set(true);
         data_map.update(|map| {
-            if let Some(val) = map.get_mut(&data_member.get()) {
-                *val = ValueType::String(Some(value.clone()));
-            } else {
-                map.insert(data_member.get(), ValueType::String(Some(value)));
-            }
+            map.insert(data_member.get(), ValueType::String(Some(value)));
         });
     };
 
@@ -96,27 +79,21 @@ pub fn Select(
                         transition-border duration-150
                         border-red-700 bg-transparent
                         disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
+                        prop:value=move || value.get()
                         on:change:target=on_change
                         disabled=disabled
                     >
                         // This closure handles the display of the options.
-                        <option
-                            value=""
-                            disabled
-                            hidden
-                            selected=move || raw_value.get().is_empty()
-                        >
+                        <option value="" disabled hidden selected=move || value.get().is_empty()>
                             "Select one..."
                         </option>
-                        {move || {
-                            value_list
-                                .iter()
-                                .map(move |value| {
-                                    let display = value.to_owned();
-                                    view! { <option value=display>{display.clone()}</option> }
-                                })
-                                .collect::<Vec<_>>()
-                        }}
+
+                        // We can reasonably assume that the options in the list will be distinct.
+                        <For
+                            each=move || value_list.get()
+                            key=|value| value.clone()
+                            children=move |val| view! { <option value=val>{val.clone()}</option> }
+                        />
                     </select>
                 </label>
             </div>

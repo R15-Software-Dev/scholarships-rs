@@ -5,6 +5,7 @@ use crate::components::{ActionButton, Header};
 
 /// Indicates the current state of an input.
 #[derive(Default, Debug, Clone)]
+#[derive(PartialEq)]
 pub enum ValidationState {
     /// A valid input.
     #[default]
@@ -149,15 +150,8 @@ pub fn ValidatedForm(
     };
 
     view! {
-        <form 
-            class="flex flex-col gap-2"
-            novalidate 
-            on:submit=submit_success_event
-        >
-            <Header
-                title=title
-                description=description
-            />
+        <form class="flex flex-col gap-2 py-7" novalidate on:submit=submit_success_event>
+            <Header title=title description=description />
             {children()}
             <ActionButton
                 on:click=move |_| {

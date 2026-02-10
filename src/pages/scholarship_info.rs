@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use leptos::either::Either;
 use leptos::html::Dialog;
-use leptos::logging::log;
+use leptos::logging::debug_log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::{use_navigate, use_params};
@@ -111,7 +111,7 @@ fn ScholarshipList(
             (refresh_token.get(), provider_id.get())
         },
         |(_, provider_id)| async move {
-            log!("Fetching from scholarship API.");
+            debug_log!("Fetching from scholarship API.");
             let Some(provider_id) = provider_id else {
                 return Ok(Vec::new());
             };
@@ -179,7 +179,7 @@ fn ScholarshipList(
             .get()
             .map(|s| s.subject.clone())
             .unwrap_or_default();
-        log!("Deleting scholarship with subject {}", subject);
+        debug_log!("Deleting scholarship with subject {}", subject);
         delete_action
             .dispatch(DeleteProviderScholarship {
                 scholarship_id: subject,
@@ -385,10 +385,10 @@ fn ScholarshipForm(
         if let Some(Ok(scholarship)) = scholarship_info.get() {
             // Get the default chips data.
             let chips_default = if let Some(ValueType::Map(Some(map))) = scholarship.data.get("requirements") {
-                log!("Found requirements map: {:?}", map);
+                debug_log!("Found requirements map: {:?}", map);
                 map.clone()
             } else {
-                log!("Couldn't find requirements map in scholarship info. Using empty map.");
+                debug_log!("Couldn't find requirements map in scholarship info. Using empty map.");
                 HashMap::new()
             };
 
@@ -496,7 +496,7 @@ fn ScholarshipForm(
         info.data = form_data.get();
         info.data.insert("requirements".to_string(), ValueType::Map(Some(chips_data.get())));
 
-        log!("Map values: {:?}", info.data);
+        debug_log!("Map values: {:?}", info.data);
         submit_action.dispatch(CreateScholarshipInfo {
             info
         });
@@ -505,7 +505,7 @@ fn ScholarshipForm(
     Effect::watch(
         move || submit_action.value().get(),
         move |value, _, _| {
-            log!("Running submit_action effect");
+            debug_log!("Running submit_action effect");
             let Some(result) = value else {
                 return;
             };
@@ -639,7 +639,7 @@ fn ScholarshipForm(
                                                     <Header
                                                         title="Eligibility Requirements"
                                                         description="Choose any requirements that this scholarship may have. If there are no extra requirements,
-                                                            leave all options blank, however please note that this will apply all students to your scholarship."
+                                                        leave all options blank, however please note that this will apply all students to your scholarship."
                                                     />
                                                     <Row>
                                                         <ChipsList
@@ -653,7 +653,7 @@ fn ScholarshipForm(
                                                     </Row>
                                                     <Row>
                                                         <ChipsList
-                                                            label="Sports Participation"
+                                                            label="Sports and Activities"
                                                             data_member="sports_participation"
                                                             data_map=chips_data
                                                             values=sports_ids

@@ -22,7 +22,7 @@ pub fn use_origin() -> String {
 /// Gets the current user claims. This function should only be used in an area that has
 /// access to an AuthSignal, or it will result in a total failure.
 pub fn get_user_claims() -> Signal<Option<TokenData<UserClaims>>> {
-    let auth = use_context::<AuthSignal>().expect("Couldn't find AuthSignal.");
+    let auth = expect_context::<AuthSignal>();
     Signal::derive(move || {
         auth.with(|auth| {
             auth.authenticated().and_then(|data| {

@@ -151,6 +151,7 @@ pub fn RadioList(
     #[prop(optional, into)] label: String,
     #[prop(optional, into)] required: Signal<bool>,
     #[prop(optional, into)] other_prompt: Signal<String>,
+    #[prop(optional, into)] name: Signal<String>
 ) -> impl IntoView {
     //#region Value Logic
 
@@ -262,7 +263,7 @@ pub fn RadioList(
                                 on_change=on_change
                                 // The actual selected values are tracked by this element, not by the checkboxes themselves.
                                 value=item
-                                name=data_member
+                                name=move || format!("{}_{}", name.get(), data_member.get())
                                 disabled=disabled
                             />
                         }

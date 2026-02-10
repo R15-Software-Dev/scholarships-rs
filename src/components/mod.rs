@@ -13,9 +13,10 @@ mod lists;
 mod toasts;
 mod header;
 pub mod login;
+mod tabs;
 
 pub use self::{
     action_button::*, banner::*, dashboard_button::*, lists::*,
     loading::*, multi_entry::*, panel::*, row::*, text_field::*,
-    validated_form::*, toasts::*, header::*, date::*
+    validated_form::*, toasts::*, header::*, date::*, tabs::*
 };

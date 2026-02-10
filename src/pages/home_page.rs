@@ -12,7 +12,7 @@ use crate::common::ExpandableInfo;
 use crate::pages::UnauthenticatedPage;
 use crate::components::{
     ActionButton, CheckboxList, Loading, MultiEntry, OutlinedTextField, Panel, RadioList, Row,
-    Select, TextFieldType, ValidatedForm
+    TextFieldType, ValidatedForm
 };
 use crate::input;
 use leptos::leptos_dom::logging::console_log;
@@ -330,20 +330,8 @@ pub fn HomePage() -> impl IntoView {
                                                     />
                                                 </Row>
                                                 <Row>
-                                                    <Select
-                                                        label="Gender:"
-                                                        value_list=vec!["Male", "Female", "Prefer not to answer"]
-                                                            .into_iter()
-                                                            .map(|s| s.to_owned())
-                                                            .collect()
-                                                        disabled=elements_disabled
-                                                        data_member="gender"
-                                                        data_map=form_data
-                                                        required=true
-                                                    />
-                                                </Row>
-                                                <Row>
                                                     <MultiEntry
+                                                        label="Testing community involvement:"
                                                         data_map=form_data
                                                         data_member="community_involvement"
                                                         schema=vec![

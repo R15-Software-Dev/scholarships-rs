@@ -7,6 +7,9 @@ use aws_sdk_dynamodb::error::ProvideErrorMetadata;
 #[cfg(feature = "ssr")]
 use leptos::logging::log;
 
+#[cfg(feature = "ssr")]
+use super::COMPARISONS_TABLE;
+
 use crate::common::{
     ComparisonData, ComparisonType, MapListComparison, NumberComparison, NumberListComparison,
     TextComparison, TextListComparison, ValueType,
@@ -15,8 +18,6 @@ use std::collections::HashMap;
 use leptos::prelude::ServerFnError;
 use leptos::server;
 
-#[cfg(feature = "ssr")]
-static COMPARISONS_TABLE: &str = "leptos-comparisons";
 
 /// Helper function to create all sports comparisons. Only used to create initial
 /// comparison data, and should be removed upon completion of a comparison editor page.
@@ -188,6 +189,17 @@ fn create_sports_comparisons() -> Vec<ComparisonData> {
             "Sports Participation",
             "Tennis",
         ),
+        ComparisonData::new(
+            "sports_baseball",
+            "sports_participation",
+            ComparisonType::MapList(MapListComparison::FlattenToTextList(
+                "sport_name".to_string(),
+                Box::new(TextListComparison::Contains),
+            )),
+            ValueType::String(Some("Baseball".to_string())),
+            "Sports Participation",
+            "Baseball",
+        ),
     ]
 }
 
@@ -252,12 +264,12 @@ fn create_major_comparisons() -> Vec<ComparisonData> {
 #[allow(unused)]
 fn make_comp_list() -> Vec<ComparisonData> {
     let gpa_3 = ComparisonData::new(
-        "gpa_3",
+        "gpa_top_third",
         "weighted_gpa",
         ComparisonType::Number(NumberComparison::GreaterThanOrEqual),
-        ValueType::Number(Some(3.0.to_string())),
+        ValueType::Number(Some(6.264.to_string())),
         "GPA Limits",
-        "GPA >= 3.0",
+        "Top Third GPA",
     );
 
     let test_comp = ComparisonData::new(
@@ -271,13 +283,10 @@ fn make_comp_list() -> Vec<ComparisonData> {
     
     let service_hours_20 = ComparisonData::new(
         "service_hours_20",
-        "community_involvement",
-        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
-            "service_hours".to_string(),
-            Box::new(NumberListComparison::Sum(Box::new(
-                NumberComparison::GreaterThanOrEqual,
-            ))),
-        )),
+        "service_hours",
+        ComparisonType::Number(
+            NumberComparison::GreaterThanOrEqual
+        ),
         ValueType::Number(Some(20.to_string())),
         "Community Service",
         "20+ service hours",
@@ -285,13 +294,10 @@ fn make_comp_list() -> Vec<ComparisonData> {
 
     let service_hours_25 = ComparisonData::new(
         "service_hours_25",
-        "community_involvement",
-        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
-            "service_hours".to_string(),
-            Box::new(NumberListComparison::Sum(Box::new(
-                NumberComparison::GreaterThanOrEqual,
-            ))),
-        )),
+        "service_hours",
+        ComparisonType::Number(
+            NumberComparison::GreaterThanOrEqual
+        ),
         ValueType::Number(Some(25.to_string())),
         "Community Service",
         "25+ service hours",
@@ -299,13 +305,10 @@ fn make_comp_list() -> Vec<ComparisonData> {
 
     let service_hours_30 = ComparisonData::new(
         "service_hours_30",
-        "community_involvement",
-        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
-            "service_hours".to_string(),
-            Box::new(NumberListComparison::Sum(Box::new(
-                NumberComparison::GreaterThanOrEqual,
-            ))),
-        )),
+        "service_hours",
+        ComparisonType::Number(
+            NumberComparison::GreaterThanOrEqual
+        ),
         ValueType::Number(Some(30.to_string())),
         "Community Service",
         "30+ service hours",
@@ -356,6 +359,42 @@ fn make_comp_list() -> Vec<ComparisonData> {
         "Family with Military Service",
     );
 
+    let youth_baseball = ComparisonData::new(
+        "youth_baseball",
+        "youth_baseball",
+        ComparisonType::Text(TextComparison::Matches),
+        ValueType::String(Some("Yes".to_string())),
+        "Additional Eligibility Factors",
+        "Participated in Pomperaug Youth Baseball"
+    );
+
+    let aquatic_club = ComparisonData::new(
+        "aquatic_club",
+        "aquatic_club",
+        ComparisonType::Text(TextComparison::Matches),
+        ValueType::String(Some("Yes".to_string())),
+        "Additional Eligibility Factors",
+        "Participated in Panthers Aquatic Club"
+    );
+    
+    let pea_member = ComparisonData::new(
+        "pea_member",
+        "pea_member",
+        ComparisonType::Text(TextComparison::Matches),
+        ValueType::String(Some("Yes".to_string())),
+        "Additional Eligibility Factors",
+        "Has a Parent in the PEA"
+    );
+    
+    let music_program = ComparisonData::new(
+        "music_program",
+        "music_program",
+        ComparisonType::Text(TextComparison::Matches),
+        ValueType::String(Some("Yes".to_string())),
+        "Sports Participation",
+        "PHS Music Program"
+    );
+
     let mut sports_comps = create_sports_comparisons();
     let mut major_comps = create_major_comparisons();
 
@@ -370,6 +409,10 @@ fn make_comp_list() -> Vec<ComparisonData> {
         attended_bas,
         midd_south,
         family_military,
+        youth_baseball,
+        aquatic_club,
+        pea_member,
+        music_program
     ];
 
     comp_list.append(&mut sports_comps);

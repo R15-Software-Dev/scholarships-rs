@@ -1,4 +1,5 @@
-use crate::pages::{ProviderPortal, ScholarshipInfoPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage, ApplicantsPageFallback};
+use crate::pages::{ProviderPortal, ScholarshipInfoPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage, ApplicantsPageFallback, AdminShell, AdminHomePage, AdminProviderPage, AdminScholarshipPage, AdminUtilsPage};
+use crate::pages::student;
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::AuthSignal;
@@ -61,8 +62,10 @@ pub fn AppWithRoutes() -> impl IntoView {
             <ToastList>
                 // TODO Create a 404 page
                 <Routes fallback=|| "Page not found.".into_view()>
+                    // <Route path=path!("/testing") view=TestPage />
                     <ProviderRoutes />
                     <LoanerRoutes />
+                    <StudentRoutes />
                 </Routes>
             </ToastList>
         </main>
@@ -94,6 +97,53 @@ fn LoanerRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("") view=LoanerFallback />
             <Route path=path!("borrowing") view=LoanerBorrowForm />
             <Route path=path!("returning") view=LoanerReturnForm />
+        </ParentRoute>
+    }
+        .into_inner()
+        .into_any_nested_route()
+}
+
+#[component(transparent)]
+fn AdminRoutes() -> impl MatchNestedRoutes + Clone {
+    view! {
+        <ParentRoute path=path!("admin") view=AdminShell>
+            <Route path=path!("home") view=AdminHomePage />
+            <Route path=path!("providers") view=AdminProviderPage />
+            <Route path=path!("scholarships") view=AdminScholarshipPage />
+            <Route path=path!("utilities") view=AdminUtilsPage />
+        </ParentRoute>
+    }
+        .into_inner()
+        .into_any_nested_route()
+}
+
+#[component(transparent)]
+fn StudentRoutes() -> impl MatchNestedRoutes + Clone {
+    view! {
+        <ParentRoute path=path!("students") view=student::StudentShell>
+            <Route path=path!("callback") view=AuthCallbackPage />
+            <Route path=path!("home") view=student::StudentHomePage />
+            <Route path=path!("demographics") view=student::StudentDemographicsPage />
+            <Route path=path!("eligibility") view=student::StudentEligibilityPage />
+            <Route path=path!("additional") view=student::AdditionalPage />
+            <Route path=path!("additional/academics") view=student::StudentAcademicsPage />
+            <Route path=path!("additional/athletics") view=student::StudentAthleticsPage />
+            <Route
+                path=path!("additional/extracurriculars")
+                view=student::StudentExtracurricularsPage
+            />
+            <Route
+                path=path!("additional/work-experience")
+                view=student::StudentWorkExperiencePage
+            />
+            <Route
+                path=path!("additional/university")
+                view=student::StudentUniversityPage
+            />
+            <Route
+                path=path!("additional/family-info")
+                view=student::StudentFamilyPage
+            />
         </ParentRoute>
     }
         .into_inner()

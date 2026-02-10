@@ -2,7 +2,8 @@ use super::{
     Comparison, MapListComparison, NestedListComparison, NumberComparison, NumberListComparison,
     TextComparison, TextListComparison,
 };
-use crate::common::{ExpandableInfo, ValueType};
+use crate::common::ValueType;
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -42,15 +43,13 @@ impl ComparisonData {
         }
     }
 
-    pub fn compare(&self, student_data: &ExpandableInfo) -> Result<bool, String> {
-        let value = student_data.data.get(&self.member).expect(
-            format!(
-                "Couldn't find member {:?}, current student data: {:?}",
-                self.member, student_data
+    pub fn compare(&self, student_data: &HashMap<String, ValueType>) -> Result<bool, String> {
+        student_data.get(&self.member)
+            .ok_or_else(||
+                format!("Couldn't find member {:?}, current student data: {:?}", self.member, student_data)
             )
-            .as_str(),
-        );
-        self.comparison.evaluate(value, &self.target_value)
+            .and_then(|value| self.comparison.evaluate(value, &self.target_value))
+            .or_else(|err| Err(err.to_string()))
     }
 }
 
@@ -106,11 +105,11 @@ mod tests {
             display_text: "First Name is Jane".to_string(),
         };
 
-        let mut result = text_comp_success.compare(&student_data);
+        let mut result = text_comp_success.compare(&student_data.data);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), true);
 
-        result = text_comp_fail.compare(&student_data);
+        result = text_comp_fail.compare(&student_data.data);
         assert!(result.is_err());
     }
 }

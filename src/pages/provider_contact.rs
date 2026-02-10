@@ -1,77 +1,11 @@
-﻿#[cfg(feature = "ssr")]
-use crate::utils::server::{create_dynamo_client, into_attr_map};
-
-use std::collections::HashMap;
+﻿use std::collections::HashMap;
 use leptos::logging::log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
-use crate::common::ValueType;
-use crate::components::{Banner, Loading, OutlinedTextField, Panel, Row, TextFieldType, Toast, ToastContext, ToastList, ValidatedForm};
+use crate::components::{Banner, Loading, OutlinedTextField, Panel, Row, TextFieldType, Toast, ToastContext, ValidatedForm};
 use crate::pages::UnauthenticatedPage;
 use crate::utils::get_user_claims;
-
-#[cfg(feature = "ssr")]
-static PROVIDER_CONTACT_TABLE: &str = "leptos-provider-contacts";
-
-#[server]
-async fn get_provider_contact(id: String) -> Result<HashMap<String, ValueType>, ServerFnError> {
-    use aws_sdk_dynamodb::types::AttributeValue;
-    use aws_sdk_dynamodb::error::ProvideErrorMetadata;
-
-    let client = create_dynamo_client().await;
-
-    log!("Getting contact info for provider {}", id);
-
-    match client
-        .get_item()
-        .table_name(PROVIDER_CONTACT_TABLE)
-        .key("subject", AttributeValue::S(id))
-        .send()
-        .await
-    {
-        Ok(output) => {
-            let Some(item) = output.item else {
-                return Ok(HashMap::new());
-            };
-
-            let map = item.iter().map(|(key, val)| {
-                let val_type = ValueType::from(val);
-
-                (key.clone(), val_type)
-            }).collect::<HashMap<String, ValueType>>();
-
-            Ok(map)
-        }
-        Err(err) => {
-            let msg = err.message().unwrap_or("An unknown error occurred.");
-            Err(ServerFnError::new(msg))
-        }
-    }
-}
-
-#[server]
-async fn put_provider_contact(id: String, contact_info: HashMap<String, ValueType>) -> Result<(), ServerFnError> {
-    use aws_sdk_dynamodb::error::ProvideErrorMetadata;
-
-    let client = create_dynamo_client().await;
-
-    let mut item = into_attr_map(contact_info);
-    item.insert("subject".to_owned(), aws_sdk_dynamodb::types::AttributeValue::S(id));
-
-    match client
-        .put_item()
-        .table_name(PROVIDER_CONTACT_TABLE)
-        .set_item(Some(item))
-        .send()
-        .await
-    {
-        Ok(_) => Ok(()),
-        Err(err) => {
-            let msg = err.message().unwrap_or("An unknown error occurred.");
-            Err(ServerFnError::new(msg))
-        }
-    }
-}
+use super::api::{get_provider_contact, PutProviderContact};
 
 #[component]
 pub fn ProviderContactPage() -> impl IntoView {
@@ -186,7 +120,7 @@ pub fn ProviderContactPage() -> impl IntoView {
                                                 <Row>
                                                     <OutlinedTextField
                                                         label="Contact Email:"
-                                                        placeholder="student@region15.org"
+                                                        placeholder="example@mymailservice.com"
                                                         disabled=elements_disabled
                                                         data_member="contact_email"
                                                         data_map=contact_info
