@@ -120,7 +120,7 @@ pub fn ProviderContactPage() -> impl IntoView {
                                                 <Row>
                                                     <OutlinedTextField
                                                         label="Contact Email:"
-                                                        placeholder="student@region15.org"
+                                                        placeholder="example@mymailservice.com"
                                                         disabled=elements_disabled
                                                         data_member="contact_email"
                                                         data_map=contact_info
