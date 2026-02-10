@@ -1,15 +1,23 @@
 use leptos::prelude::*;
+use leptos::server_fn::codec::Json;
 
-#[server]
+#[cfg(feature = "ssr")]
+mod imports {
+    pub use crate::utils::server::*;
+    pub use aws_sdk_dynamodb::types::AttributeValue;
+    pub use super::super::MAIN_TABLE_NAME;
+    pub use crate::common::ValueType;
+    pub use std::collections::HashMap;
+}
+
+#[server(input = Json)]
 pub async fn put_student_data(
     subject: String,
     data_type: String,
     data_map: std::collections::HashMap<String, crate::common::ValueType>
 ) -> Result<(), ServerFnError> {
     use leptos::logging::log;
-    use crate::utils::server::{create_dynamo_client, into_attr_map};
-    use aws_sdk_dynamodb::types::AttributeValue;
-    use super::MAIN_TABLE_NAME;
+    use imports::*;
     
     let client = create_dynamo_client().await;
     
@@ -40,11 +48,7 @@ pub async fn get_student_data(
     subject: String,
     data_type: String,
 ) -> Result<std::collections::HashMap<String, crate::common::ValueType>, ServerFnError> {
-    use crate::utils::server::create_dynamo_client;
-    use std::collections::HashMap;
-    use crate::common::ValueType;
-    use aws_sdk_dynamodb::types::AttributeValue;
-    use super::MAIN_TABLE_NAME;
+    use imports::*;
     
     let client = create_dynamo_client().await;
     
@@ -72,6 +76,39 @@ pub async fn get_student_data(
                 });
             
             map
+        })
+        .map_err(ServerFnError::from)
+}
+
+/// Gets and flattens all of a student's information from the database, regardless of their defined
+/// sort key.
+/// 
+/// Note: if sorted data from the `put_student_data` function contains the same fields, this
+/// function will have unexpected behavior. For example, if a `first_name` field appears in multiple
+/// locations in the database, all for this single student, they will overwrite each other in no
+/// specific order.
+#[server]
+pub async fn get_all_student_data(
+    subject: String
+) -> Result<std::collections::HashMap<String, crate::common::ValueType>, ServerFnError> {
+    use imports::*;
+    
+    let client = create_dynamo_client().await;
+    
+    client.query()
+        .table_name(MAIN_TABLE_NAME)
+        .key_condition_expression("HK = :hk")
+        .expression_attribute_values(":hk", AttributeValue::S(format!("STUDENT#{}", subject)))
+        .send()
+        .await
+        .map(|output| {
+            let Some(items) = output.items else {
+                return HashMap::new();
+            };
+            
+            items.iter().flatten()
+                .map(|(|k, v)| (k.clone(), ValueType::from(v)))
+                .collect::<HashMap<String, ValueType>>()
         })
         .map_err(ServerFnError::from)
 }

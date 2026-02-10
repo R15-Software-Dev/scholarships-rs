@@ -38,6 +38,7 @@ pub fn StudentShell() -> impl IntoView {
                                             ],
                                         ),
                                     ),
+                                    TabInfo::new("Eligible Scholarships", "eligibility", None)
                                 ]
                             />
                         </Authenticated>

@@ -88,7 +88,7 @@ pub fn ComparisonTestPage() -> impl IntoView {
                                                                     _ => None,
                                                                 };
                                                                 let comparison_outcome = match comp_opt {
-                                                                    Some(comp) => comp.compare(&student),
+                                                                    Some(comp) => comp.compare(&student.data),
                                                                     _ => Err("".to_string()),
                                                                 };
                                                                 match comparison_outcome {

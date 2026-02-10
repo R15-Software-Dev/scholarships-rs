@@ -125,6 +125,7 @@ fn StudentRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("callback") view=AuthCallbackPage />
             <Route path=path!("home") view=student::StudentHomePage />
             <Route path=path!("demographics") view=student::StudentDemographicsPage />
+            <Route path=path!("eligibility") view=student::StudentEligibilityPage />
             <Route path=path!("additional") view=student::AdditionalPage />
             <Route path=path!("additional/academics") view=student::StudentAcademicsPage />
             <Route path=path!("additional/athletics") view=student::StudentAthleticsPage />

@@ -19,7 +19,7 @@ pub fn StudentAthleticsPage() -> impl IntoView {
                         label="Athletics Activities:"
                         description="Leave blank if not applicable."
                         data_map=controller.data_map
-                        data_member="athletic_participation"
+                        data_member="sports_participation"
                         schema=vec![
                             input!(
                                 Select, "sport_name", "Sport Name:", true, [

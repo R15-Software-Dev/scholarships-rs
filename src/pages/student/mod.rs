@@ -9,6 +9,7 @@ mod work_experience_page;
 mod university_page;
 mod family_info_page;
 mod form_setup;
+mod eligibility_page;
 
 pub use shell::*;
 pub use home_page::*;
@@ -20,3 +21,4 @@ pub use extracurriculars_page::*;
 pub use work_experience_page::*;
 pub use university_page::*;
 pub use family_info_page::*;
+pub use eligibility_page::*;
