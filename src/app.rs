@@ -65,7 +65,6 @@ pub fn AppWithRoutes() -> impl IntoView {
                     // <Route path=path!("/testing") view=TestPage />
                     <ProviderRoutes />
                     <LoanerRoutes />
-                    <AdminRoutes />
                     <StudentRoutes />
                 </Routes>
             </ToastList>
