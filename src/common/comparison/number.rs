@@ -17,14 +17,16 @@ impl Comparison for NumberComparison {
         // The prerequisites for all number comparisons is that the target value is Some(number) and the
         // comparison member points to Some(number) in the student_info.
         let student_value = match comp_value {
-            ValueType::Number(Some(num)) => num.parse::<i32>().unwrap(),
+            ValueType::Number(Some(num)) => num.parse::<f32>().unwrap(),
             _ => {
                 return Err("Student value is not a number".into());
             }
         };
 
+        leptos::logging::log!("Parsing value: {:?}", target_value);
+        
         let target = match target_value {
-            ValueType::Number(Some(num)) => num.parse::<i32>().unwrap(),
+            ValueType::Number(Some(num)) => num.parse::<f32>().unwrap(),
             _ => {
                 return Err("Target value is not a number".into());
             }
