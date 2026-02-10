@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use leptos::either::Either;
 use leptos::html::Dialog;
-use leptos::logging::{debug_log, log};
+use leptos::logging::debug_log;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
 use leptos_router::hooks::{use_navigate, use_params};
