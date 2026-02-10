@@ -283,13 +283,10 @@ fn make_comp_list() -> Vec<ComparisonData> {
     
     let service_hours_20 = ComparisonData::new(
         "service_hours_20",
-        "community_involvement",
-        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
-            "service_hours".to_string(),
-            Box::new(NumberListComparison::Sum(Box::new(
-                NumberComparison::GreaterThanOrEqual,
-            ))),
-        )),
+        "service_hours",
+        ComparisonType::Number(
+            NumberComparison::GreaterThanOrEqual
+        ),
         ValueType::Number(Some(20.to_string())),
         "Community Service",
         "20+ service hours",
@@ -297,13 +294,10 @@ fn make_comp_list() -> Vec<ComparisonData> {
 
     let service_hours_25 = ComparisonData::new(
         "service_hours_25",
-        "community_involvement",
-        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
-            "service_hours".to_string(),
-            Box::new(NumberListComparison::Sum(Box::new(
-                NumberComparison::GreaterThanOrEqual,
-            ))),
-        )),
+        "service_hours",
+        ComparisonType::Number(
+            NumberComparison::GreaterThanOrEqual
+        ),
         ValueType::Number(Some(25.to_string())),
         "Community Service",
         "25+ service hours",
@@ -311,13 +305,10 @@ fn make_comp_list() -> Vec<ComparisonData> {
 
     let service_hours_30 = ComparisonData::new(
         "service_hours_30",
-        "community_involvement",
-        ComparisonType::MapList(MapListComparison::FlattenToNumberList(
-            "service_hours".to_string(),
-            Box::new(NumberListComparison::Sum(Box::new(
-                NumberComparison::GreaterThanOrEqual,
-            ))),
-        )),
+        "service_hours",
+        ComparisonType::Number(
+            NumberComparison::GreaterThanOrEqual
+        ),
         ValueType::Number(Some(30.to_string())),
         "Community Service",
         "30+ service hours",
