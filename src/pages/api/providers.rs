@@ -1,6 +1,7 @@
 ﻿use leptos::prelude::*;
 use leptos::logging::log;
 use std::collections::HashMap;
+use leptos::server_fn::codec::Json;
 use crate::common::ValueType;
 
 #[cfg(feature = "ssr")]
@@ -45,7 +46,7 @@ pub async fn get_provider_contact(id: String) -> Result<HashMap<String, ValueTyp
     }
 }
 
-#[server]
+#[server(input = Json)]
 pub async fn put_provider_contact(id: String, contact_info: HashMap<String, ValueType>) -> Result<(), ServerFnError> {
     use aws_sdk_dynamodb::error::ProvideErrorMetadata;
 

@@ -1,27 +1,27 @@
 #[cfg(feature = "ssr")]
-use aws_sdk_dynamodb::{
-    types::AttributeValue,
-    error::ProvideErrorMetadata,
-};
-#[cfg(feature = "ssr")]
-use leptos::leptos_dom::log;
-#[cfg(feature = "ssr")]
-use uuid::Uuid;
-#[cfg(feature = "ssr")]
-use crate::utils::server::{create_dynamo_client, into_attr_map};
-#[cfg(feature = "ssr")]
-use crate::common::ValueType;
+mod imports {
+    pub use aws_sdk_dynamodb::{
+        types::AttributeValue,
+        error::ProvideErrorMetadata,
+    };
+    pub use leptos::leptos_dom::log;
+    pub use uuid::Uuid;
+    pub use crate::utils::server::{create_dynamo_client, into_attr_map};
+    pub use crate::common::ValueType;
+}
 
 use crate::common::ExpandableInfo;
 
 use leptos::prelude::ServerFnError;
 use leptos::server;
-
+use leptos::server_fn::codec::Json;
 #[cfg(feature = "ssr")]
 use super::SCHOLARSHIPS_TABLE;
 
 #[server(GetScholarshipInfo)]
 pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFnError> {
+    use imports::*;
+    
     let client = create_dynamo_client().await;
 
     // Perform the operation - we just want to return all data that's contained in this entry,
@@ -50,8 +50,9 @@ pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFn
     }
 }
 
-#[server(CreateScholarshipInfo)]
+#[server(CreateScholarshipInfo, input = Json)]
 pub async fn create_scholarship_info(info: ExpandableInfo) -> Result<(), ServerFnError> {
+    use imports::*;
     use aws_sdk_dynamodb::error::ProvideErrorMetadata;
 
     let client = create_dynamo_client().await;
@@ -75,6 +76,8 @@ pub async fn create_scholarship_info(info: ExpandableInfo) -> Result<(), ServerF
 
 #[server(GetAllScholarshipInfo)]
 pub async fn get_all_scholarship_info() -> Result<Vec<ExpandableInfo>, ServerFnError> {
+    use imports::*;
+    
     let client = create_dynamo_client().await;
     log!("Getting all scholarship info");
     match client
@@ -100,6 +103,8 @@ pub async fn get_all_scholarship_info() -> Result<Vec<ExpandableInfo>, ServerFnE
 /// Gets all scholarships that are associated with the given scholarship provider's ID.
 #[server(GetProviderScholarships)]
 pub async fn get_provider_scholarships(provider_id: String) -> Result<Vec<ExpandableInfo>, ServerFnError> {
+    use imports::*;
+    
     let client = create_dynamo_client().await;
     
     log!("Getting provider scholarships for provider with ID {:?}", provider_id);
@@ -129,6 +134,8 @@ pub async fn get_provider_scholarships(provider_id: String) -> Result<Vec<Expand
 /// Creates a new scholarship with a unique ID, and then returns that ID.
 #[server(RegisterScholarship)]
 pub async fn register_scholarship(provider_id: String) -> Result<String, ServerFnError> {
+    use imports::*;
+    
     let client = create_dynamo_client().await;
     
     log!("Creating scholarship for provider with ID {:?}", provider_id);
@@ -173,6 +180,8 @@ pub async fn register_scholarship(provider_id: String) -> Result<String, ServerF
 /// Deletes a provider's scholarship given their provider ID and scholarship ID.
 #[server(DeleteProviderScholarship)]
 pub async fn delete_provider_scholarship(provider_id: String, scholarship_id: String) -> Result<(), ServerFnError> {
+    use imports::*;
+    
     let client = create_dynamo_client().await;
     
     log!("Deleting scholarship with ID {:?} for provider with ID {:?}", scholarship_id, provider_id);
@@ -196,4 +205,30 @@ pub async fn delete_provider_scholarship(provider_id: String, scholarship_id: St
             Err(ServerFnError::new(msg))
         }
     }
+}
+
+#[server]
+pub async fn get_all_scholarships() -> Result<Vec<std::collections::HashMap<String, crate::common::ValueType>>, ServerFnError> {
+    use imports::*;
+    use std::collections::HashMap;
+    
+    let client = create_dynamo_client().await;
+    
+    client
+        .scan()
+        .table_name(SCHOLARSHIPS_TABLE)
+        .send()
+        .await
+        .map(|output| {
+            let Some(items) = output.items else {
+                return Vec::new();
+            };
+            
+            items.iter().map(|item| {
+                // Each item should be simply converted from an AttributeValue to a ValueType.
+                item.iter().map(|(k, v)| (k.clone(), ValueType::from(v)))
+                    .collect::<HashMap<String, ValueType>>()
+            }).collect::<Vec<_>>()
+        })
+        .map_err(ServerFnError::from)
 }
