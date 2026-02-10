@@ -28,6 +28,8 @@ pub enum TextFieldType {
 fn validate(required: bool, value: &str, input_type: &TextFieldType) -> ValidationState {
     if required && value.is_empty() {
         ValidationState::Invalid("This field is required.".to_string())
+    } else if !required && value.is_empty() {
+        ValidationState::Valid
     } else {
         match input_type {
             TextFieldType::Email(domains) => validate_email(value, domains),
@@ -54,7 +56,7 @@ fn validate_email(input: &str, valid_domains: &Vec<String>) -> ValidationState {
 
 /// Validates a number.
 fn validate_number(input: &str) -> ValidationState {
-    if input.parse::<i32>().is_ok() {
+    if input.parse::<f32>().is_ok() {
         ValidationState::Valid
     } else {
         ValidationState::Invalid("Value is not a valid number.".to_string())
