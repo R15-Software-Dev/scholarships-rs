@@ -136,14 +136,8 @@ fn StudentRoutes() -> impl MatchNestedRoutes + Clone {
                 path=path!("additional/work-experience")
                 view=student::StudentWorkExperiencePage
             />
-            <Route
-                path=path!("additional/university")
-                view=student::StudentUniversityPage
-            />
-            <Route
-                path=path!("additional/family-info")
-                view=student::StudentFamilyPage
-            />
+            <Route path=path!("additional/university") view=student::StudentUniversityPage />
+            <Route path=path!("additional/family-info") view=student::StudentFamilyPage />
         </ParentRoute>
     }
         .into_inner()

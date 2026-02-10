@@ -60,53 +60,69 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                     let Some(Ok(student_info)) = student_resource.get() else {
                         return view! {}.into_any();
                     };
-                    
-                    let valid_list = scholarships_list.iter()
+                    let valid_list = scholarships_list
+                        .iter()
                         .filter_map(|scholarship| {
-                            let scholarship_name = scholarship.data.get("name")
-                                    .unwrap_or(&ValueType::String(None))
-                                    .as_string().ok().flatten().unwrap_or_default();
+                            let scholarship_name = scholarship
+                                .data
+                                .get("name")
+                                .unwrap_or(&ValueType::String(None))
+                                .as_string()
+                                .ok()
+                                .flatten()
+                                .unwrap_or_default();
                             debug_log!("Checking scholarship: {}", scholarship_name);
-                        
-                            // Each scholarship will return Some(itself), or None. This is will be automatically
-                            // filtered based on the information. Invalid scholarships are None, along with those
-                            // that fail validation for any reason. Scholarships that are valid or did not choose
-                            // any requirements are Some(scholarship).
-                            let requirements_map = scholarship.data.get("requirements")
+                            let requirements_map = scholarship
+                                .data
+                                .get("requirements")
                                 .unwrap_or(&ValueType::Map(None))
-                                .as_map().ok().flatten()
+                                .as_map()
+                                .ok()
+                                .flatten()
                                 .unwrap_or_default()
-                                .values().cloned()
+                                .values()
+                                .cloned()
                                 .collect::<Vec<ValueType>>();
-                        
                             let resolved_requirements = requirements_map
                                 .iter()
                                 .map(|list_val| {
-                                    // We want to cast to a list, and then map the list to a new
-                                    // one that contains the correct ComparisonData.
-                                    let list = list_val.as_list().ok().flatten().unwrap_or_default();
-                                    list.iter().filter_map(|v| {
-                                        let id_string = v.as_string().ok().flatten().unwrap_or_default();
-                                        relations_list.iter()
-                                            .find(|relation| relation.id == id_string)
-                                    })
-                                    .cloned()
-                                    .collect::<Vec<ComparisonData>>()
+                                    let list = list_val
+                                        .as_list()
+                                        .ok()
+                                        .flatten()
+                                        .unwrap_or_default();
+                                    list.iter()
+                                        .filter_map(|v| {
+                                            let id_string = v
+                                                .as_string()
+                                                .ok()
+                                                .flatten()
+                                                .unwrap_or_default();
+                                            relations_list
+                                                .iter()
+                                                .find(|relation| relation.id == id_string)
+                                        })
+                                        .cloned()
+                                        .collect::<Vec<ComparisonData>>()
                                 })
                                 .collect::<Vec<Vec<ComparisonData>>>();
-                        
-                            debug_log!("Resolved requirements: {:?}", resolved_requirements.iter().flatten().map(|rel| rel.display_text.clone()).collect::<Vec<String>>());
-                            
-                            let valid = resolved_requirements.iter()
+                            debug_log!(
+                                "Resolved requirements: {:?}", resolved_requirements.iter().flatten().map(|rel| rel.display_text.clone()).collect::<Vec<String>>()
+                            );
+                            let valid = resolved_requirements
+                                .iter()
                                 .all(|list| {
-                                    list.iter().fold(false, |prev, requirement| {
-                                        let result = requirement.compare(&student_info)
-                                            .unwrap_or(false);
-                                
-                                        if prev { prev } else { result }
-                                    })
+                                    list.iter()
+                                        .fold(
+                                            false,
+                                            |prev, requirement| {
+                                                let result = requirement
+                                                    .compare(&student_info)
+                                                    .unwrap_or(false);
+                                                if prev { prev } else { result }
+                                            },
+                                        )
                                 });
-                            
                             if valid {
                                 debug_log!("Scholarship is valid.");
                                 Some(scholarship.clone())
@@ -116,15 +132,19 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                         })
                         .collect::<Vec<ExpandableInfo>>();
 
+                    // Each scholarship will return Some(itself), or None. This is will be automatically
+                    // filtered based on the information. Invalid scholarships are None, along with those
+                    // that fail validation for any reason. Scholarships that are valid or did not choose
+                    // any requirements are Some(scholarship).
+
+                    // We want to cast to a list, and then map the list to a new
+                    // one that contains the correct ComparisonData.
+
                     view! {
                         <div>{format!("Valid scholarships: {}", valid_list.len())}</div>
                         <For
                             each=move || valid_list.clone()
-                            key=|scholarship| {
-                                scholarship
-                                    .subject
-                                    .clone()
-                            }
+                            key=|scholarship| { scholarship.subject.clone() }
                             children=move |scholarship| {
                                 let scholarship = StoredValue::new(scholarship);
                                 let scholarship_name = Memo::new(move |_| {
@@ -163,7 +183,8 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                 }
                             }
                         />
-                    }.into_any()
+                    }
+                        .into_any()
                 }}
             </Suspense>
         </div>

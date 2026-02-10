@@ -36,60 +36,70 @@ impl InputType {
     ) -> impl IntoView {
         view! {
             {match self {
-                InputType::Text(member, label, placeholder, required) =>
+                InputType::Text(member, label, placeholder, required) => {
                     view! {
                         <Row>
                             <OutlinedTextField
-                                label = label.clone()
-                                placeholder = placeholder.clone()
-                                data_member = member.clone()
-                                data_map = data_map
-                                required = required
+                                label=label.clone()
+                                placeholder=placeholder.clone()
+                                data_member=member.clone()
+                                data_map=data_map
+                                required=required
                             />
                         </Row>
-                    }.into_any(),
-                InputType::Number(member, label, placeholder, required) =>
+                    }
+                        .into_any()
+                }
+                InputType::Number(member, label, placeholder, required) => {
                     view! {
                         <OutlinedTextField
-                            label = label.clone()
-                            placeholder = placeholder.clone()
-                            data_member = member.clone()
-                            data_map = data_map
-                            input_type = TextFieldType::Number
-                            required = required
+                            label=label.clone()
+                            placeholder=placeholder.clone()
+                            data_member=member.clone()
+                            data_map=data_map
+                            input_type=TextFieldType::Number
+                            required=required
                         />
-                    }.into_any(),
-                InputType::Checkbox(member, label, options, required) =>
+                    }
+                        .into_any()
+                }
+                InputType::Checkbox(member, label, options, required) => {
                     view! {
                         <CheckboxList
-                            label = label.clone()
-                            name = name.clone()
-                            items = options.clone()
-                            data_member = member.clone()
-                            data_map = data_map
-                            required = required
+                            label=label.clone()
+                            name=name.clone()
+                            items=options.clone()
+                            data_member=member.clone()
+                            data_map=data_map
+                            required=required
                         />
-                    }.into_any(),
-                InputType::Radio(member, label, options, required) =>
+                    }
+                        .into_any()
+                }
+                InputType::Radio(member, label, options, required) => {
                     view! {
                         <RadioList
-                            label = label.clone()
-                            data_member = member.clone()
-                            data_map = data_map
-                            items = options.clone()
-                            required = required
+                            label=label.clone()
+                            data_member=member.clone()
+                            data_map=data_map
+                            items=options.clone()
+                            required=required
                         />
-                    }.into_any(),
-                InputType::Select(member, label, options, required) =>
+                    }
+                        .into_any()
+                }
+                InputType::Select(member, label, options, required) => {
                     view! {
                         <Select
-                            label = label.clone()
-                            value_list = options.clone()
-                            data_member = member.clone()
-                            data_map = data_map
-                            required = required
+                            label=label.clone()
+                            value_list=options.clone()
+                            data_member=member.clone()
+                            data_map=data_map
+                            required=required
                         />
-                    }.into_any()
+                    }
+                        .into_any()
+                }
             }}
         }
     }

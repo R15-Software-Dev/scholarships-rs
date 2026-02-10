@@ -15,7 +15,7 @@ pub fn StudentShell() -> impl IntoView {
                     title="R15 Student Scholarship Application"
                     logo="/PHS_Stacked_Acronym.png"
                 />
-            
+
                 <div class="flex flex-1 min-h-0">
                     <AuthLoaded fallback=Loading>
                         <Authenticated unauthenticated=UnauthenticatedPage>
@@ -38,7 +38,7 @@ pub fn StudentShell() -> impl IntoView {
                                             ],
                                         ),
                                     ),
-                                    TabInfo::new("Eligible Scholarships", "eligibility", None)
+                                    TabInfo::new("Eligible Scholarships", "eligibility", None),
                                 ]
                             />
                         </Authenticated>
