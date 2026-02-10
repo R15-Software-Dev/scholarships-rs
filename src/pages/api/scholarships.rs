@@ -1,22 +1,21 @@
 #[cfg(feature = "ssr")]
 mod imports {
+    pub use leptos::logging::debug_log;
     pub use aws_sdk_dynamodb::{
         types::AttributeValue,
         error::ProvideErrorMetadata,
     };
     pub use leptos::leptos_dom::log;
     pub use uuid::Uuid;
-    pub use crate::utils::server::{create_dynamo_client, into_attr_map};
+    pub use crate::utils::server::{create_dynamo_client};
     pub use crate::common::ValueType;
+    pub use super::super::SCHOLARSHIPS_TABLE;
 }
 
 use crate::common::ExpandableInfo;
-
 use leptos::prelude::ServerFnError;
 use leptos::server;
 use leptos::server_fn::codec::Json;
-#[cfg(feature = "ssr")]
-use super::SCHOLARSHIPS_TABLE;
 
 #[server(GetScholarshipInfo)]
 pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFnError> {
@@ -79,7 +78,7 @@ pub async fn get_all_scholarship_info() -> Result<Vec<ExpandableInfo>, ServerFnE
     use imports::*;
     
     let client = create_dynamo_client().await;
-    log!("Getting all scholarship info");
+    debug_log!("Getting all scholarship info");
     match client
         .scan()
         .table_name(SCHOLARSHIPS_TABLE)
@@ -107,7 +106,7 @@ pub async fn get_provider_scholarships(provider_id: String) -> Result<Vec<Expand
     
     let client = create_dynamo_client().await;
     
-    log!("Getting provider scholarships for provider with ID {:?}", provider_id);
+    debug_log!("Getting provider scholarships for provider with ID {:?}", provider_id);
     
     match client
         .scan()
@@ -138,7 +137,7 @@ pub async fn register_scholarship(provider_id: String) -> Result<String, ServerF
     
     let client = create_dynamo_client().await;
     
-    log!("Creating scholarship for provider with ID {:?}", provider_id);
+    debug_log!("Creating scholarship for provider with ID {:?}", provider_id);
     
     let mut current_uuid = Uuid::new_v4().to_string();
     let mut item = ExpandableInfo::new(current_uuid.clone());
@@ -184,7 +183,7 @@ pub async fn delete_provider_scholarship(provider_id: String, scholarship_id: St
     
     let client = create_dynamo_client().await;
     
-    log!("Deleting scholarship with ID {:?} for provider with ID {:?}", scholarship_id, provider_id);
+    debug_log!("Deleting scholarship with ID {:?} for provider with ID {:?}", scholarship_id, provider_id);
     
     // When we delete a scholarship, we need to ensure that the provider's ID matches the scholarship,
     // otherwise everyone can delete anyone else's scholarships.

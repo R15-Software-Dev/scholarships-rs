@@ -1,5 +1,5 @@
 ﻿use leptos::prelude::*;
-use leptos::logging::log;
+use leptos::logging::debug_log;
 use std::collections::HashMap;
 use leptos::server_fn::codec::Json;
 use crate::common::ValueType;
@@ -17,7 +17,7 @@ pub async fn get_provider_contact(id: String) -> Result<HashMap<String, ValueTyp
 
     let client = create_dynamo_client().await;
 
-    log!("Getting contact info for provider {}", id);
+    debug_log!("Getting contact info for provider {}", id);
 
     match client
         .get_item()

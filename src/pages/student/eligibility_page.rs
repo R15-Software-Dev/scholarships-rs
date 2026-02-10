@@ -1,4 +1,4 @@
-use leptos::logging::log;
+use leptos::logging::debug_log;
 use leptos::prelude::*;
 use crate::common::{ComparisonData, ExpandableInfo, ValueType};
 use crate::pages::api::{get_all_scholarship_info, get_comparison_info};
@@ -66,7 +66,7 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                             let scholarship_name = scholarship.data.get("name")
                                     .unwrap_or(&ValueType::String(None))
                                     .as_string().ok().flatten().unwrap_or_default();
-                            log!("Checking scholarship: {}", scholarship_name);
+                            debug_log!("Checking scholarship: {}", scholarship_name);
                         
                             // Each scholarship will return Some(itself), or None. This is will be automatically
                             // filtered based on the information. Invalid scholarships are None, along with those
@@ -78,8 +78,6 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                 .unwrap_or_default()
                                 .values().cloned()
                                 .collect::<Vec<ValueType>>();
-                            
-                            log!("Requirements list after conversion: {:?}", requirements_map);
                         
                             let resolved_requirements = requirements_map
                                 .iter()
@@ -97,7 +95,7 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                 })
                                 .collect::<Vec<Vec<ComparisonData>>>();
                         
-                            log!("Resolved requirements: {:?}", resolved_requirements.iter().flatten().map(|rel| rel.display_text.clone()).collect::<Vec<String>>());
+                            debug_log!("Resolved requirements: {:?}", resolved_requirements.iter().flatten().map(|rel| rel.display_text.clone()).collect::<Vec<String>>());
                             
                             let valid = resolved_requirements.iter()
                                 .all(|list| {
@@ -110,7 +108,7 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                 });
                             
                             if valid {
-                                log!("Scholarship is valid.");
+                                debug_log!("Scholarship is valid.");
                                 Some(scholarship.clone())
                             } else {
                                 None

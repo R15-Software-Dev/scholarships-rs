@@ -8,6 +8,7 @@ mod imports {
     pub use super::super::MAIN_TABLE_NAME;
     pub use crate::common::ValueType;
     pub use std::collections::HashMap;
+    pub use leptos::logging::debug_log;
 }
 
 #[server(input = Json)]
@@ -16,7 +17,6 @@ pub async fn put_student_data(
     data_type: String,
     data_map: std::collections::HashMap<String, crate::common::ValueType>
 ) -> Result<(), ServerFnError> {
-    use leptos::logging::log;
     use imports::*;
     
     let client = create_dynamo_client().await;
@@ -31,7 +31,7 @@ pub async fn put_student_data(
         AttributeValue::S(data_type.to_uppercase())
     );
     
-    log!("Inserting this item: {:?}", data_map_attr);
+    debug_log!("Inserting this item: {:?}", data_map_attr);
     
     client
         .put_item()
