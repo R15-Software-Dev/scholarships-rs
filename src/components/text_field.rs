@@ -2,6 +2,7 @@ use crate::common::ValueType;
 use leptos::prelude::*;
 use std::collections::HashMap;
 use leptos::html::Input;
+use leptos::logging::debug_log;
 use crate::components::{use_validation_context, InputState};
 use crate::components::validated_form::ValidationState;
 
@@ -66,7 +67,7 @@ fn validate_number(input: &str) -> ValidationState {
 #[component]
 pub fn OutlinedTextField(
     #[prop(optional, into)] placeholder: String,
-    #[prop(into)] data_member: String, // should this be an RwSignal??
+    #[prop(into)] data_member: String,
     #[prop()] data_map: RwSignal<HashMap<String, ValueType>>,
     #[prop(optional, into)] input_type: Signal<TextFieldType>,
     #[prop(optional, into)] disabled: Signal<bool>,
@@ -75,30 +76,28 @@ pub fn OutlinedTextField(
     #[prop(optional, into)] required: Signal<bool>
 ) -> impl IntoView {
     let input_ref = NodeRef::<Input>::new();
+    let data_member = StoredValue::new(data_member);
 
     // Register this input's validation signal.
     let validator_context = use_validation_context()
         .expect("FormValidSignal was not found");
-
-    let raw_value = Signal::derive({
-        let data_member = data_member.clone();
-        move ||
-            data_map
-                .get()
-                .get(&data_member)
-                .unwrap_or(&ValueType::String(None))
-                .to_string()
-    });
+    
+    let display_value = RwSignal::new(
+        data_map.get_untracked()
+            .get(&data_member.get_value())
+            .map(|v| v.to_string())
+            .unwrap_or_default()
+    );
 
     let dirty = RwSignal::new(false);
     let error = Signal::derive(move || 
-        validate(required.get(), &raw_value.get(), &input_type.get())
+        validate(required.get(), &display_value.get(), &input_type.get())
     );
     let show_errors = Signal::derive(move || {
         dirty.get() && matches!(error.get(), ValidationState::Invalid(_))
     });
 
-    let validator = RwSignal::new(InputState::new(data_member.clone(), error.clone(), dirty.clone()));
+    let validator = RwSignal::new(InputState::new(data_member.get_value(), error.clone(), dirty.clone()));
 
     validator_context.validators.update(|list| list.push(validator));
 
@@ -108,35 +107,42 @@ pub fn OutlinedTextField(
         });
     });
 
-    let str_type = Signal::derive(move || match input_type.get_untracked() {
-        TextFieldType::Number => "number",
-        _ => "text"  // This is fine even for emails, as we're doing our own validation.
-    });
-
     let on_blur = move |_| {
         // Check validity of input's current value. The value will be updated by on_input,
         // and it should be a raw input (not parsed into a ValueType).
         dirty.set(true);
     };
 
+    // Syncs data from the map into the display_value, only when the map is actually changed.
+    Effect::new(move || {
+        let new_value = data_map.get()
+            .get(&data_member.get_value())
+            .map(|v| v.to_string())
+            .unwrap_or_default();
+        
+        if new_value != display_value.get_untracked() {
+            debug_log!("Found value from map: {}", new_value);
+            display_value.set(new_value);
+        }
+    });
+    
     // This function parses the input into the correct type. It only accepts numbers or strings as
     // valid types, and parses them accordingly.
-    let on_input = {
-        let data_member = data_member.clone();
-        move |e| {
-            let to_parse = event_target_value(&e);
+    let on_input = move |e| {
+        let to_parse = event_target_value(&e);
+        debug_log!("Setting value to display_value: {}", to_parse);
+        display_value.set(to_parse.clone());
+        
+        // Push the new value to the data map. This happens regardless of whether the value parses
+        // or not.
+        data_map.update(|map| {
             let into_map = match input_type.get() {
                 TextFieldType::Number => ValueType::Number(Some(to_parse)),
                 _ => ValueType::String(Some(to_parse))
             };
 
-            // Edit the data map. Note that this should be uncoupled in the future - we don't want
-            // to update the map inside the component definition, but inside the page/form that
-            // created this input.
-            data_map.update(|map| {
-                map.insert(data_member.clone(), into_map);
-            });
-        }
+            map.insert(data_member.get_value(), into_map);
+        });
     };
 
     view! {
@@ -149,11 +155,11 @@ pub fn OutlinedTextField(
                     transition-all duration-150
                     border-red-700 bg-transparent
                     disabled:border-gray-600 disabled:pointer-events-none disabled:bg-gray-600/33"
-                    r#type=str_type
+                    r#type="text"
                     disabled=disabled
                     placeholder=placeholder
                     prop:name=name
-                    prop:value=raw_value
+                    prop:value=display_value
                     on:input=on_input
                     on:blur=on_blur
                 />
