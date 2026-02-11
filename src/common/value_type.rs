@@ -13,7 +13,7 @@ use std::fmt::Display;
 pub enum ValueType {
     /// Indicates a `String` value.
     String(Option<String>),
-    /// Indicates an `i32` value.
+    /// Indicates an `i32` value.    /// Indicates an `f32` value.
     Number(Option<String>),
     /// Indicates a `Vec<T>`, where `T` can be any other `ValueType`.
     List(Option<Vec<ValueType>>),
