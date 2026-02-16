@@ -1,9 +1,9 @@
+use crate::common::{SubTabInfo, TabInfo};
+use crate::components::login::StudentLoginContext;
+use crate::components::{Banner, Loading, TabSidebarList};
+use crate::pages::UnauthenticatedPage;
 use leptos::prelude::*;
 use leptos_oidc::{AuthLoaded, Authenticated};
-use crate::common::{SubTabInfo, TabInfo};
-use crate::components::{Banner, Loading, TabSidebarList};
-use crate::components::login::StudentLoginContext;
-use crate::pages::UnauthenticatedPage;
 
 #[component]
 pub fn StudentShell() -> impl IntoView {
@@ -39,6 +39,7 @@ pub fn StudentShell() -> impl IntoView {
                                         ),
                                     ),
                                     TabInfo::new("Eligible Scholarships", "eligibility", None),
+                                    TabInfo::new("Testing Display", "testing", None)
                                 ]
                             />
                         </Authenticated>

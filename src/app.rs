@@ -1,12 +1,20 @@
-use crate::pages::{ProviderPortal, ScholarshipInfoPage, ProviderContactPage, LoanerShell, LoanerFallback, LoanerBorrowForm, LoanerReturnForm, AuthCallbackPage, ApplicantsPageFallback, AdminShell, AdminHomePage, AdminProviderPage, AdminScholarshipPage, AdminUtilsPage};
+use crate::components::ToastList;
+use crate::components::login::ProviderLoginContext;
 use crate::pages::student;
+use crate::pages::{
+    AdminHomePage, AdminProviderPage, AdminScholarshipPage, AdminShell, AdminUtilsPage,
+    ApplicantsPageFallback, AuthCallbackPage, LoanerBorrowForm, LoanerFallback, LoanerReturnForm,
+    LoanerShell, ProviderContactPage, ProviderPortal, ScholarshipInfoPage,
+};
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::AuthSignal;
-use leptos_router::{components::{Route, Router, Routes, ParentRoute}, path, MatchNestedRoutes};
 use leptos_router::any_nested_route::IntoAnyNestedRoute;
-use crate::components::login::ProviderLoginContext;
-use crate::components::ToastList;
+use leptos_router::{
+    MatchNestedRoutes,
+    components::{ParentRoute, Route, Router, Routes},
+    path,
+};
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -86,8 +94,8 @@ fn ProviderRoutes() -> impl MatchNestedRoutes + Clone {
             </ParentRoute>
         </ParentRoute>
     }
-        .into_inner()
-        .into_any_nested_route()
+    .into_inner()
+    .into_any_nested_route()
 }
 
 #[component(transparent)]
@@ -99,8 +107,8 @@ fn LoanerRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("returning") view=LoanerReturnForm />
         </ParentRoute>
     }
-        .into_inner()
-        .into_any_nested_route()
+    .into_inner()
+    .into_any_nested_route()
 }
 
 #[component(transparent)]
@@ -113,8 +121,8 @@ fn AdminRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("utilities") view=AdminUtilsPage />
         </ParentRoute>
     }
-        .into_inner()
-        .into_any_nested_route()
+    .into_inner()
+    .into_any_nested_route()
 }
 
 #[component(transparent)]
@@ -126,6 +134,7 @@ fn StudentRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("demographics") view=student::StudentDemographicsPage />
             <Route path=path!("eligibility") view=student::StudentEligibilityPage />
             <Route path=path!("additional") view=student::AdditionalPage />
+            <Route path=path!("testing") view=student::StudentTestDisplay />
             <Route path=path!("additional/academics") view=student::StudentAcademicsPage />
             <Route path=path!("additional/athletics") view=student::StudentAthleticsPage />
             <Route
@@ -140,8 +149,8 @@ fn StudentRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("additional/family-info") view=student::StudentFamilyPage />
         </ParentRoute>
     }
-        .into_inner()
-        .into_any_nested_route()
+    .into_inner()
+    .into_any_nested_route()
 }
 
 #[component]
