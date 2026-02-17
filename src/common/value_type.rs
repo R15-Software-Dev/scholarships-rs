@@ -105,8 +105,8 @@ impl Default for ValueType {
 impl Display for ValueType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match self {
-            ValueType::String(s) => s.clone().unwrap_or("".to_owned()),
-            ValueType::Number(n) => n.clone().unwrap_or("".to_owned()),
+            ValueType::String(s) => s.clone().unwrap_or_default(),
+            ValueType::Number(n) => n.clone().unwrap_or_default(),
             ValueType::List(l) => format!("{l:?}"),
             ValueType::Map(m) => format!("{m:?}"),
         };

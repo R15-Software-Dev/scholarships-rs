@@ -1,38 +1,203 @@
-use crate::common::ValueType;
+use crate::common::{SchemaNode, SchemaType, ValueType};
 use leptos::prelude::*;
 use std::collections::HashMap;
+use leptos::logging::debug_log;
 
 #[component]
 pub fn ValueDisplay(
-    #[prop(into)] data_member: Signal<String>,
+    #[prop(into)] schema: Signal<SchemaNode>,
+    #[prop(into, optional)] data_member: Signal<String>,
     #[prop(into)] data_map: Signal<HashMap<String, ValueType>>,
-    #[prop(into)] header: Signal<String>,
 ) -> impl IntoView {
-    let display_value = Memo::new(move |_| {
-        data_map
-            .get()
-            .get(&data_member.get())
-            .unwrap_or(&ValueType::String(None))
-            .clone()
+    let data_value = Memo::new(move |_| {
+        if data_member.get().is_empty() {
+            ValueType::Map(Some(data_map.get()))
+        } else {
+            data_map.get()
+                .get(&data_member.get())
+                .map(|v| v.clone())
+                .unwrap_or_default()
+        }
     });
 
-    // I've chosen to display all information - we're not going to worry about the depth of the
-    // information, but we are going to provide a way to collapse information like maps and lists.
-    // This means we need some capsule-like appearance for the information in order to facilitate
-    // having a header and a series of information that's buried underneath. Also, we need to consider
-    // how we determine what the header is because that's not really procedurally possible.
+    view! {
+        {move || {
+            match schema.get().data_type {
+                SchemaType::String | SchemaType::Number => view! {
+                    <PrimitiveDisplay
+                        header={move || schema.get().header}
+                        value=data_value
+                    />
+                }.into_any(),
+                SchemaType::List => view! {
+                    <ListDisplay
+                        header=move || schema.get().header
+                        value=data_value
+                        item_template=move || schema.get().item_template.unwrap_or(Box::from(SchemaNode::new(SchemaType::List)))
+                    />
+                }.into_any(),
+                SchemaType::Map => view! {
+                    <MapDisplay
+                        value=data_value
+                        header=move || schema.get().header
+                        schema=move || schema.get().children
+                    />
+                }.into_any()
+            }
+        }}
+    }
+}
 
-    // One possible way to handle this is a "schema." We would plan out the information beforehand
-    // and pass through this schema struct, allowing us to limit what's displayed, relative to the
-    // starting data_map. I'll write this out in a scratch file for now.
+#[component]
+fn PrimitiveDisplay(
+    #[prop(into)] header: Signal<String>,
+    #[prop(into)] value: Signal<ValueType>
+) -> impl IntoView {
+    let display_string = Memo::new(move |_| {
+        let value = value.get();
+        match value {
+            ValueType::String(_) | ValueType::Number(_) => {
+                value.to_string()
+            }
+            _ => {
+                "Value is not a string.".to_string()
+            }
+        }
+    });
 
     view! {
-        <div class="flex flex-1 flex-col">
-            <div class="font-bold">{header}</div>
-            <div>{move || display_value.get().to_string()}</div>
+        <div>
+            <Show when=move || !header.get().is_empty()>
+                <div class="font-bold">{header}</div>
+            </Show>
+            <div>{display_string}</div>
         </div>
     }
 }
 
 #[component]
-pub fn MapDisplay() {}
+fn ListDisplay(
+    #[prop(into)] item_template: Signal<Box<SchemaNode>>,
+    #[prop(into)] value: Signal<ValueType>,
+    #[prop(into)] header: Signal<String>,
+) -> impl IntoView {
+    // Unwrap the value and check if it's the correct type. To be displayed with this component, it
+    // MUST be a ValueType::List.
+    let display_list = Memo::new(move |_| {
+        let ValueType::List(Some(list)) = value.get() else {
+            return Vec::new();
+        };
+
+        list.into_iter().enumerate().collect::<Vec<(usize, ValueType)>>()
+    });
+
+    let is_valid = Memo::new(move |_| {
+        matches!(value.get(), ValueType::List(_))
+    });
+
+    let item_header = Memo::new(move |_| {
+        item_template.get().header
+    });
+
+    view! {
+        <div>
+            <div class="font-bold">{header}</div>
+            <For
+                each=move || display_list.get()
+                key=|(idx, _)| idx.clone()
+                children=move |(idx, entry)| {
+                    match item_template.get().data_type {
+                        SchemaType::String | SchemaType::Number =>view! {
+                            <PrimitiveDisplay
+                                value=entry
+                                header=item_header
+                            />
+                        }.into_any(),
+                        SchemaType::List => view! {
+                            <div>"Nested lists are not currently supported for display."</div>
+                        }.into_any(),
+                        SchemaType::Map => view! {
+                            <MapDisplay
+                                value=entry
+                                header=item_header
+                                schema=move || item_template.get().children
+                            />
+                        }.into_any()
+                    }
+                }
+            />
+        </div>
+    }
+}
+
+#[component]
+fn MapDisplay(
+    #[prop(into)] value: Signal<ValueType>,
+    #[prop(into)] header: Signal<String>,
+    #[prop(into)] schema: Signal<HashMap<String, SchemaNode>>,
+) -> impl IntoView {
+    // Unwrap the value and check if it is the correct type. It must be a ValueType::Map.
+    let display_map = Memo::new(move |_| {
+        let ValueType::Map(Some(map)) = value.get() else {
+            return HashMap::new();
+        };
+
+        map
+    });
+
+    Effect::new(move || {
+        debug_log!("Current map values: {:?}", display_map.get());
+    });
+
+    let is_valid = Memo::new(move |_| {
+        matches!(value.get(), ValueType::Map(_))
+    });
+
+    view! {
+        <div class="flex flex-col flex-1 gap-2">
+            <div class="font-bold">{header}</div>
+            <div class="p-2 rounded-md shadow-lg/33 m-2">
+                <For
+                    each=move || schema.get()
+                    key=|(k, _)| k.clone()
+                    children=move |(member, child_schema)| {
+                        let display_value = Memo::new(move |_| {
+                            display_map.get()
+                                .get(&member)
+                                .map(|v| v.clone())
+                                .unwrap_or_default()
+                        });
+
+                        match child_schema.data_type {
+                            SchemaType::String | SchemaType::Number => view! {
+                                <PrimitiveDisplay
+                                    value=display_value
+                                    header=child_schema.header
+                                />
+                            }.into_any(),
+                            SchemaType::List => {
+                                let template = child_schema.item_template
+                                    .unwrap_or(Box::from(SchemaNode::new(SchemaType::List)));
+
+                                view! {
+                                    <ListDisplay
+                                        value=display_value
+                                        item_template=template
+                                        header=child_schema.header
+                                    />
+                                }
+                            }.into_any(),
+                            SchemaType::Map => view! {
+                                <MapDisplay
+                                    value=display_value
+                                    schema=child_schema.children
+                                    header=child_schema.header
+                                />
+                            }.into_any()
+                        }
+                    }
+                />
+            </div>
+        </div>
+    }
+}
