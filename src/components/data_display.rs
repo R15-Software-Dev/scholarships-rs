@@ -1,6 +1,7 @@
 use crate::common::{SchemaNode, SchemaType, ValueType};
 use leptos::prelude::*;
 use std::collections::HashMap;
+use indexmap::IndexMap;
 use leptos::logging::debug_log;
 
 #[component]
@@ -134,7 +135,7 @@ fn ListDisplay(
 fn MapDisplay(
     #[prop(into)] value: Signal<ValueType>,
     #[prop(into)] header: Signal<String>,
-    #[prop(into)] schema: Signal<HashMap<String, SchemaNode>>,
+    #[prop(into)] schema: Signal<IndexMap<String, SchemaNode>>,
 ) -> impl IntoView {
     // Unwrap the value and check if it is the correct type. It must be a ValueType::Map.
     let display_map = Memo::new(move |_| {

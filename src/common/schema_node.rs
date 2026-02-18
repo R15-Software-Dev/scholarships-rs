@@ -1,4 +1,5 @@
 ﻿use std::collections::HashMap;
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -67,7 +68,7 @@ pub struct SchemaNode {
     pub item_template: Option<Box<SchemaNode>>,
     /// When used with a SchemaType::Map, this determines what children from the map are displayed
     /// and how. It is ignored with all other SchemaType variants.
-    pub children: HashMap<String, SchemaNode>,
+    pub children: IndexMap<String, SchemaNode>,
 }
 
 impl SchemaNode {
@@ -76,7 +77,7 @@ impl SchemaNode {
             data_type,
             header: "".to_string(),
             item_template: None,
-            children: HashMap::new(),
+            children: IndexMap::new(),
         }
     }
 

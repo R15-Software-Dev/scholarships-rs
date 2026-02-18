@@ -29,6 +29,7 @@ macros = { path = "./macros" }
 traits = { path = "./traits" }
 icondata = { version = "0.7.0", features = ["font-awesome"] }
 leptos_icons = "0.7.1"
+indexmap = { version = "2.13.0", features = ["serde"] }
 
 [features]
 default = ["ssr"]
