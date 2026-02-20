@@ -124,20 +124,32 @@ impl From<&AttributeValue> for ValueType {
             AttributeValue::S(s) => ValueType::String(Some(s.clone())),
             AttributeValue::N(n) => ValueType::Number(Some(n.clone())),
             AttributeValue::L(l) => ValueType::List(Some(l.iter().map(|v| v.into()).collect())),
-            AttributeValue::M(m) => ValueType::Map(Some(m.iter().map(|(k, v)| (k.clone(), v.into())).collect())),
+            AttributeValue::M(m) => {
+                ValueType::Map(Some(m.iter().map(|(k, v)| (k.clone(), v.into())).collect()))
+            }
             _ => ValueType::default(),
         }
     }
 }
 
 #[cfg(feature = "ssr")]
-impl Into<AttributeValue> for ValueType {
-    fn into(self) -> AttributeValue {
-        match self {
+impl From<ValueType> for AttributeValue {
+    fn from(value: ValueType) -> Self {
+        match value {
             ValueType::String(s) => AttributeValue::S(s.unwrap_or_default()),
             ValueType::Number(n) => AttributeValue::N(n.unwrap_or_default()),
-            ValueType::List(l) => AttributeValue::L(l.unwrap_or_default().into_iter().map(|v| v.into()).collect()),
-            ValueType::Map(m) => AttributeValue::M(m.unwrap_or_default().into_iter().map(|(k, v)| (k, v.into())).collect()),
+            ValueType::List(l) => AttributeValue::L(
+                l.unwrap_or_default()
+                    .into_iter()
+                    .map(|v| v.into())
+                    .collect(),
+            ),
+            ValueType::Map(m) => AttributeValue::M(
+                m.unwrap_or_default()
+                    .into_iter()
+                    .map(|(k, v)| (k, v.into()))
+                    .collect(),
+            ),
         }
     }
 }
