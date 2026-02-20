@@ -1,22 +1,38 @@
+use crate::common::{SchemaNode, SchemaType};
 use crate::components::{Loading, ValueDisplay};
 use crate::pages::api::students::get_all_student_data;
 use crate::utils::get_user_claims;
 use leptos::prelude::*;
-use crate::common::{SchemaNode, SchemaType};
 
 #[component]
 pub fn StudentTestDisplay() -> impl IntoView {
     let create_student_display_schema = move || {
         SchemaNode::new(SchemaType::Map)
-            .header("Student Information:")
-            .child("first_name", SchemaNode::new(SchemaType::String).header("First Name:"))
-            .child("last_name", SchemaNode::new(SchemaType::String).header("Last Name:"))
-            .child("sports_participation", SchemaNode::new(SchemaType::List)
-                .header("List of Sports Activities")
-                .item_template(SchemaNode::new(SchemaType::Map)
-                    .child("sport_name", SchemaNode::new(SchemaType::String).header("Sport Name:"))
-                    .child("achievements", SchemaNode::new(SchemaType::String).header("Special Achievements"))
-                )
+            .header("Student Information")
+            .child(
+                "first_name",
+                SchemaNode::new(SchemaType::String).header("First Name"),
+            )
+            .child(
+                "last_name",
+                SchemaNode::new(SchemaType::String).header("Last Name"),
+            )
+            .child(
+                "sports_participation",
+                SchemaNode::new(SchemaType::List)
+                    .header("Sports Activities")
+                    .item_template(
+                        SchemaNode::new(SchemaType::Map)
+                            .header("Sport")
+                            .child(
+                                "sport_name",
+                                SchemaNode::new(SchemaType::String).header("Sport Name"),
+                            )
+                            .child(
+                                "achievements",
+                                SchemaNode::new(SchemaType::String).header("Special Achievements"),
+                            ),
+                    ),
             )
     };
 
@@ -31,8 +47,9 @@ pub fn StudentTestDisplay() -> impl IntoView {
     let schema = StoredValue::new(create_student_display_schema());
 
     view! {
+        <div class="flex flex-1" />
         <Suspense fallback=Loading>
-            <div class="flex flex-1 flex-col">
+            <div class="flex flex-2 flex-col">
                 {move || {
                     resource
                         .get()
@@ -55,5 +72,6 @@ pub fn StudentTestDisplay() -> impl IntoView {
                 }}
             </div>
         </Suspense>
+        <div class="flex flex-1" />
     }
 }

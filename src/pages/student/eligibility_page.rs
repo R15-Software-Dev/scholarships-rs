@@ -1,9 +1,10 @@
+use crate::common::{ComparisonData, ExpandableInfo, SchemaNode, SchemaType, ValueType};
+use crate::components::ValueDisplay;
+use crate::pages::api::students::get_all_student_data;
+use crate::pages::api::{get_all_scholarship_info, get_comparison_info};
+use crate::utils::get_user_claims;
 use leptos::logging::debug_log;
 use leptos::prelude::*;
-use crate::common::{ComparisonData, ExpandableInfo, ValueType};
-use crate::pages::api::{get_all_scholarship_info, get_comparison_info};
-use crate::pages::api::students::get_all_student_data;
-use crate::utils::get_user_claims;
 
 #[component]
 pub fn StudentEligibilityPage() -> impl IntoView {
@@ -13,37 +14,28 @@ pub fn StudentEligibilityPage() -> impl IntoView {
     // Then, for each scholarship found, we'll check every relation and filter out scholarships that
     // do not pass the check. We'll show some sort of simple list to indicate what scholarships passed
     // the check, and another to indicate which ones didn't.
-    
+
     // My only reservation with showing the scholarships that aren't valid is that people will want
     // to know why. That's hard information to keep track of right now.
-    
+
     let user_claims = get_user_claims();
-    let user_id = Memo::new(move |_| {
-        user_claims.get()
-            .map(|info| info.claims.subject.clone())
-    });
-    
+    let user_id = Memo::new(move |_| user_claims.get().map(|info| info.claims.subject.clone()));
+
     let refresh_trigger = Trigger::new();
-    
+
     let scholarships_resource = Resource::new(
         move || refresh_trigger.track(),
-        async move |_| {
-            get_all_scholarship_info().await
-        }
+        async move |_| get_all_scholarship_info().await,
     );
     let relations_resource = Resource::new(
         move || refresh_trigger.track(),
-        async move |_| {
-            get_comparison_info().await
-        }
+        async move |_| get_comparison_info().await,
     );
     let student_resource = Resource::new(
         move || (user_id.get().unwrap_or_default(), refresh_trigger.track()),
-        async move |(user_id, _)| {
-            get_all_student_data(user_id).await
-        }
+        async move |(user_id, _)| get_all_student_data(user_id).await,
     );
-    
+
     view! {
         <div class="flex-1" />
         <div>
@@ -131,15 +123,6 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                             }
                         })
                         .collect::<Vec<ExpandableInfo>>();
-
-                    // Each scholarship will return Some(itself), or None. This is will be automatically
-                    // filtered based on the information. Invalid scholarships are None, along with those
-                    // that fail validation for any reason. Scholarships that are valid or did not choose
-                    // any requirements are Some(scholarship).
-
-                    // We want to cast to a list, and then map the list to a new
-                    // one that contains the correct ComparisonData.
-
                     view! {
                         <div>{format!("Valid scholarships: {}", valid_list.len())}</div>
                         <For
@@ -147,39 +130,23 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                             key=|scholarship| { scholarship.subject.clone() }
                             children=move |scholarship| {
                                 let scholarship = StoredValue::new(scholarship);
-                                let scholarship_name = Memo::new(move |_| {
-                                    scholarship
-                                        .read_value()
-                                        .data
-                                        .get("name")
-                                        .unwrap_or(&ValueType::String(None))
-                                        .as_string()
-                                        .ok()
-                                        .flatten()
-                                        .unwrap_or_default()
-                                });
-                                let scholarship_essay_prompt = Memo::new(move |_| {
-                                    scholarship
-                                        .read_value()
-                                        .data
-                                        .get("essay_prompt")
-                                        .unwrap_or(&ValueType::String(None))
-                                        .as_string()
-                                        .ok()
-                                        .flatten()
-                                        .unwrap_or_default()
-                                });
-                                let essay_required = Memo::new(move |_| {
-                                    !scholarship_essay_prompt.get().is_empty()
-                                });
+                                let display_schema = SchemaNode::new(SchemaType::Map)
+                                    .header("Eligible Scholarship")
+                                    .child(
+                                        "name",
+                                        SchemaNode::new(SchemaType::String)
+                                            .header("Scholarship Name"),
+                                    )
+                                    .child(
+                                        "essay_prompt",
+                                        SchemaNode::new(SchemaType::String).header("Essay Prompt"),
+                                    );
 
                                 view! {
-                                    <div class="flex flex-1 flex-row gap-2 p-3">
-                                        <div>{scholarship_name}</div>
-                                        <Show when=move || essay_required.get()>
-                                            <div>{scholarship_essay_prompt}</div>
-                                        </Show>
-                                    </div>
+                                    <ValueDisplay
+                                        schema=display_schema
+                                        data_map=scholarship.get_value().data
+                                    />
                                 }
                             }
                         />
