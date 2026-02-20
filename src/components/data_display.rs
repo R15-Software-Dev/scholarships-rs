@@ -4,6 +4,9 @@ use leptos::logging::debug_log;
 use leptos::prelude::*;
 use std::collections::HashMap;
 
+/// # Value Display Component
+/// This component displays any data from a given `HashMap<String, ValueType>`. It requires a schema
+/// to tell it how to display the information, which is covered in the [`SchemaNode`] documentation.
 #[component]
 pub fn ValueDisplay(
     #[prop(into)] schema: Signal<SchemaNode>,
@@ -67,16 +70,16 @@ pub fn ValueDisplay(
     }
 }
 
+/// # Display Wrapper Component
+/// This component is designed to wrap information for the [`ValueDisplay`] component. It allows
+/// for simple uniform styling of the header and capsule, along with the ability for users to
+/// collapse the information.
 #[component]
 fn DisplayWrapper(
     #[prop(into, optional)] header: Signal<String>,
     #[prop(into, optional)] nested: Signal<bool>,
     children: Children,
 ) -> impl IntoView {
-    // This component is the wrapper that is used in the rest of the display components.
-    // It allows for simpler styling of the header and capsule, along with simple collapsable
-    // functionality.
-
     let expanded = RwSignal::new(true);
 
     view! {
@@ -102,6 +105,8 @@ fn DisplayWrapper(
     }
 }
 
+/// # Primitive Value Display Component
+/// This component allows for the display of a `ValueType::String` or `ValueType::Number`.
 #[component]
 fn PrimitiveDisplay(
     #[prop(into)] header: Signal<String>,
@@ -123,6 +128,10 @@ fn PrimitiveDisplay(
     }
 }
 
+/// # List Value Display Component
+/// This component allows for the display of a `ValueType::List`. It will show an error if passed
+/// anything other than a list. It requires an item template that tells the list how to display
+/// each value inside of it, most specifically the type of data inside of it.
 #[component]
 fn ListDisplay(
     #[prop(into)] item_template: Signal<Box<SchemaNode>>,
@@ -180,6 +189,10 @@ fn ListDisplay(
     }
 }
 
+/// # Map Data Display Component
+/// This component allows for the display of a `ValueType::Map`. The nested information must be defined
+/// by a [`SchemaNode`], which tells the display what keys in the value map to search for the
+/// display information.
 #[component]
 fn MapDisplay(
     #[prop(into)] value: Signal<ValueType>,
