@@ -74,6 +74,7 @@ pub fn AppWithRoutes() -> impl IntoView {
                     <ProviderRoutes />
                     <LoanerRoutes />
                     <StudentRoutes />
+                    <AdminRoutes />
                 </Routes>
             </ToastList>
         </main>
