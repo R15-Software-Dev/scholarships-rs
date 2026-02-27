@@ -1,5 +1,5 @@
 ﻿use crate::common::{DateInfo, DateRange};
-use crate::components::ActionButton;
+use crate::components::{ActionButton, FileDrop};
 use crate::pages::api::exports::get_scholarship_csv;
 use crate::pages::api::{CreateDates, CreateTestComparisons, exports::GetScholarshipCsv};
 use chrono::DateTime;
@@ -109,6 +109,7 @@ pub fn AdminUtilsPage() -> impl IntoView {
                 <ActionButton on:click=on_click_comparisons>"Create Comparisons"</ActionButton>
                 <ActionButton on:click=on_click_dates>"Create Dates"</ActionButton>
                 <ActionButton on:click=on_click_export>"Scholarship Export"</ActionButton>
+                <FileDrop />
             </div>
         </div>
     }.into_any()

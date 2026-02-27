@@ -3,6 +3,7 @@ mod banner;
 mod dashboard_button;
 mod data_display;
 mod date;
+mod file_drop;
 mod header;
 mod lists;
 mod loading;
@@ -17,7 +18,7 @@ mod utils;
 mod validated_form;
 
 pub use self::{
-    action_button::*, banner::*, dashboard_button::*, data_display::*, date::*, header::*,
-    lists::*, loading::*, multi_entry::*, panel::*, row::*, tabs::*, text_field::*, toasts::*,
-    validated_form::*,
+    action_button::*, banner::*, dashboard_button::*, data_display::*, date::*, file_drop::*,
+    header::*, lists::*, loading::*, multi_entry::*, panel::*, row::*, tabs::*, text_field::*,
+    toasts::*, validated_form::*,
 };
