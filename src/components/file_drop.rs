@@ -1,7 +1,8 @@
-use leptos::html::{Div, Input, Label};
+use leptos::html::{Input, Label};
 use leptos::logging::debug_log;
 use leptos::prelude::*;
 use leptos::web_sys::{File, FormData};
+use leptos_icons::Icon;
 use leptos_oidc::AuthSignal;
 use leptos_use::{UseDropZoneOptions, UseDropZoneReturn, use_drop_zone_with_options};
 use crate::pages::api::files::upload_file;
@@ -105,12 +106,18 @@ pub fn FileDrop(
         <label
             node_ref=zone_ref
             class="m-1.5 p-2.5 flex flex-col transition-color duration-200 rounded-lg border-2 items-center cursor-pointer"
-            class=(["border-gray-500"], move || !is_over_drop_zone.get())
+            class=(["border-gray-400"], move || !is_over_drop_zone.get())
             class=(["border-blue-500"], move || is_over_drop_zone.get())
         >
-            <div>
-                "Drop a file to upload"
+            <div
+                class="m-2 mb-4 transition-color duration-200 size-10"
+                class=("text-gray-400", move || !is_over_drop_zone.get())
+                class=("text-blue-500", move || is_over_drop_zone.get())
+            >
+                <Icon icon=icondata::FaFileCirclePlusSolid width="2.5rem" height="2.5rem" />
             </div>
+            <div>"Drop a file here to upload"</div>
+            <div class="text-sm text-gray-400">"Or click to select a file"</div>
             <input
                 node_ref=input_ref
                 type="file"
