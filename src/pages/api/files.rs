@@ -6,7 +6,6 @@ use leptos::logging::debug_log;
 pub async fn upload_file(
     data: MultipartData
 ) -> Result<(), ServerFnError> {
-    use std::path::PathBuf;
     use crate::pages::api::tokens::validate_and_get_token_info;
     use crate::utils::server::create_aws_config;
 
