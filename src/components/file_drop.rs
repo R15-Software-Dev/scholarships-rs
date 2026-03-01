@@ -1,53 +1,125 @@
-use leptos::html::Div;
+use leptos::html::{Div, Input, Label};
 use leptos::logging::debug_log;
 use leptos::prelude::*;
+use leptos::web_sys::{File, FormData};
+use leptos_oidc::AuthSignal;
 use leptos_use::{UseDropZoneOptions, UseDropZoneReturn, use_drop_zone_with_options};
+use crate::pages::api::files::upload_file;
 
 #[component]
-pub fn FileDrop() -> impl IntoView {
-    // I'm really not sure how to hydrate this, but we'll try our best to do it somehow.
-    // We just need to know the file names and the size, not actually have the file itself.
+pub fn FileDrop(
+    #[prop(into)] name: String,
+    #[prop(into)] form_id: String,
+) -> impl IntoView {
+    let zone_ref = NodeRef::<Label>::new();
+    let input_ref = NodeRef::<Input>::new();
 
-    let zone_ref = NodeRef::<Div>::new();
+    let file_name_list = RwSignal::new(Vec::new());
+    let hovering = RwSignal::new(false);
+    let name = StoredValue::new(name);
+    let form_id = StoredValue::new(form_id);
+    let auth = expect_context::<AuthSignal>();
 
-    let file_list = RwSignal::new(Vec::new());
+    let upload_action = StoredValue::new(Action::new(|form_data: &FormData| {
+        let form_data = form_data.clone();
+        async move {
+            upload_file(form_data.into()).await
+        }
+    }));
 
-    // Files are just the current files that are being processed, not the full list of files that
-    // have been dropped. So, if the user drops multiple files, it will be the list of those files,
-    // but it will wipe the previous set of dropped files.
+    let uploading = upload_action.get_value().pending();
+
+    let upload_files = Callback::new(move |files: Vec<File>| {
+        let form_data = FormData::new().unwrap();
+
+        files.iter().for_each(|file| {
+            let file_name = format!("{}_{}", name.get_value(), file.name());
+
+            form_data.append_with_blob_and_filename(&name.get_value(), file, &file_name)
+                .unwrap();
+        });
+
+        form_data.append_with_str("form_id", form_id.get_value().as_str()).unwrap();
+
+        let token = auth.try_with(|a|
+            a.authenticated().map(|authenticated| authenticated.access_token())
+        ).flatten();
+
+        if let Some(access_token) = token {
+            form_data.append_with_str("access_token", access_token.as_str()).unwrap()
+        }
+
+        // Upload file to server.
+        upload_action.get_value().dispatch(form_data);
+    });
+
     let UseDropZoneReturn {
         is_over_drop_zone,
-        files,
+        ..
     } = use_drop_zone_with_options(
         zone_ref,
         UseDropZoneOptions::default()
-            .on_over(|_| debug_log!("File is over the drop zone!"))
-            .on_drop(move |mut ev| {
-                file_list.update(|list| {
-                    list.extend(ev.files);
+            .on_over(move |_| hovering.set(true))
+            .on_drop(move |ev| {
+                let file = ev.files.first()
+                    .unwrap();
+
+                // Update file list
+                file_name_list.update(|list| {
+                    list.push(file.name());
                 });
+
+                upload_files.run(vec![file.to_owned()]);
             }),
     );
 
-    Effect::new(move || {
-        let file_names = file_list
-            .get()
-            .iter()
-            .map(|file| file.name())
-            .collect::<Vec<String>>()
-            .join(", ");
+    let on_input_change = move |_| {
+        debug_log!("Running on:change");
 
-        debug_log!("Updated file list. Current file names: {}", file_names);
-    });
+        // This runs when users select a file by clicking on the element. We aren't going
+        // to link the file list with this input except to update it with new information.
+        let files = input_ref.get()
+            .and_then(|input| input.files())
+            .map(|list| {
+                (0..list.length())
+                    .filter_map(|i| list.item(i))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+
+        file_name_list.update({
+            let files = files.clone();
+            |list| {
+                for file in files {
+                    if !list.iter().any(|f| *f == file.name()) {
+                        list.push(file.name());
+                    }
+                }
+            }
+        });
+
+        upload_files.run(files);
+    };
 
     view! {
-        <div
+        <label
             node_ref=zone_ref
-            class="size-64"
-            class=(["bg-blue-500"], move || is_over_drop_zone.get())
-        />
-        <For each=move || file_list.get() key=|file| file.name() let:file>
-            <div>"File name: "{file.name()}</div>
+            class="m-1.5 p-2.5 flex flex-col transition-color duration-200 rounded-lg border-2 items-center cursor-pointer"
+            class=(["border-gray-500"], move || !is_over_drop_zone.get())
+            class=(["border-blue-500"], move || is_over_drop_zone.get())
+        >
+            <div>
+                "Drop a file to upload"
+            </div>
+            <input
+                node_ref=input_ref
+                type="file"
+                class="hidden"
+                on:change=on_input_change
+            />
+        </label>
+        <For each=move || file_name_list.get() key=|file| file.clone() let:file>
+            <div>"File name: "{file}</div>
         </For>
     }
 }

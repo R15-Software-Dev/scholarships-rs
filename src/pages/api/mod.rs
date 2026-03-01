@@ -5,6 +5,8 @@ pub mod exports;
 mod providers;
 mod scholarships;
 pub mod students;
+pub mod files;
+mod tokens;
 
 pub use admin::*;
 pub use comparisons::*;

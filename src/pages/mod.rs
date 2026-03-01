@@ -1,5 +1,5 @@
 mod about_page;
-mod api;
+pub mod api;
 mod comparison_test;
 mod home_page;
 mod loaner_page;

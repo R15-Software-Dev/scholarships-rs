@@ -22,4 +22,6 @@ pub struct UserClaims {
     /// The username of the user. This should be their email address.
     #[serde(rename = "username")]
     pub username: String,
+    /// The intended use for the token.
+    pub token_use: String,
 }
