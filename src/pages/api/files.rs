@@ -3,7 +3,7 @@ use leptos::prelude::*;
 use server_fn::codec::{MultipartData, MultipartFormData};
 
 #[server(input = MultipartFormData)]
-pub async fn upload_file(data: MultipartData) -> Result<(), ServerFnError> {
+pub async fn upload_file(data: MultipartData) -> Result<String, ServerFnError> {
     use super::{MAIN_TABLE_NAME, S3_BUCKET_NAME};
     use crate::pages::api::tokens::validate_and_get_token_info;
     use crate::utils::server::create_aws_config;
@@ -89,31 +89,39 @@ pub async fn upload_file(data: MultipartData) -> Result<(), ServerFnError> {
             "SK".to_string(),
             AttributeValue::S(format!("FILE#{form_id}#{input_name}")),
         )
-        .item("file_name".to_string(), AttributeValue::S(file_name))
+        .item(
+            "file_name".to_string(),
+            AttributeValue::S(file_name.clone()),
+        )
         .item("file_key".to_string(), AttributeValue::S(key.clone()))
         .send()
         .await
-        .map(|_| ())
-        .map_err(|e| ServerFnError::new(format!("Couldn't put file to Dynamo: {}", e.to_string())));
+        .map_err(|e| {
+            ServerFnError::new(format!(
+                "Couldn't put file to Dynamo, file rolled back: {}",
+                e.to_string()
+            ))
+        });
 
-    if let Err(_) = dynamo_result {
-        // Roll back file insertion to S3. Only attempted on Dynamo insertion failure.
+    // If Dynamo fails, we want to handle the error by rolling back the file. Then, we return a failure.
+    if let Err(err) = dynamo_result {
         s3_client
             .delete_object()
             .bucket("leptos-scholarships")
             .key(&key)
             .send()
             .await
-            .map(|_| ())
             .map_err(|e| {
                 ServerFnError::new(format!(
                     "Couldn't roll back S3 operation: {}",
                     e.to_string()
                 ))
-            })
-    } else {
-        dynamo_result
+            })?;
+
+        return Err(err);
     }
+
+    Ok(file_name)
 }
 
 #[server]

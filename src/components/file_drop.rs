@@ -18,12 +18,12 @@ pub fn FileDrop(#[prop(into)] name: String, #[prop(into)] form_id: String) -> im
     let form_id = StoredValue::new(form_id);
     let auth = expect_context::<AuthSignal>();
 
-    let upload_action = StoredValue::new(Action::new(|form_data: &FormData| {
+    let upload_action = Action::new(|form_data: &FormData| {
         let form_data = form_data.clone();
         async move { upload_file(form_data.into()).await }
-    }));
+    });
 
-    let uploading = upload_action.get_value().pending();
+    let uploading = upload_action.pending();
 
     let upload_files = Callback::new(move |files: Vec<File>| {
         let form_data = FormData::new().unwrap();
@@ -52,7 +52,7 @@ pub fn FileDrop(#[prop(into)] name: String, #[prop(into)] form_id: String) -> im
         }
 
         // Upload file to server.
-        upload_action.get_value().dispatch(form_data);
+        upload_action.dispatch(form_data);
     });
 
     let UseDropZoneReturn {
@@ -63,11 +63,6 @@ pub fn FileDrop(#[prop(into)] name: String, #[prop(into)] form_id: String) -> im
             .on_over(move |_| hovering.set(true))
             .on_drop(move |ev| {
                 let file = ev.files.first().unwrap();
-
-                // Update file list
-                file_name_list.update(|list| {
-                    list.push(file.name());
-                });
 
                 upload_files.run(vec![file.to_owned()]);
             }),
@@ -88,19 +83,17 @@ pub fn FileDrop(#[prop(into)] name: String, #[prop(into)] form_id: String) -> im
             })
             .unwrap_or_default();
 
-        file_name_list.update({
-            let files = files.clone();
-            |list| {
-                for file in files {
-                    if !list.iter().any(|f| *f == file.name()) {
-                        list.push(file.name());
-                    }
-                }
-            }
-        });
-
         upload_files.run(files);
     };
+
+    // Add file names to the list when upload_action is successful.
+    Effect::new(move || {
+        if let Some(Ok(uploaded_file_name)) = upload_action.value().get() {
+            file_name_list.update(|list| {
+                list.push(uploaded_file_name);
+            });
+        }
+    });
 
     // let on_click_file_delete = move |file_name, form_id| {
     //
