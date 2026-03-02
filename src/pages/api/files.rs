@@ -57,3 +57,29 @@ pub async fn upload_file(
         .map(|_| ())
         .map_err(ServerFnError::from)
 }
+
+#[server]
+pub async fn delete_file(
+    access_token: String,
+    form_id: String,
+    file_name: String
+) -> Result<(), ServerFnError> {
+    use crate::utils::server::create_aws_config;
+    use crate::pages::api::tokens::validate_and_get_token_info;
+
+    let user_claims = validate_and_get_token_info(access_token).await?;
+    let subject = user_claims.subject;
+
+    let key = format!("{form_id}/{subject}/{file_name}");
+
+    let client = aws_sdk_s3::Client::new(&create_aws_config().await);
+
+    client
+        .delete_object()
+        .bucket("leptos-scholarhips")
+        .key(key)
+        .send()
+        .await
+        .map(|_| ())
+        .map_err(ServerFnError::from)
+}

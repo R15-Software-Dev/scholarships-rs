@@ -28,3 +28,6 @@ pub static PROVIDER_CONTACT_TABLE: &str = "leptos-provider-contacts";
 
 #[cfg(feature = "ssr")]
 pub static MAIN_TABLE_NAME: &str = "scholarships-main";
+
+#[cfg(feature = "ssr")]
+pub static S3_BUCKET_NAME: &str = "leptos-scholarships";

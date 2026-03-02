@@ -102,6 +102,10 @@ pub fn FileDrop(
         upload_files.run(files);
     };
 
+    // let on_click_file_delete = move |file_name, form_id| {
+    //
+    // };
+
     view! {
         <label
             node_ref=zone_ref
@@ -126,7 +130,12 @@ pub fn FileDrop(
             />
         </label>
         <For each=move || file_name_list.get() key=|file| file.clone() let:file>
-            <div>"File name: "{file}</div>
+            <div class="flex flex-row relative">
+                <div>{file}</div>
+                <div class="text-gray-400 hover:text-red-700">
+                    <Icon icon=icondata::FaTrashCanRegular />
+                </div>
+            </div>
         </For>
     }
 }
