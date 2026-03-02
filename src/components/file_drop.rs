@@ -1,4 +1,4 @@
-use crate::pages::api::files::upload_file;
+use crate::pages::api::files::{DeleteFile, upload_file};
 use leptos::html::{Input, Label};
 use leptos::logging::debug_log;
 use leptos::prelude::*;
@@ -23,7 +23,10 @@ pub fn FileDrop(#[prop(into)] name: String, #[prop(into)] form_id: String) -> im
         async move { upload_file(form_data.into()).await }
     });
 
+    let delete_action = ServerAction::<DeleteFile>::new();
+
     let uploading = upload_action.pending();
+    let deleting = delete_action.pending();
 
     let upload_files = Callback::new(move |files: Vec<File>| {
         let form_data = FormData::new().unwrap();
@@ -86,6 +89,19 @@ pub fn FileDrop(#[prop(into)] name: String, #[prop(into)] form_id: String) -> im
         upload_files.run(files);
     };
 
+    let on_click_file_delete = move |file_name: String| {
+        let access_token = auth
+            .try_with(|a| a.authenticated().map(|a| a.access_token()))
+            .flatten();
+
+        delete_action.dispatch(DeleteFile {
+            form_id: form_id.get_value(),
+            input_name: name.get_value(),
+            access_token: access_token.unwrap_or_default(),
+            file_name,
+        })
+    };
+
     // Add file names to the list when upload_action is successful.
     Effect::new(move || {
         if let Some(Ok(uploaded_file_name)) = upload_action.value().get() {
@@ -95,9 +111,14 @@ pub fn FileDrop(#[prop(into)] name: String, #[prop(into)] form_id: String) -> im
         }
     });
 
-    // let on_click_file_delete = move |file_name, form_id| {
-    //
-    // };
+    // Remove file name from the list when delete_action is successful.
+    Effect::new(move || {
+        if let Some(Ok(deleted_file_name)) = delete_action.value().get() {
+            file_name_list.update(|list| {
+                list.retain(|f| *f != deleted_file_name);
+            });
+        }
+    });
 
     view! {
         <label
@@ -117,13 +138,23 @@ pub fn FileDrop(#[prop(into)] name: String, #[prop(into)] form_id: String) -> im
             <div class="text-sm text-gray-400">"Or click to select a file"</div>
             <input node_ref=input_ref type="file" class="hidden" on:change=on_input_change />
         </label>
-        <For each=move || file_name_list.get() key=|file| file.clone() let:file>
-            <div class="flex flex-row relative">
-                <div>{file}</div>
-                <div class="text-gray-400 hover:text-red-700">
-                    <Icon icon=icondata::FaTrashCanRegular />
-                </div>
-            </div>
-        </For>
+        <For
+            each=move || file_name_list.get()
+            key=|file| file.clone()
+            children=move |file| {
+                let file = StoredValue::new(file);
+                let on_click = move |_| {
+                    on_click_file_delete(file.get_value());
+                };
+                view! {
+                    <div class="flex flex-row relative items-center">
+                        <div class="flex-1">{file.get_value()}</div>
+                        <div class="text-gray-400 hover:text-red-700 right-0" on:click=on_click>
+                            <Icon icon=icondata::FaTrashCanRegular />
+                        </div>
+                    </div>
+                }
+            }
+        />
     }
 }

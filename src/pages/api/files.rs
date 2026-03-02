@@ -87,7 +87,7 @@ pub async fn upload_file(data: MultipartData) -> Result<String, ServerFnError> {
         )
         .item(
             "SK".to_string(),
-            AttributeValue::S(format!("FILE#{form_id}#{input_name}")),
+            AttributeValue::S(format!("FILE#{form_id}#{input_name}#{file_name}")),
         )
         .item(
             "file_name".to_string(),
@@ -128,25 +128,62 @@ pub async fn upload_file(data: MultipartData) -> Result<String, ServerFnError> {
 pub async fn delete_file(
     access_token: String,
     form_id: String,
+    input_name: String,
     file_name: String,
-) -> Result<(), ServerFnError> {
-    use super::S3_BUCKET_NAME;
+) -> Result<String, ServerFnError> {
+    use super::{MAIN_TABLE_NAME, S3_BUCKET_NAME};
     use crate::pages::api::tokens::validate_and_get_token_info;
     use crate::utils::server::create_aws_config;
+    use aws_sdk_dynamodb::types::{AttributeValue, ReturnValue};
 
     let user_claims = validate_and_get_token_info(access_token).await?;
     let subject = user_claims.subject;
 
-    let key = format!("{form_id}/{subject}/{file_name}");
+    let entry_hk = format!("STUDENT#{subject}");
+    let entry_sk = format!("FILE#{form_id}#{input_name}#{file_name}");
 
-    let client = aws_sdk_s3::Client::new(&create_aws_config().await);
+    let key = format!("{form_id}/{subject}/{input_name}/{file_name}");
 
-    client
+    let config = create_aws_config().await;
+    let s3_client = aws_sdk_s3::Client::new(&config);
+    let dynamo_client = aws_sdk_dynamodb::Client::new(&config);
+
+    let previous_values = dynamo_client
+        .delete_item()
+        .table_name(MAIN_TABLE_NAME)
+        .key("HK".to_string(), AttributeValue::S(entry_hk))
+        .key("SK".to_string(), AttributeValue::S(entry_sk))
+        .return_values(ReturnValue::AllOld)
+        .send()
+        .await?
+        .attributes
+        .unwrap_or_default();
+
+    let s3_result = s3_client
         .delete_object()
         .bucket(S3_BUCKET_NAME)
         .key(key)
         .send()
         .await
-        .map(|_| ())
-        .map_err(ServerFnError::from)
+        .map_err(ServerFnError::from);
+
+    if let Err(err) = s3_result {
+        // Add the key back to Dynamo and return an error.
+        dynamo_client
+            .put_item()
+            .table_name(MAIN_TABLE_NAME)
+            .set_item(Some(previous_values))
+            .send()
+            .await
+            .map_err(|err| {
+                ServerFnError::new(format!(
+                    "Couldn't roll back Dynamo operation: {}",
+                    err.to_string()
+                ))
+            })?;
+
+        return Err(err);
+    }
+
+    Ok(file_name)
 }
