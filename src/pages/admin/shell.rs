@@ -1,7 +1,9 @@
-﻿use leptos::prelude::*;
-use crate::common::TabInfo;
-use crate::components::{Banner, TabSidebarList};
+﻿use crate::common::TabInfo;
 use crate::components::login::AdminLoginContext;
+use crate::components::{Banner, Loading, TabSidebarList};
+use crate::pages::UnauthenticatedPage;
+use leptos::prelude::*;
+use leptos_oidc::{AuthLoaded, Authenticated};
 
 /// # Admin Shell Component
 ///
@@ -13,16 +15,20 @@ pub fn AdminShell() -> impl IntoView {
     view! {
         <AdminLoginContext>
             <Banner title="R15 Scholarships Admin" logo="/PHS_Stacked_Acronym.png" />
-            // We'll put the tabs here.
-            <TabSidebarList
-                base_path="admin"
-                tabs=vec![
-                    TabInfo::new("Home", "home", None),
-                    TabInfo::new("Providers", "providers", None),
-                    TabInfo::new("Scholarships", "scholarships", None),
-                    TabInfo::new("Utilities", "utilities", None),
-                ]
-            />
+            <AuthLoaded fallback=Loading>
+                <Authenticated unauthenticated=UnauthenticatedPage>
+                    // We'll put the tabs here.
+                    <TabSidebarList
+                        base_path="admin"
+                        tabs=vec![
+                            TabInfo::new("Home", "home", None),
+                            TabInfo::new("Providers", "providers", None),
+                            TabInfo::new("Scholarships", "scholarships", None),
+                            TabInfo::new("Utilities", "utilities", None),
+                        ]
+                    />
+                </Authenticated>
+            </AuthLoaded>
         </AdminLoginContext>
     }
 }

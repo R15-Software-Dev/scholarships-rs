@@ -116,6 +116,7 @@ fn LoanerRoutes() -> impl MatchNestedRoutes + Clone {
 fn AdminRoutes() -> impl MatchNestedRoutes + Clone {
     view! {
         <ParentRoute path=path!("admin") view=AdminShell>
+            <Route path=path!("callback") view=AuthCallbackPage />
             <Route path=path!("home") view=AdminHomePage />
             <Route path=path!("providers") view=AdminProviderPage />
             <Route path=path!("scholarships") view=AdminScholarshipPage />
