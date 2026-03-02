@@ -147,7 +147,7 @@ pub fn FileDrop(#[prop(into)] name: String, #[prop(into)] form_id: String) -> im
                     on_click_file_delete(file.get_value());
                 };
                 view! {
-                    <div class="flex flex-row relative items-center">
+                    <div class="m-1.5 flex flex-row relative items-center">
                         <div class="flex-1">{file.get_value()}</div>
                         <div class="text-gray-400 hover:text-red-700 right-0" on:click=on_click>
                             <Icon icon=icondata::FaTrashCanRegular />
