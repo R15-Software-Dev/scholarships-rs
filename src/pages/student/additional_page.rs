@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::components::FileDrop;
+use leptos::prelude::*;
 
 #[component]
 pub fn AdditionalPage() -> impl IntoView {
@@ -10,7 +10,7 @@ pub fn AdditionalPage() -> impl IntoView {
                 "This is just a placeholder for now. We'll show redirect buttons to each form."
             </div>
             <div class="text-lg">"Here's a testing file input!"</div>
-            <FileDrop name="testing" form_id="student_additional"/>
+            <FileDrop name="testing" form_id="student_additional" />
         </div>
     }
 }
