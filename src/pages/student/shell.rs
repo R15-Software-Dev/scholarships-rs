@@ -35,6 +35,7 @@ pub fn StudentShell() -> impl IntoView {
                                                 SubTabInfo::new("Extracurriculars", "extracurriculars"),
                                                 SubTabInfo::new("University Info", "university"),
                                                 SubTabInfo::new("Family Info", "family-info"),
+                                                SubTabInfo::new("Financials", "financials"),
                                             ],
                                         ),
                                     ),
