@@ -1,4 +1,4 @@
-﻿FROM rust:1.90 AS builder
+﻿FROM rust:1.93 AS builder
 
 # Install node for tailwind capability
 RUN apt-get update -y && apt-get install -y --no-install-recommends clang libc6 mold

@@ -1,9 +1,12 @@
+use crate::common::{ComparisonData, ExpandableInfo, ValueType};
+use crate::components::{FileDrop, Header};
+use crate::pages::api::files::list_files;
+use crate::pages::api::students::get_all_student_data;
+use crate::pages::api::{get_all_scholarship_info, get_comparison_info};
+use crate::utils::get_user_claims;
 use leptos::logging::debug_log;
 use leptos::prelude::*;
-use crate::common::{ComparisonData, ExpandableInfo, ValueType};
-use crate::pages::api::{get_all_scholarship_info, get_comparison_info};
-use crate::pages::api::students::get_all_student_data;
-use crate::utils::get_user_claims;
+use leptos_oidc::AuthSignal;
 
 #[component]
 pub fn StudentEligibilityPage() -> impl IntoView {
@@ -13,40 +16,34 @@ pub fn StudentEligibilityPage() -> impl IntoView {
     // Then, for each scholarship found, we'll check every relation and filter out scholarships that
     // do not pass the check. We'll show some sort of simple list to indicate what scholarships passed
     // the check, and another to indicate which ones didn't.
-    
+
     // My only reservation with showing the scholarships that aren't valid is that people will want
     // to know why. That's hard information to keep track of right now.
-    
+
+    let auth = expect_context::<AuthSignal>();
     let user_claims = get_user_claims();
-    let user_id = Memo::new(move |_| {
-        user_claims.get()
-            .map(|info| info.claims.subject.clone())
-    });
-    
+    let user_id = Memo::new(move |_| user_claims.get().map(|info| info.claims.subject.clone()));
+
+    let form_id = StoredValue::new("scholarship_essays".to_string());
+
     let refresh_trigger = Trigger::new();
-    
+
     let scholarships_resource = Resource::new(
         move || refresh_trigger.track(),
-        async move |_| {
-            get_all_scholarship_info().await
-        }
+        async move |_| get_all_scholarship_info().await,
     );
     let relations_resource = Resource::new(
         move || refresh_trigger.track(),
-        async move |_| {
-            get_comparison_info().await
-        }
+        async move |_| get_comparison_info().await,
     );
     let student_resource = Resource::new(
         move || (user_id.get().unwrap_or_default(), refresh_trigger.track()),
-        async move |(user_id, _)| {
-            get_all_student_data(user_id).await
-        }
+        async move |(user_id, _)| get_all_student_data(user_id).await,
     );
-    
+
     view! {
         <div class="flex-1" />
-        <div>
+        <div class="flex-2 mb-4 flex flex-col">
             <Suspense fallback=move || {
                 view! { <div>"Checking eligibility..."</div> }
             }>
@@ -125,64 +122,91 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                 });
                             if valid {
                                 debug_log!("Scholarship is valid.");
-                                Some(scholarship.clone())
+                                let scholarship_id = StoredValue::new(scholarship.subject.clone());
+                                let resource = Resource::new(
+                                    move || (
+                                        auth
+                                            .try_with(|a| a.authenticated().map(|a| a.access_token()))
+                                            .flatten(),
+                                        form_id.get_value(),
+                                        scholarship_id.get_value(),
+                                    ),
+                                    async move |(access_token, form_id, scholarship_id)| {
+                                        list_files(
+                                                access_token.unwrap_or_default(),
+                                                form_id,
+                                                scholarship_id,
+                                            )
+                                            .await
+                                    },
+                                );
+                                Some((scholarship.clone(), resource))
                             } else {
                                 None
                             }
                         })
-                        .collect::<Vec<ExpandableInfo>>();
-
-                    // Each scholarship will return Some(itself), or None. This is will be automatically
-                    // filtered based on the information. Invalid scholarships are None, along with those
-                    // that fail validation for any reason. Scholarships that are valid or did not choose
-                    // any requirements are Some(scholarship).
-
-                    // We want to cast to a list, and then map the list to a new
-                    // one that contains the correct ComparisonData.
+                        .collect::<
+                            Vec<(ExpandableInfo, Resource<Result<Vec<String>, ServerFnError>>)>,
+                        >();
 
                     view! {
-                        <div>{format!("Valid scholarships: {}", valid_list.len())}</div>
-                        <For
-                            each=move || valid_list.clone()
-                            key=|scholarship| { scholarship.subject.clone() }
-                            children=move |scholarship| {
-                                let scholarship = StoredValue::new(scholarship);
-                                let scholarship_name = Memo::new(move |_| {
-                                    scholarship
-                                        .read_value()
-                                        .data
-                                        .get("name")
-                                        .unwrap_or(&ValueType::String(None))
-                                        .as_string()
-                                        .ok()
-                                        .flatten()
-                                        .unwrap_or_default()
-                                });
-                                let scholarship_essay_prompt = Memo::new(move |_| {
-                                    scholarship
-                                        .read_value()
-                                        .data
-                                        .get("essay_prompt")
-                                        .unwrap_or(&ValueType::String(None))
-                                        .as_string()
-                                        .ok()
-                                        .flatten()
-                                        .unwrap_or_default()
-                                });
-                                let essay_required = Memo::new(move |_| {
-                                    !scholarship_essay_prompt.get().is_empty()
-                                });
-
-                                view! {
-                                    <div class="flex flex-1 flex-row gap-2 p-3">
-                                        <div>{scholarship_name}</div>
-                                        <Show when=move || essay_required.get()>
-                                            <div>{scholarship_essay_prompt}</div>
-                                        </Show>
-                                    </div>
-                                }
-                            }
+                        <Header
+                            title="Eligible Scholarships"
+                            description="This is the list of scholarships that you are eligible for, as well as those that require essays.
+                            Once you have fulfilled the essay requirement, you will be automatically applied for that scholarship.
+                            If there is no essay requirement, you have already been applied."
                         />
+                        <div>
+                            <For
+                                each=move || valid_list.clone()
+                                key=|(scholarship, _)| { scholarship.subject.clone() }
+                                children=move |(scholarship, resource)| {
+                                    let scholarship_id = StoredValue::new(
+                                        scholarship.subject.clone(),
+                                    );
+                                    let scholarship_name = StoredValue::new(
+                                        scholarship
+                                            .data
+                                            .get("name")
+                                            .map(|v| v.as_string().ok().flatten().unwrap_or_default())
+                                            .unwrap_or_default(),
+                                    );
+                                    let scholarship_essay = StoredValue::new(
+                                        scholarship
+                                            .data
+                                            .get("essay_prompt")
+                                            .map(|v| v.as_string().ok().flatten().unwrap_or_default())
+                                            .unwrap_or_default(),
+                                    );
+
+                                    view! {
+                                        <div class="m-1.5 flex flex-col gap-2 shadow-lg rounded-lg">
+                                            <div class="rounded-t-lg bg-red-900 p-2 text-white font-bold">
+                                                {scholarship_name.get_value()}
+                                            </div>
+
+                                            <div class="p-2 flex flex-col gap-2">
+                                                <Show
+                                                    when=move || !scholarship_essay.get_value().is_empty()
+                                                    fallback=move || {
+                                                        view! {
+                                                            <div>"This scholarship does not require an essay."</div>
+                                                        }
+                                                    }
+                                                >
+                                                    <div>{scholarship_essay.get_value()}</div>
+                                                    <FileDrop
+                                                        form_id=form_id.get_value()
+                                                        name=scholarship_id.get_value()
+                                                        existing_files=resource
+                                                    />
+                                                </Show>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            />
+                        </div>
                     }
                         .into_any()
                 }}

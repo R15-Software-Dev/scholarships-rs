@@ -1,15 +1,18 @@
-mod comparisons;
-mod scholarships;
-mod dates;
 mod admin;
+mod comparisons;
+mod dates;
+pub mod exports;
 mod providers;
+mod scholarships;
 pub mod students;
+pub mod files;
+mod tokens;
 
-pub use comparisons::*;
-pub use scholarships::*;
-pub use dates::*;
 pub use admin::*;
+pub use comparisons::*;
+pub use dates::*;
 pub use providers::*;
+pub use scholarships::*;
 
 #[cfg(feature = "ssr")]
 pub static COMPARISONS_TABLE: &str = "leptos-comparisons";
@@ -25,3 +28,6 @@ pub static PROVIDER_CONTACT_TABLE: &str = "leptos-provider-contacts";
 
 #[cfg(feature = "ssr")]
 pub static MAIN_TABLE_NAME: &str = "scholarships-main";
+
+#[cfg(feature = "ssr")]
+pub static S3_BUCKET_NAME: &str = "leptos-scholarships";
