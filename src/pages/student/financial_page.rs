@@ -1,10 +1,29 @@
-use crate::components::{FileDrop, Header};
+use crate::components::{FileDrop, Header, Loading};
+use crate::pages::api::files::list_files;
 use leptos::prelude::*;
+use leptos_oidc::AuthSignal;
 
 #[component]
 pub fn StudentFinancialPage() -> impl IntoView {
     // This is where we'll get information about the files that have been uploaded.
     // For now, we'll leave it blank.
+
+    let auth = expect_context::<AuthSignal>();
+
+    let files_resource = Resource::new(
+        move || {
+            auth.try_with(|a| a.authenticated().map(|a| a.access_token()))
+                .flatten()
+        },
+        async move |access_token| {
+            list_files(
+                access_token.unwrap_or_default(),
+                "financial_info".to_string(),
+                "fafsa".to_string(),
+            )
+            .await
+        },
+    );
 
     view! {
         <div class="flex flex-1" />
@@ -14,7 +33,9 @@ pub fn StudentFinancialPage() -> impl IntoView {
                 title="Financial Information"
                 description="Please upload your FAFSA SAR (Student Aid Report) here."
             />
-            <FileDrop name="fafsa" form_id="financial_info" />
+            <Suspense fallback=Loading>
+                <FileDrop name="fafsa" form_id="financial_info" existing_files=files_resource />
+            </Suspense>
         // </ValidatedForm>
         </div>
         <div class="flex flex-1" />

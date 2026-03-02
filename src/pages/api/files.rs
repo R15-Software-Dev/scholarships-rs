@@ -2,12 +2,17 @@
 use leptos::prelude::*;
 use server_fn::codec::{MultipartData, MultipartFormData};
 
+#[cfg(feature = "ssr")]
+mod imports {
+    pub use super::super::{MAIN_TABLE_NAME, S3_BUCKET_NAME};
+    pub use crate::pages::api::tokens::validate_and_get_token_info;
+    pub use crate::utils::server::create_aws_config;
+    pub use aws_sdk_dynamodb::types::{AttributeValue, ReturnValue, Select};
+}
+
 #[server(input = MultipartFormData)]
 pub async fn upload_file(data: MultipartData) -> Result<String, ServerFnError> {
-    use super::{MAIN_TABLE_NAME, S3_BUCKET_NAME};
-    use crate::pages::api::tokens::validate_and_get_token_info;
-    use crate::utils::server::create_aws_config;
-    use aws_sdk_dynamodb::types::AttributeValue;
+    use imports::*;
 
     let mut multipart = data.into_inner().unwrap();
 
@@ -131,10 +136,7 @@ pub async fn delete_file(
     input_name: String,
     file_name: String,
 ) -> Result<String, ServerFnError> {
-    use super::{MAIN_TABLE_NAME, S3_BUCKET_NAME};
-    use crate::pages::api::tokens::validate_and_get_token_info;
-    use crate::utils::server::create_aws_config;
-    use aws_sdk_dynamodb::types::{AttributeValue, ReturnValue};
+    use imports::*;
 
     let user_claims = validate_and_get_token_info(access_token).await?;
     let subject = user_claims.subject;
@@ -186,4 +188,47 @@ pub async fn delete_file(
     }
 
     Ok(file_name)
+}
+
+#[server]
+pub async fn list_files(
+    access_token: String,
+    form_id: String,
+    input_name: String,
+) -> Result<Vec<String>, ServerFnError> {
+    use imports::*;
+
+    let user_claims = validate_and_get_token_info(access_token).await?;
+    let subject = user_claims.subject;
+
+    let entry_hk = format!("STUDENT#{subject}");
+    let entry_sk = format!("FILE#{form_id}#{input_name}");
+
+    debug_log!("Getting file list: HK = {}, SK = {}", entry_hk, entry_sk);
+
+    let dynamo_client = aws_sdk_dynamodb::Client::new(&create_aws_config().await);
+
+    dynamo_client
+        .query()
+        .table_name(MAIN_TABLE_NAME)
+        .key_condition_expression("HK = :hk AND begins_with(SK, :sk)")
+        .expression_attribute_values(":hk".to_string(), AttributeValue::S(entry_hk))
+        .expression_attribute_values(":sk".to_string(), AttributeValue::S(entry_sk))
+        .send()
+        .await
+        .map(|output| {
+            let Some(items) = output.items else {
+                return vec![];
+            };
+
+            items
+                .into_iter()
+                .filter_map(|item| {
+                    item.get("file_name")
+                        .map(|v| v.as_s().ok().cloned())
+                        .flatten()
+                })
+                .collect::<Vec<String>>()
+        })
+        .map_err(|e| ServerFnError::new(format!("Couldn't list files: {}", e.to_string())))
 }

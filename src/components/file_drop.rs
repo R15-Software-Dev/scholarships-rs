@@ -8,7 +8,11 @@ use leptos_oidc::AuthSignal;
 use leptos_use::{UseDropZoneOptions, UseDropZoneReturn, use_drop_zone_with_options};
 
 #[component]
-pub fn FileDrop(#[prop(into)] name: String, #[prop(into)] form_id: String) -> impl IntoView {
+pub fn FileDrop(
+    #[prop(into)] name: String,
+    #[prop(into)] form_id: String,
+    #[prop()] existing_files: Resource<Result<Vec<String>, ServerFnError>>,
+) -> impl IntoView {
     let zone_ref = NodeRef::<Label>::new();
     let input_ref = NodeRef::<Input>::new();
 
@@ -121,6 +125,16 @@ pub fn FileDrop(#[prop(into)] name: String, #[prop(into)] form_id: String) -> im
     });
 
     view! {
+        {move || {
+            existing_files
+                .get()
+                .map(|result| {
+                    if let Ok(files) = result {
+                        file_name_list.set(files);
+                    }
+                })
+        }}
+
         <label
             node_ref=zone_ref
             class="m-1.5 p-2.5 flex flex-col transition-color duration-200 rounded-lg border-2 items-center cursor-pointer"
