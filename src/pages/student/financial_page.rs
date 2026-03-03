@@ -34,7 +34,12 @@ pub fn StudentFinancialPage() -> impl IntoView {
                 description="Please upload your FAFSA SAR (Student Aid Report) here."
             />
             <Suspense fallback=Loading>
-                <FileDrop name="fafsa" form_id="financial_info" existing_files=files_resource />
+                <FileDrop
+                    name="fafsa"
+                    form_id="financial_info"
+                    existing_files=files_resource
+                    allowed_types=vec![".pdf".to_string()]
+                />
             </Suspense>
         // </ValidatedForm>
         </div>
