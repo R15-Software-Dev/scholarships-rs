@@ -9,9 +9,19 @@ use leptos_use::{UseDropZoneOptions, UseDropZoneReturn, use_drop_zone_with_optio
 
 #[component]
 pub fn FileDrop(
-    #[prop(into)] name: String,
-    #[prop(into)] form_id: String,
-    #[prop()] existing_files: Resource<Result<Vec<String>, ServerFnError>>,
+    /// The name of this input. Used in file organization.
+    #[prop(into)]
+    name: String,
+    /// The ID of the form containing this input. Used in file organization.
+    #[prop(into)]
+    form_id: String,
+    /// The types that a file is allowed to be. Must be specified as the desired file extension (i.e.
+    /// `.pdf`, `.txt`, etc.)
+    #[prop(optional)]
+    allowed_types: Vec<String>,
+    /// A [`Resource`] that gives the currently uploaded files for this input.
+    #[prop()]
+    existing_files: Resource<Result<Vec<String>, ServerFnError>>,
 ) -> impl IntoView {
     let zone_ref = NodeRef::<Label>::new();
     let input_ref = NodeRef::<Input>::new();
@@ -31,6 +41,22 @@ pub fn FileDrop(
 
     let uploading = upload_action.pending();
     let deleting = delete_action.pending();
+
+    let verify_file_type = move |file_name: String| {
+        if !allowed_types.is_empty() {
+            let verified = allowed_types
+                .iter()
+                .any(|file_ext| file_name.ends_with(file_ext));
+            if !verified {
+                debug_log!("Blocking file with name {file_name}");
+            } else {
+                debug_log!("Allowing file with name {file_name}");
+            }
+            verified
+        } else {
+            true
+        }
+    };
 
     let upload_files = Callback::new(move |files: Vec<File>| {
         let form_data = FormData::new().unwrap();
@@ -69,9 +95,10 @@ pub fn FileDrop(
         UseDropZoneOptions::default()
             .on_over(move |_| hovering.set(true))
             .on_drop(move |ev| {
-                let file = ev.files.first().unwrap();
-
-                upload_files.run(vec![file.to_owned()]);
+                debug_log!("Received dropped file. List has length {}", ev.files.len());
+                ev.files
+                    .iter()
+                    .for_each(|file| upload_files.run(vec![file.to_owned()]));
             }),
     );
 
@@ -90,7 +117,20 @@ pub fn FileDrop(
             })
             .unwrap_or_default();
 
-        upload_files.run(files);
+        let verified_files = files
+            .iter()
+            .filter_map(|file| verify_file_type(file.name().to_string()).then(|| file.to_owned()))
+            .collect::<Vec<File>>();
+
+        // input_ref.try_update(|input| {
+        //     if let Some(input) = input {
+        //         input.set_files(None);
+        //     }
+        // });
+
+        if !verified_files.is_empty() {
+            upload_files.run(verified_files);
+        }
     };
 
     let on_click_file_delete = move |file_name: String| {
@@ -103,14 +143,17 @@ pub fn FileDrop(
             input_name: name.get_value(),
             access_token: access_token.unwrap_or_default(),
             file_name,
-        })
+        });
     };
 
     // Add file names to the list when upload_action is successful.
     Effect::new(move || {
         if let Some(Ok(uploaded_file_name)) = upload_action.value().get() {
             file_name_list.update(|list| {
-                list.push(uploaded_file_name);
+                list.iter()
+                    .find(|v| **v == uploaded_file_name)
+                    .is_none()
+                    .then(|| list.push(uploaded_file_name));
             });
         }
     });
@@ -134,7 +177,6 @@ pub fn FileDrop(
                     }
                 })
         }}
-
         <label
             node_ref=zone_ref
             class="m-1.5 p-2.5 flex flex-col transition-color duration-200 rounded-lg border-2 items-center cursor-pointer"
@@ -163,7 +205,10 @@ pub fn FileDrop(
                 view! {
                     <div class="m-1.5 flex flex-row relative items-center">
                         <div class="flex-1">{file.get_value()}</div>
-                        <div class="text-gray-400 hover:text-red-700 right-0" on:click=on_click>
+                        <div
+                            class="text-gray-400 hover:text-red-700 right-0 cursor-pointer"
+                            on:click=on_click
+                        >
                             <Icon icon=icondata::FaTrashCanRegular />
                         </div>
                     </div>
