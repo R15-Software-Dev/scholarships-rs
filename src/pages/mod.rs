@@ -11,9 +11,10 @@ mod auth_callback;
 mod provider_applicants;
 mod admin;
 pub(crate) mod student;
+mod form_closed_page;
 
 pub use self::{
     about_page::*, comparison_test::*, home_page::*, loaner_page::*, provider_portal::*,
     unauthenticated_page::*, scholarship_info::*, provider_contact::*,
-    auth_callback::*, provider_applicants::*, admin::*, student::*,
+    auth_callback::*, provider_applicants::*, admin::*, student::*, form_closed_page::*,
 };
