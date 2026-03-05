@@ -1,10 +1,10 @@
 use crate::components::ToastList;
 use crate::components::login::ProviderLoginContext;
-use crate::pages::student;
+use crate::pages::{student, FormClosedPage};
 use crate::pages::{
     AdminHomePage, AdminProviderPage, AdminScholarshipPage, AdminShell, AdminUtilsPage,
     ApplicantsPageFallback, AuthCallbackPage, LoanerBorrowForm, LoanerFallback, LoanerReturnForm,
-    LoanerShell, ProviderContactPage, ProviderPortal, ScholarshipInfoPage,
+    LoanerShell, ProviderContactPage, ProviderPortal,
 };
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
@@ -89,10 +89,11 @@ fn ProviderRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("/applicants") view=ApplicantsPageFallback />
             <Route path=path!("/callback") view=AuthCallbackPage />
             <Route path=path!("/profile") view=ProviderContactPage />
-            <ParentRoute path=path!("/scholarships") view=ScholarshipInfoPage>
-                <Route path=path!(":id") view=ScholarshipInfoPage />
-                <Route path=path!("") view=ScholarshipInfoPage />
-            </ParentRoute>
+            <Route path=path!("/scholarships") view=FormClosedPage />
+            // <ParentRoute path=path!("/scholarships") view=FormClosedPage>
+            //     <Route path=path!(":id") view=FormClosedPage />
+            //     <Route path=path!("") view=FormClosedPage />
+            // </ParentRoute>
         </ParentRoute>
     }
     .into_inner()
