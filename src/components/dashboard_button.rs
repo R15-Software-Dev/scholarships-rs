@@ -43,8 +43,8 @@ pub fn DashboardButton(
         <button
             type="button"
             class="dashboard-button flex items-start gap-3 rounded-lg bg-white border-grey-300 p-6
-             hover:bg-gray-100 transition cursor-pointer w-full text-left
-             shadow-[inset_0_0_6px_rgba(0,0,0,0.12)]"
+            hover:bg-gray-100 transition cursor-pointer w-full text-left
+            shadow-[inset_0_0_6px_rgba(0,0,0,0.12)]"
             on:click=on_click
         >
             <div class="flex flex-col">
@@ -57,5 +57,6 @@ pub fn DashboardButton(
 
             </div>
         </button>
-    }.into_any()
+    }
+    .into_any()
 }

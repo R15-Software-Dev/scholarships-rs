@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::components::DashboardButton;
+use leptos::prelude::*;
 
 #[component]
 pub fn StudentHomePage() -> impl IntoView {
@@ -9,7 +9,9 @@ pub fn StudentHomePage() -> impl IntoView {
             <div class="font-bold text-3xl">"Region 15 Scholarship Application"</div>
             <div class="text-lg">
                 "Welcome to the R15 general scholarship application! If you have any questions, please direct them to Sara Smith at "
-                <a class="text-blue-500 underline" href="mailto:ssmith@region15.org">"ssmith@region15.org"</a>"."
+                <a class="text-blue-500 underline" href="mailto:ssmith@region15.org">
+                    "ssmith@region15.org"
+                </a>"."
             </div>
             <div class="text-lg">"Here are some links to get you started:"</div>
             <DashboardButton

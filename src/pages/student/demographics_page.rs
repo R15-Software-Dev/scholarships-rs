@@ -1,16 +1,16 @@
-use leptos::prelude::*;
 use crate::components::{Loading, OutlinedTextField, Select, TextFieldType, ValidatedForm};
 use crate::pages::student::form_setup::use_student_form;
+use leptos::prelude::*;
 
 #[component]
 pub fn StudentDemographicsPage() -> impl IntoView {
     // This page should show a form that the students need to fill out.
     // It's a simple form, really nothing more than a contact form.
-    // I'm going to test out creating this form without using a panel - we'll just use the page as 
+    // I'm going to test out creating this form without using a panel - we'll just use the page as
     // it is with a specially spaced invisible div instead of a shaded container.
 
     let controller = use_student_form("demographics");
-    
+
     view! {
         <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
             <div class="flex flex-1" />
@@ -49,7 +49,11 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                         data_map=controller.data_map
                         data_member="dob"
                         required=true
-                        value_list=vec!["Male".to_string(), "Female".to_string(), "Prefer not to answer/Other".to_string()]
+                        value_list=vec![
+                            "Male".to_string(),
+                            "Female".to_string(),
+                            "Prefer not to answer/Other".to_string(),
+                        ]
                     />
                     <OutlinedTextField
                         label="Student ID Number:"

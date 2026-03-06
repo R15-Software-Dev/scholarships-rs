@@ -1,11 +1,11 @@
 use crate::components::ToastList;
 use crate::components::login::ProviderLoginContext;
-use crate::pages::{student, FormClosedPage};
 use crate::pages::{
     AdminHomePage, AdminProviderPage, AdminScholarshipPage, AdminShell, AdminUtilsPage,
     ApplicantsPageFallback, AuthCallbackPage, LoanerBorrowForm, LoanerFallback, LoanerReturnForm,
     LoanerShell, ProviderContactPage, ProviderPortal,
 };
+use crate::pages::{FormClosedPage, student};
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::AuthSignal;
@@ -90,10 +90,10 @@ fn ProviderRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("/callback") view=AuthCallbackPage />
             <Route path=path!("/profile") view=ProviderContactPage />
             <Route path=path!("/scholarships") view=FormClosedPage />
-            // <ParentRoute path=path!("/scholarships") view=FormClosedPage>
-            //     <Route path=path!(":id") view=FormClosedPage />
-            //     <Route path=path!("") view=FormClosedPage />
-            // </ParentRoute>
+        // <ParentRoute path=path!("/scholarships") view=FormClosedPage>
+        // <Route path=path!(":id") view=FormClosedPage />
+        // <Route path=path!("") view=FormClosedPage />
+        // </ParentRoute>
         </ParentRoute>
     }
     .into_inner()
@@ -150,7 +150,10 @@ fn StudentRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("additional/university") view=student::StudentUniversityPage />
             <Route path=path!("additional/family-info") view=student::StudentFamilyPage />
             <Route path=path!("additional/financials") view=student::StudentFinancialPage />
-            <Route path=path!("additional/specifics") view=student::StudentSpecificRequirementsPage />
+            <Route
+                path=path!("additional/specifics")
+                view=student::StudentSpecificRequirementsPage
+            />
         </ParentRoute>
     }
     .into_inner()

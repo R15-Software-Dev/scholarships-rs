@@ -1,7 +1,7 @@
-﻿use leptos::prelude::*;
-use crate::components::{Loading, MultiEntry, ValidatedForm};
+﻿use crate::components::{Loading, MultiEntry, ValidatedForm};
 use crate::input;
 use crate::pages::student::form_setup::use_student_form;
+use leptos::prelude::*;
 
 #[component]
 pub fn StudentWorkExperiencePage() -> impl IntoView {
@@ -26,9 +26,15 @@ pub fn StudentWorkExperiencePage() -> impl IntoView {
                                 Text, "job_title", "Job Title:", true, "Waiter, Cashier, etc..."
                             ),
                             input!(Text, "employer", "Employer:", true, "Your employer's name..."),
-                            input!(Text, "start_date", "Approximate start date:", true, "01/01/2000"),
-                            input!(Text, "end_date", "End date:", true, "01/01/2026, or current if not applicable"),
-                            input!(Number, "num_hours", "Approximate number of hours per week:", true, "25")
+                            input!(
+                                Text, "start_date", "Approximate start date:", true, "01/01/2000"
+                            ),
+                            input!(
+                                Text, "end_date", "End date:", true, "01/01/2026, or current if not applicable"
+                            ),
+                            input!(
+                                Number, "num_hours", "Approximate number of hours per week:", true, "25"
+                            ),
                         ]
                     />
                 </ValidatedForm>

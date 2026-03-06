@@ -30,9 +30,8 @@ pub fn StudentFinancialPage() -> impl IntoView {
         <div class="flex flex-col flex-2 mt-6">
             <Header
                 title="Financial Information"
-                description=
-                    "Please upload your FAFSA SAR (Student Aid Report) here. This information is NOT required,
-                    but some scholarships may recognize this as a requirement."
+                description="Please upload your FAFSA SAR (Student Aid Report) here. This information is NOT required,
+                but some scholarships may recognize this as a requirement."
             />
             <Suspense fallback=Loading>
                 <FileDrop
