@@ -10,7 +10,11 @@ pub fn StudentFamilyPage() -> impl IntoView {
         <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
             <div class="flex flex-1" />
             <div class="flex flex-col flex-2 mt-6">
-                <ValidatedForm title="Family Information" on_submit=controller.submit_action>
+                <ValidatedForm
+                    title="Family Information"
+                    description="General family information. You must fill out information about at least one parent."
+                    on_submit=controller.submit_action
+                >
                     // Inputs here.
                     <OutlinedTextField
                         label="Total number of children in family:"
@@ -71,7 +75,6 @@ pub fn StudentFamilyPage() -> impl IntoView {
                         input_type=TextFieldType::Text
                         required=false
                     />
-                    // TODO Could this be a select dropdown?
                     <OutlinedTextField
                         label="Parent/Guardian 2 Relationship:"
                         data_map=controller.data_map
@@ -80,7 +83,6 @@ pub fn StudentFamilyPage() -> impl IntoView {
                         input_type=TextFieldType::Text
                         required=false
                     />
-                    // TODO Get a better example
                     <OutlinedTextField
                         label="Parent/Guardian 2 Occupation:"
                         data_map=controller.data_map

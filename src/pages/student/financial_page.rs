@@ -28,10 +28,11 @@ pub fn StudentFinancialPage() -> impl IntoView {
     view! {
         <div class="flex flex-1" />
         <div class="flex flex-col flex-2 mt-6">
-            // <ValidatedForm title="Student Demographic Form" on_submit=controller.submit_action>
             <Header
                 title="Financial Information"
-                description="Please upload your FAFSA SAR (Student Aid Report) here."
+                description=
+                    "Please upload your FAFSA SAR (Student Aid Report) here. This information is NOT required,
+                    but some scholarships may recognize this as a requirement."
             />
             <Suspense fallback=Loading>
                 <FileDrop
@@ -41,7 +42,6 @@ pub fn StudentFinancialPage() -> impl IntoView {
                     allowed_types=vec![".pdf".to_string()]
                 />
             </Suspense>
-        // </ValidatedForm>
         </div>
         <div class="flex flex-1" />
     }

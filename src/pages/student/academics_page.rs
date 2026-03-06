@@ -18,6 +18,7 @@ pub fn StudentAcademicsPage() -> impl IntoView {
                             <div class="flex flex-col flex-2 mt-6">
                                 <ValidatedForm
                                     title="Academic Information"
+                                    description="This information will allow you to be eligible for any scholarships that have specific academic/grade requirements."
                                     on_submit=controller.submit_action
                                 >
                                     <OutlinedTextField

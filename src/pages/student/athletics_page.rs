@@ -11,7 +11,11 @@ pub fn StudentAthleticsPage() -> impl IntoView {
         <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
             <div class="flex flex-1" />
             <div class="flex flex-col flex-2 mt-6">
-                <ValidatedForm title="Athletics Information" on_submit=controller.submit_action>
+                <ValidatedForm 
+                    title="Athletics Information"
+                    description="This information will allow you to be eligible for any scholarships that have specific sports requirements."
+                    on_submit=controller.submit_action
+                >
                     <MultiEntry
                         label="Athletics Activities:"
                         description="Leave blank if not applicable."

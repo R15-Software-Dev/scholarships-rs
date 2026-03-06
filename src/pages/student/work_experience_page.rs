@@ -11,7 +11,11 @@ pub fn StudentWorkExperiencePage() -> impl IntoView {
         <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
             <div class="flex flex-1" />
             <div class="flex flex-col flex-2 mt-6">
-                <ValidatedForm title="Student Work Experience" on_submit=controller.submit_action>
+                <ValidatedForm
+                    title="Student Work Experience"
+                    description="Here you may add information about your past/current workplace."
+                    on_submit=controller.submit_action
+                >
                     <MultiEntry
                         label="Work Experience:"
                         description="Leave blank if not applicable."

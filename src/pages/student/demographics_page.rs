@@ -15,7 +15,11 @@ pub fn StudentDemographicsPage() -> impl IntoView {
         <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
             <div class="flex flex-1" />
             <div class="flex flex-col flex-2 mt-6">
-                <ValidatedForm title="Student Demographic Form" on_submit=controller.submit_action>
+                <ValidatedForm
+                    title="Student Demographic Form"
+                    description="Here you'll set up some basic information about yourself."
+                    on_submit=controller.submit_action
+                >
                     <OutlinedTextField
                         label="First Name:"
                         data_map=controller.data_map

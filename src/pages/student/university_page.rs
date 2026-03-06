@@ -13,7 +13,11 @@ pub fn StudentUniversityPage() -> impl IntoView {
         <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
             <div class="flex flex-1" />
             <div class="flex flex-col flex-2 mt-6">
-                <ValidatedForm title="University Information" on_submit=controller.submit_action>
+                <ValidatedForm
+                    title="University Information"
+                    description="Here you may fill out general information about the university you plan to attend."
+                    on_submit=controller.submit_action
+                >
                     // Inputs here.
                     <OutlinedTextField
                         label="University Name:"
