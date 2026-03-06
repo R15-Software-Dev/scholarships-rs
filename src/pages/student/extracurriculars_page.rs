@@ -13,6 +13,7 @@ pub fn StudentExtracurricularsPage() -> impl IntoView {
             <div class="flex flex-col flex-2 mt-6">
                 <ValidatedForm
                     title="Extracurricular Information"
+                    description="This information will allow you to be eligible for any scholarships that have specific extracurricular requirements."
                     on_submit=controller.submit_action
                 >
                     // Inputs here.
@@ -36,7 +37,7 @@ pub fn StudentExtracurricularsPage() -> impl IntoView {
                             input!(Number, "num_hours", "Number of hours completed:", true, "40"),
                             input!(Number, "num_weeks", "Number of weeks participated:", true, "3"),
                             input!(
-                                Text, "special_involvement", "Any special involvement:", false, ""
+                                Text, "special_involvement", "Any special involvement:", false, "Club president, etc."
                             ),
                             input!(
                                 Checkbox, "grades", "Grades Participated:", true, ["9th", "10th", "11th", "12th"]

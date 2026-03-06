@@ -27,7 +27,7 @@ pub fn DashboardButton(
     #[prop(into)]
     description: String,
     /// The file path or URL of the icon displayed at the top of the button.
-    #[prop(into)]
+    #[prop(optional, into)]
     icon: String,
     /// The route that the user is navigated to when clicking the button.
     #[prop(into)]
@@ -37,22 +37,26 @@ pub fn DashboardButton(
 
     let on_click = move |_| navigate(&path, Default::default());
 
+    let icon = StoredValue::new(icon);
+
     view! {
         <button
             type="button"
             class="dashboard-button flex items-start gap-3 rounded-lg bg-white border-grey-300 p-6
-             hover:bg-gray-100 transition cursor-pointer w-full text-left
-             shadow-[inset_0_0_6px_rgba(0,0,0,0.12)]"
+            hover:bg-gray-100 transition cursor-pointer w-full text-left
+            shadow-[inset_0_0_6px_rgba(0,0,0,0.12)]"
             on:click=on_click
         >
-
             <div class="flex flex-col">
-                <img src=icon.clone() class="h-8 w-8" alt="icon" />
-                <h3 class="font-semibold text-base">{title.clone()}</h3>
+                <Show when=move || !icon.get_value().is_empty()>
+                    <img src=icon.get_value() class="h-8 w-8" alt="icon" />
+                </Show>
 
+                <h3 class="font-semibold text-base">{title.clone()}</h3>
                 <p class="text-sm text-gray-600 pt-6">{description.clone()}</p>
 
             </div>
         </button>
-    }.into_any()
+    }
+    .into_any()
 }

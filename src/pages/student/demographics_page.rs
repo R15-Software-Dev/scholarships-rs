@@ -1,22 +1,25 @@
-use leptos::prelude::*;
 use crate::components::{Loading, OutlinedTextField, Select, TextFieldType, ValidatedForm};
 use crate::pages::student::form_setup::use_student_form;
+use leptos::prelude::*;
 
 #[component]
 pub fn StudentDemographicsPage() -> impl IntoView {
     // This page should show a form that the students need to fill out.
     // It's a simple form, really nothing more than a contact form.
-    // I'm going to test out creating this form without using a panel - we'll just use the page as 
+    // I'm going to test out creating this form without using a panel - we'll just use the page as
     // it is with a specially spaced invisible div instead of a shaded container.
 
     let controller = use_student_form("demographics");
-    
+
     view! {
         <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
             <div class="flex flex-1" />
             <div class="flex flex-col flex-2 mt-6">
-                <ValidatedForm title="Student Demographic Form" on_submit=controller.submit_action>
-                    // Inputs here.
+                <ValidatedForm
+                    title="Student Demographic Form"
+                    description="Here you'll set up some basic information about yourself."
+                    on_submit=controller.submit_action
+                >
                     <OutlinedTextField
                         label="First Name:"
                         data_map=controller.data_map
@@ -33,7 +36,25 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                         input_type=TextFieldType::Text
                         required=true
                     />
-                    // There must be a date of birth selection field here.
+                    <OutlinedTextField
+                        label="Date of Birth:"
+                        data_map=controller.data_map
+                        data_member="dob"
+                        placeholder="MM/DD/YYYY"
+                        input_type=TextFieldType::Text
+                        required=true
+                    />
+                    <Select
+                        label="Gender:"
+                        data_map=controller.data_map
+                        data_member="dob"
+                        required=true
+                        value_list=vec![
+                            "Male".to_string(),
+                            "Female".to_string(),
+                            "Prefer not to answer/Other".to_string(),
+                        ]
+                    />
                     <OutlinedTextField
                         label="Student ID Number:"
                         data_map=controller.data_map
