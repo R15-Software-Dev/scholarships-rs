@@ -40,7 +40,6 @@ pub fn StudentShell() -> impl IntoView {
                                         ),
                                     ),
                                     TabInfo::new("Eligible Scholarships", "eligibility", None),
-                                    TabInfo::new("Testing Display", "testing", None)
                                 ]
                             />
                         </Authenticated>
