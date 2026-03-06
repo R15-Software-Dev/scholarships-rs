@@ -50,6 +50,11 @@ pub fn AdditionalPage() -> impl IntoView {
                 path="/students/additional/family-info"
             />
             <DashboardButton
+                title="Scholarship Specifics"
+                description="Scholarship-specific questions"
+                path="/students/additional/specifics"
+            />
+            <DashboardButton
                 title="Financials"
                 description="FAFSA SAR Upload"
                 path="/students/additional/financials"

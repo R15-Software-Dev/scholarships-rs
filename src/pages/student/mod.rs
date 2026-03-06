@@ -12,6 +12,7 @@ mod shell;
 mod test_display;
 mod university_page;
 mod work_experience_page;
+mod specific_requirements_page;
 
 pub use academics_page::*;
 pub use additional_page::*;
@@ -26,3 +27,4 @@ pub use shell::*;
 pub use test_display::*;
 pub use university_page::*;
 pub use work_experience_page::*;
+pub use specific_requirements_page::*;
