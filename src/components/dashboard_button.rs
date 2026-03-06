@@ -37,6 +37,8 @@ pub fn DashboardButton(
 
     let on_click = move |_| navigate(&path, Default::default());
 
+    let icon = StoredValue::new(icon);
+
     view! {
         <button
             type="button"
@@ -45,11 +47,12 @@ pub fn DashboardButton(
              shadow-[inset_0_0_6px_rgba(0,0,0,0.12)]"
             on:click=on_click
         >
-
             <div class="flex flex-col">
-                <img src=icon.clone() class="h-8 w-8" alt="icon" />
-                <h3 class="font-semibold text-base">{title.clone()}</h3>
+                <Show when=move || !icon.get_value().is_empty()>
+                    <img src=icon.get_value() class="h-8 w-8" alt="icon" />
+                </Show>
 
+                <h3 class="font-semibold text-base">{title.clone()}</h3>
                 <p class="text-sm text-gray-600 pt-6">{description.clone()}</p>
 
             </div>
