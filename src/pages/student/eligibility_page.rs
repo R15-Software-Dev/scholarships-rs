@@ -1,5 +1,5 @@
 use crate::common::{ComparisonData, ExpandableInfo, ValueType};
-use crate::components::{FileDrop, Header};
+use crate::components::{FileDrop, Header, Loading};
 use crate::pages::api::files::list_files;
 use crate::pages::api::students::get_all_student_data;
 use crate::pages::api::{get_all_scholarship_info, get_comparison_info};
@@ -44,9 +44,7 @@ pub fn StudentEligibilityPage() -> impl IntoView {
     view! {
         <div class="flex-1" />
         <div class="flex-2 mb-4 flex flex-col">
-            <Suspense fallback=move || {
-                view! { <div>"Checking eligibility..."</div> }
-            }>
+            <Suspense fallback=Loading>
                 {move || {
                     let Some(Ok(scholarships_list)) = scholarships_resource.get() else {
                         return view! {}.into_any();
