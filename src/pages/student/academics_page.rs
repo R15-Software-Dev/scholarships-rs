@@ -56,7 +56,7 @@ pub fn StudentAcademicsPage() -> impl IntoView {
                                         label="Academic Honors:"
                                         data_map=controller.data_map
                                         data_member="academic_honors"
-                                        placeholder="TBD"
+                                        placeholder="High Honors, etc."
                                         required=false
                                         input_type=TextFieldType::Text
                                     />
