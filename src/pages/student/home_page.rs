@@ -13,6 +13,7 @@ pub fn StudentHomePage() -> impl IntoView {
                     "ssmith@region15.org"
                 </a>"."
             </div>
+            <div class="text-lg">"The due date for this form is on April 2nd, 2026 at 2:05pm."</div>
             <div class="text-lg">"Here are some links to get you started:"</div>
             <DashboardButton
                 title="Scholarship Book"

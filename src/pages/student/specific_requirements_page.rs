@@ -4,7 +4,7 @@ use leptos::prelude::*;
 
 #[component]
 pub fn StudentSpecificRequirementsPage() -> impl IntoView {
-    let controller = use_student_form("specifics");
+    let controller = use_student_form("specifics", true);
 
     view! {
         <Suspense fallback=Loading>
@@ -20,9 +20,11 @@ pub fn StudentSpecificRequirementsPage() -> impl IntoView {
                                     title="Scholarship-Specific Eligibility Requirements"
                                     description="These questions are specific to some scholarships. Indicate yes or no for each question."
                                     on_submit=controller.submit_action
+                                    disabled=controller.submit_pending
                                 >
                                     <RadioList
                                         label="Have you attended BAS?"
+                                        disabled=controller.submit_pending
                                         data_map=controller.data_map
                                         data_member="attend_bas"
                                         items=vec!["Yes".to_string(), "No".to_string()]
@@ -30,6 +32,7 @@ pub fn StudentSpecificRequirementsPage() -> impl IntoView {
                                     />
                                     <RadioList
                                         label="Are you a member of Midd-South Catholic Church?"
+                                        disabled=controller.submit_pending
                                         data_map=controller.data_map
                                         data_member="middsouth_church"
                                         items=vec!["Yes".to_string(), "No".to_string()]
@@ -37,6 +40,7 @@ pub fn StudentSpecificRequirementsPage() -> impl IntoView {
                                     />
                                     <RadioList
                                         label="Do you have a family member that is or has served in the US military? (Note: you may be asked for proof of service)"
+                                        disabled=controller.submit_pending
                                         data_map=controller.data_map
                                         data_member="family_military_service"
                                         items=vec!["Yes".to_string(), "No".to_string()]
@@ -44,6 +48,7 @@ pub fn StudentSpecificRequirementsPage() -> impl IntoView {
                                     />
                                     <RadioList
                                         label="Have you participated in Pomperaug Youth Baseball?"
+                                        disabled=controller.submit_pending
                                         data_map=controller.data_map
                                         data_member="youth_baseball"
                                         items=vec!["Yes".to_string(), "No".to_string()]
@@ -51,6 +56,7 @@ pub fn StudentSpecificRequirementsPage() -> impl IntoView {
                                     />
                                     <RadioList
                                         label="Have you participated in the Panthers Aquatic Club?"
+                                        disabled=controller.submit_pending
                                         data_map=controller.data_map
                                         data_member="aquatic_club"
                                         items=vec!["Yes".to_string(), "No".to_string()]
@@ -58,6 +64,7 @@ pub fn StudentSpecificRequirementsPage() -> impl IntoView {
                                     />
                                     <RadioList
                                         label="Are at least one of your parents a member of the Region 15 PEA?"
+                                        disabled=controller.submit_pending
                                         data_map=controller.data_map
                                         data_member="pea_member"
                                         items=vec!["Yes".to_string(), "No".to_string()]
@@ -65,6 +72,7 @@ pub fn StudentSpecificRequirementsPage() -> impl IntoView {
                                     />
                                     <RadioList
                                         label="Have you participated in the PHS Music Program (Band, Chorus, etc)?"
+                                        disabled=controller.submit_pending
                                         data_map=controller.data_map
                                         data_member="music_program"
                                         items=vec!["Yes".to_string(), "No".to_string()]

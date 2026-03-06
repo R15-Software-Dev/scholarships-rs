@@ -5,7 +5,7 @@ use crate::pages::student::form_setup::use_student_form;
 
 #[component]
 pub fn StudentExtracurricularsPage() -> impl IntoView {
-    let controller = use_student_form("demographics");
+    let controller = use_student_form("demographics", true);
 
     view! {
         <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
@@ -15,10 +15,12 @@ pub fn StudentExtracurricularsPage() -> impl IntoView {
                     title="Extracurricular Information"
                     description="This information will allow you to be eligible for any scholarships that have specific extracurricular requirements."
                     on_submit=controller.submit_action
+                    disabled=controller.submit_pending
                 >
                     // Inputs here.
                     <OutlinedTextField
                         label="Total number of service hours:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="service_hours"
                         placeholder="Any number..."

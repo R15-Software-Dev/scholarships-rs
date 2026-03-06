@@ -5,7 +5,7 @@ use leptos::prelude::*;
 
 #[component]
 pub fn StudentAthleticsPage() -> impl IntoView {
-    let controller = use_student_form("athletics");
+    let controller = use_student_form("athletics", true);
 
     view! {
         <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
@@ -15,6 +15,7 @@ pub fn StudentAthleticsPage() -> impl IntoView {
                     title="Athletics Information"
                     description="This information will allow you to be eligible for any scholarships that have specific sports requirements."
                     on_submit=controller.submit_action
+                    disabled=controller.submit_pending
                 >
                     <MultiEntry
                         label="Athletics Activities:"

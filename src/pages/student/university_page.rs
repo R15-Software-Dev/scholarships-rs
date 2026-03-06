@@ -4,7 +4,7 @@ use crate::pages::student::form_setup::use_student_form;
 
 #[component]
 pub fn StudentUniversityPage() -> impl IntoView {
-    let controller = use_student_form("university");
+    let controller = use_student_form("university", true);
     
     // college name, state, city, zip
     // major, study field, intended career, college_acceptance
@@ -17,10 +17,12 @@ pub fn StudentUniversityPage() -> impl IntoView {
                     title="University Information"
                     description="Here you may fill out general information about the university you plan to attend."
                     on_submit=controller.submit_action
+                    disabled=controller.submit_pending
                 >
                     // Inputs here.
                     <OutlinedTextField
                         label="University Name:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="college_name"
                         placeholder="University of Example"
@@ -29,6 +31,7 @@ pub fn StudentUniversityPage() -> impl IntoView {
                     />
                     <OutlinedTextField
                         label="University Street Address:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="college_city"
                         placeholder="123 Example Rd"
@@ -37,6 +40,7 @@ pub fn StudentUniversityPage() -> impl IntoView {
                     />
                     <OutlinedTextField
                         label="University State:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="college_state"
                         placeholder="CT, AZ, etc."
@@ -45,6 +49,7 @@ pub fn StudentUniversityPage() -> impl IntoView {
                     />
                     <OutlinedTextField
                         label="University ZIP:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="college_zip"
                         placeholder="12345"
@@ -53,13 +58,15 @@ pub fn StudentUniversityPage() -> impl IntoView {
                     />
                     <Select
                         label="Have you been sent an acceptance to the university?"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="college_acceptance"
                         required=true
                         value_list=vec!["Yes".to_string(), "No".to_string()]
                     />
                     <Select
-                        label="Chosen Major:"
+                        label="Intended Major/Field of Study:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="major"
                         required=true
@@ -90,10 +97,12 @@ pub fn StudentUniversityPage() -> impl IntoView {
                             "Landscaping".to_string(),
                             "Legal Studies".to_string(),
                             "Criminal Justice".to_string(),
+                            "None of the above".to_string(),
                         ]
                     />
                     <OutlinedTextField
                         label="Intended Career:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="intended_career"
                         placeholder="Engineer, Artist, etc."

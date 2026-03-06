@@ -4,7 +4,7 @@ use leptos::prelude::*;
 
 #[component]
 pub fn StudentAcademicsPage() -> impl IntoView {
-    let controller = use_student_form("academics");
+    let controller = use_student_form("academics", true);
 
     view! {
         <Suspense fallback=Loading>
@@ -20,9 +20,11 @@ pub fn StudentAcademicsPage() -> impl IntoView {
                                     title="Academic Information"
                                     description="This information will allow you to be eligible for any scholarships that have specific academic/grade requirements."
                                     on_submit=controller.submit_action
+                                    disabled=controller.submit_pending
                                 >
                                     <OutlinedTextField
                                         label="Unweighted GPA:"
+                                        disabled=controller.submit_pending
                                         data_map=controller.data_map
                                         data_member="unweighted_gpa"
                                         placeholder="4.0"
@@ -31,6 +33,7 @@ pub fn StudentAcademicsPage() -> impl IntoView {
                                     />
                                     <OutlinedTextField
                                         label="Weighted GPA:"
+                                        disabled=controller.submit_pending
                                         data_map=controller.data_map
                                         data_member="weighted_gpa"
                                         placeholder="4.5"
@@ -39,6 +42,7 @@ pub fn StudentAcademicsPage() -> impl IntoView {
                                     />
                                     <OutlinedTextField
                                         label="Highest SAT Score:"
+                                        disabled=controller.submit_pending
                                         data_map=controller.data_map
                                         data_member="sat_score"
                                         placeholder="1600"
@@ -47,6 +51,7 @@ pub fn StudentAcademicsPage() -> impl IntoView {
                                     />
                                     <OutlinedTextField
                                         label="Highest ACT Score:"
+                                        disabled=controller.submit_pending
                                         data_map=controller.data_map
                                         data_member="act_score"
                                         placeholder="36"
@@ -55,6 +60,7 @@ pub fn StudentAcademicsPage() -> impl IntoView {
                                     />
                                     <OutlinedTextField
                                         label="Academic Honors:"
+                                        disabled=controller.submit_pending
                                         data_map=controller.data_map
                                         data_member="academic_honors"
                                         placeholder="High Honors, etc."

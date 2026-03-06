@@ -5,7 +5,7 @@ use leptos::prelude::*;
 
 #[component]
 pub fn StudentWorkExperiencePage() -> impl IntoView {
-    let controller = use_student_form("workexp");
+    let controller = use_student_form("workexp", true);
 
     view! {
         <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
@@ -15,6 +15,7 @@ pub fn StudentWorkExperiencePage() -> impl IntoView {
                     title="Student Work Experience"
                     description="Here you may add information about your past/current workplace."
                     on_submit=controller.submit_action
+                    disabled=controller.submit_pending
                 >
                     <MultiEntry
                         label="Work Experience:"
