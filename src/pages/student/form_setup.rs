@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use leptos::prelude::*;
+use uuid::Uuid;
 use crate::common::ValueType;
+use crate::components::{Toast, ToastContext};
 use crate::pages::api::students::{get_student_data, PutStudentData};
 use crate::utils::get_user_claims;
 
@@ -9,11 +11,13 @@ pub struct StudentFormInfo {
     pub user_id: Memo<Option<String>>,
     pub submit_action: Callback<()>,
     pub refresh_trigger: Trigger,
-    pub data_resource: Resource<Result<HashMap<String, ValueType>, ServerFnError>>
+    pub data_resource: Resource<Result<HashMap<String, ValueType>, ServerFnError>>,
+    pub submit_pending: Memo<bool>,
 }
 
 pub fn use_student_form(
-    form_type: impl Into<Signal<String>>
+    form_type: impl Into<Signal<String>>,
+    enable_toasts: bool,
 ) -> StudentFormInfo {
     let form_type = form_type.into();
     
@@ -53,11 +57,39 @@ pub fn use_student_form(
         });
     };
     
+    if enable_toasts {
+        let mut toasts = expect_context::<ToastContext>();
+        Effect::watch(
+            move || submit_action.value().get(),
+            move |value, _, _| {
+                let Some(result) = value else {
+                    return;
+                };
+
+                let toast = match result {
+                    Ok(_) => Toast::new()
+                        .id(Uuid::new_v4())
+                        .header("Submission Successful")
+                        .msg("You may continue editing or fill out another form."),
+                    Err(e) => Toast::new()
+                        .id(Uuid::new_v4())
+                        .header("Submission Failed")
+                        .msg(e.to_string())
+                };
+
+                toasts.toast(toast);
+                untrack(move || submit_action.clear());
+            },
+            false
+        );
+    }
+
     StudentFormInfo {
         data_map,
         refresh_trigger,
         data_resource,
         user_id,
         submit_action: on_submit.into(),
+        submit_pending: submit_action.pending()
     }
 }

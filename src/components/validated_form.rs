@@ -111,6 +111,8 @@ pub fn ValidatedForm(
     #[prop(into)] title: Signal<String>,
     /// The description for the included header.
     #[prop(optional, into)] description: Signal<String>,
+    /// A `Signal` that determines when the submit button should be disabled.
+    #[prop(optional, into)] disabled: Signal<bool>,
 ) -> impl IntoView {
     let validators = RwSignal::new(vec![]);
 
@@ -154,6 +156,7 @@ pub fn ValidatedForm(
             <Header title=title description=description />
             {children()}
             <ActionButton
+                disabled=disabled
                 on:click=move |_| {
                     log!("{:?}", can_submit.get());
                 }

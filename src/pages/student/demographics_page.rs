@@ -9,7 +9,7 @@ pub fn StudentDemographicsPage() -> impl IntoView {
     // I'm going to test out creating this form without using a panel - we'll just use the page as
     // it is with a specially spaced invisible div instead of a shaded container.
 
-    let controller = use_student_form("demographics");
+    let controller = use_student_form("demographics", true);
 
     view! {
         <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
@@ -19,9 +19,11 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                     title="Student Demographic Form"
                     description="Here you'll set up some basic information about yourself."
                     on_submit=controller.submit_action
+                    disabled=controller.submit_pending
                 >
                     <OutlinedTextField
                         label="First Name:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="first_name"
                         placeholder="John"
@@ -30,6 +32,7 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                     />
                     <OutlinedTextField
                         label="Last Name:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="last_name"
                         placeholder="Smith"
@@ -38,6 +41,7 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                     />
                     <OutlinedTextField
                         label="Date of Birth:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="dob"
                         placeholder="MM/DD/YYYY"
@@ -46,6 +50,7 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                     />
                     <Select
                         label="Gender:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="gender"
                         required=true
@@ -57,6 +62,7 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                     />
                     <OutlinedTextField
                         label="Student ID Number:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="id_number"
                         placeholder="Your 7 digit number..."
@@ -65,6 +71,7 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                     />
                     <OutlinedTextField
                         label="Preferred Email:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="email"
                         placeholder="me@example.com"
@@ -73,6 +80,7 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                     />
                     <OutlinedTextField
                         label="Preferred Phone Number:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="phone_number"
                         placeholder="000-000-0000"
@@ -81,6 +89,7 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                     />
                     <OutlinedTextField
                         label="Street Address:"
+                        disabled=controller.submit_pending
                         data_map=controller.data_map
                         data_member="street_address"
                         placeholder="234 Judd Rd"
@@ -89,6 +98,7 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                     />
                     <Select
                         label="Town:"
+                        disabled=controller.submit_pending
                         value_list=vec!["Southbury".to_string(), "Middlebury".to_string()]
                         data_map=controller.data_map
                         data_member="town"
