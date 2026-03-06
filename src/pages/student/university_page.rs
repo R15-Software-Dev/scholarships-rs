@@ -31,12 +31,11 @@ pub fn StudentUniversityPage() -> impl IntoView {
                         input_type=TextFieldType::Text
                         required=true
                     />
-                    // TODO Make this a select dropdown.
                     <OutlinedTextField
                         label="University State:"
                         data_map=controller.data_map
                         data_member="college_state"
-                        placeholder="The State of Panic"
+                        placeholder="CT, AZ, etc."
                         input_type=TextFieldType::Text
                         required=true
                     />
@@ -55,14 +54,47 @@ pub fn StudentUniversityPage() -> impl IntoView {
                         required=true
                         value_list=vec!["Yes".to_string(), "No".to_string()]
                     />
-                    // TODO Make this a select dropdown.
-                    <OutlinedTextField
+                    <Select
                         label="Chosen Major:"
                         data_map=controller.data_map
                         data_member="major"
-                        placeholder="Computer Science"
-                        input_type=TextFieldType::Text
                         required=true
+                        value_list=vec![
+                            "Music".to_string(),
+                            "Education".to_string(),
+                            "Special Education".to_string(),
+                            "Speech Pathology".to_string(),
+                            "School Psychology".to_string(),
+                            "School Counseling".to_string(),
+                            "Occupational Therapy".to_string(),
+                            "Physical Therapy".to_string(),
+                            "Nursing".to_string(),
+                            "Allied Health".to_string(),
+                            "Fine/Performing Arts".to_string(),
+                            "Writing/Communication".to_string(),
+                            "History".to_string(),
+                            "Government".to_string(),
+                            "Political Science".to_string(),
+                            "Social Work".to_string(),
+                            "Sports Medicine".to_string(),
+                            "Athletic Training".to_string(),
+                            "Horticulture".to_string(),
+                            "Conservation Studies".to_string(),
+                            "Ecology".to_string(),
+                            "Environmental Studies".to_string(),
+                            "Urban Planning".to_string(),
+                            "Landscaping".to_string(),
+                            "Legal Studies".to_string(),
+                            "Criminal Justice".to_string(),
+                        ]
+                    />
+                    <OutlinedTextField
+                        label="Intended Career:"
+                        data_map=controller.data_map
+                        data_member="intended_career"
+                        placeholder="Engineer, Artist, etc."
+                        input_type=TextFieldType::Text
+                        required=false
                     />
                 </ValidatedForm>
             </div>
