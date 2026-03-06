@@ -59,7 +59,7 @@ pub fn StudentUniversityPage() -> impl IntoView {
                         value_list=vec!["Yes".to_string(), "No".to_string()]
                     />
                     <Select
-                        label="Chosen Major:"
+                        label="Intended Major/Field of Study:"
                         data_map=controller.data_map
                         data_member="major"
                         required=true
@@ -90,6 +90,7 @@ pub fn StudentUniversityPage() -> impl IntoView {
                             "Landscaping".to_string(),
                             "Legal Studies".to_string(),
                             "Criminal Justice".to_string(),
+                            "None of the above".to_string(),
                         ]
                     />
                     <OutlinedTextField
