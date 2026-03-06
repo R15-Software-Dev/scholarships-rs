@@ -22,9 +22,9 @@ pub fn StudentWorkExperiencePage() -> impl IntoView {
                                 Text, "job_title", "Job Title:", true, "Waiter, Cashier, etc..."
                             ),
                             input!(Text, "employer", "Employer:", true, "Your employer's name..."),
-                            input!(Number, "start_date", "Start date:", true, "40"),
-                            input!(Number, "end_date", "End date:", true, "3"),
-                            input!(Number, "num_hours", "Number of hours completed:", true, "120"),
+                            input!(Text, "start_date", "Approximate start date:", true, "01/01/2000"),
+                            input!(Text, "end_date", "End date:", true, "01/01/2026, or current if not applicable"),
+                            input!(Number, "num_hours", "Approximate number of hours per week:", true, "25")
                         ]
                     />
                 </ValidatedForm>
