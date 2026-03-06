@@ -19,7 +19,7 @@ pub fn StudentHomePage() -> impl IntoView {
                 path="https://docs.google.com/document/d/1qVs0Lwvwl1bVGHznocoev3AF56KlhTfs/view"
             />
             <DashboardButton
-                title="Demographics Forms"
+                title="Demographics Form"
                 description="Basic student information"
                 icon="/Person_Black.png"
                 path="/students/demographics"
@@ -28,7 +28,7 @@ pub fn StudentHomePage() -> impl IntoView {
                 title="Additional Forms"
                 description="Extra eligibility factors"
                 icon="/Form_Black.png"
-                path="/students/demographics"
+                path="/students/additional"
             />
         </div>
         <div class="flex-1" />

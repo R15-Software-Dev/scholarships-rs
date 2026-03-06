@@ -27,7 +27,7 @@ pub fn DashboardButton(
     #[prop(into)]
     description: String,
     /// The file path or URL of the icon displayed at the top of the button.
-    #[prop(into)]
+    #[prop(optional, into)]
     icon: String,
     /// The route that the user is navigated to when clicking the button.
     #[prop(into)]
