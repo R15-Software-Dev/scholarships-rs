@@ -16,7 +16,6 @@ pub fn StudentDemographicsPage() -> impl IntoView {
             <div class="flex flex-1" />
             <div class="flex flex-col flex-2 mt-6">
                 <ValidatedForm title="Student Demographic Form" on_submit=controller.submit_action>
-                    // Inputs here.
                     <OutlinedTextField
                         label="First Name:"
                         data_map=controller.data_map
@@ -33,7 +32,21 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                         input_type=TextFieldType::Text
                         required=true
                     />
-                    // There must be a date of birth selection field here.
+                    <OutlinedTextField
+                        label="Date of Birth:"
+                        data_map=controller.data_map
+                        data_member="dob"
+                        placeholder="MM/DD/YYYY"
+                        input_type=TextFieldType::Text
+                        required=true
+                    />
+                    <Select
+                        label="Gender:"
+                        data_map=controller.data_map
+                        data_member="dob"
+                        required=true
+                        value_list=vec!["Male".to_string(), "Female".to_string(), "Prefer not to answer/Other".to_string()]
+                    />
                     <OutlinedTextField
                         label="Student ID Number:"
                         data_map=controller.data_map
