@@ -47,7 +47,7 @@ pub fn StudentDemographicsPage() -> impl IntoView {
                     <Select
                         label="Gender:"
                         data_map=controller.data_map
-                        data_member="dob"
+                        data_member="gender"
                         required=true
                         value_list=vec![
                             "Male".to_string(),
