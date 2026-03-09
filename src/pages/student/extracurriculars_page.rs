@@ -12,7 +12,7 @@ pub fn StudentExtracurricularsPage() -> impl IntoView {
             <div class="flex flex-1" />
             <div class="flex flex-col flex-2 mt-6">
                 <ValidatedForm
-                    title="Extracurricular Information"
+                    title="Extracurricular and Community Service Information"
                     description="This information will allow you to be eligible for any scholarships that have specific extracurricular requirements."
                     on_submit=controller.submit_action
                     disabled=controller.submit_pending
