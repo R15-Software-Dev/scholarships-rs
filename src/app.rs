@@ -89,11 +89,11 @@ fn ProviderRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("/applicants") view=ApplicantsPageFallback />
             <Route path=path!("/callback") view=AuthCallbackPage />
             <Route path=path!("/profile") view=ProviderContactPage />
-            <Route path=path!("/scholarships") view=FormClosedPage />
-        // <ParentRoute path=path!("/scholarships") view=FormClosedPage>
-        // <Route path=path!(":id") view=FormClosedPage />
-        // <Route path=path!("") view=FormClosedPage />
-        // </ParentRoute>
+            // <Route path=path!("/scholarships") view=FormClosedPage />
+            <ParentRoute path=path!("/scholarships") view=FormClosedPage>
+                <Route path=path!(":id") view=FormClosedPage />
+                <Route path=path!("") view=FormClosedPage />
+            </ParentRoute>
         </ParentRoute>
     }
     .into_inner()
