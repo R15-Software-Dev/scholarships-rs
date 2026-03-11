@@ -113,7 +113,10 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                             |prev, requirement| {
                                                 let result = requirement
                                                     .compare(&student_info)
-                                                    .unwrap_or(false);
+                                                    .unwrap_or_else(|err| {
+                                                        debug_log!("Requirement failed: {err}");
+                                                        false
+                                                    });
                                                 if prev { prev } else { result }
                                             },
                                         )
