@@ -7,7 +7,11 @@ mod imports {
     pub use super::super::{MAIN_TABLE_NAME, S3_BUCKET_NAME};
     pub use crate::pages::api::tokens::validate_and_get_token_info;
     pub use crate::utils::server::create_aws_config;
-    pub use aws_sdk_dynamodb::types::{AttributeValue, ReturnValue, Select};
+    pub use aws_sdk_dynamodb::{
+        error::ProvideErrorMetadata as _,
+        types::{AttributeValue, ReturnValue, Select},
+    };
+    pub use aws_sdk_s3::error::ProvideErrorMetadata as _;
 }
 
 #[server(input = MultipartFormData)]
@@ -57,6 +61,9 @@ pub async fn upload_file(data: MultipartData) -> Result<String, ServerFnError> {
     if input_name.is_empty() {
         return Err(ServerFnError::new("Missing input file"));
     }
+    if file_bytes.is_empty() {
+        return Err(ServerFnError::new("Missing file contents"));
+    }
 
     let user_claims = validate_and_get_token_info(access_token).await?;
     let subject = user_claims.subject;
@@ -75,7 +82,12 @@ pub async fn upload_file(data: MultipartData) -> Result<String, ServerFnError> {
         .send()
         .await
         .map(|_| ())
-        .map_err(|e| ServerFnError::new(format!("Couldn't put file to S3: {}", e.to_string())))?;
+        .map_err(|e| {
+            ServerFnError::new(format!(
+                "Couldn't put file to S3: {}",
+                e.message().unwrap_or_default()
+            ))
+        })?;
 
     // Besides uploading the file to S3, we also want to store a FILE entry in Dynamo.
     // This will allow the server to quickly return a list of all files that a specific user has
@@ -104,7 +116,7 @@ pub async fn upload_file(data: MultipartData) -> Result<String, ServerFnError> {
         .map_err(|e| {
             ServerFnError::new(format!(
                 "Couldn't put file to Dynamo, file rolled back: {}",
-                e.to_string()
+                e.message().unwrap_or_default()
             ))
         });
 
@@ -119,7 +131,7 @@ pub async fn upload_file(data: MultipartData) -> Result<String, ServerFnError> {
             .map_err(|e| {
                 ServerFnError::new(format!(
                     "Couldn't roll back S3 operation: {}",
-                    e.to_string()
+                    e.message().unwrap_or_default()
                 ))
             })?;
 
@@ -180,7 +192,7 @@ pub async fn delete_file(
             .map_err(|err| {
                 ServerFnError::new(format!(
                     "Couldn't roll back Dynamo operation: {}",
-                    err.to_string()
+                    err.message().unwrap_or_default()
                 ))
             })?;
 
@@ -230,5 +242,10 @@ pub async fn list_files(
                 })
                 .collect::<Vec<String>>()
         })
-        .map_err(|e| ServerFnError::new(format!("Couldn't list files: {}", e.to_string())))
+        .map_err(|e| {
+            ServerFnError::new(format!(
+                "Couldn't list files: {}",
+                e.message().unwrap_or_default()
+            ))
+        })
 }
