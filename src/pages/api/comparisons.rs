@@ -14,10 +14,9 @@ use crate::common::{
     ComparisonData, ComparisonType, MapListComparison, NumberComparison, NumberListComparison,
     TextComparison, TextListComparison, ValueType,
 };
-use std::collections::HashMap;
 use leptos::prelude::ServerFnError;
 use leptos::server;
-
+use std::collections::HashMap;
 
 /// Helper function to create all sports comparisons. Only used to create initial
 /// comparison data, and should be removed upon completion of a comparison editor page.
@@ -250,14 +249,18 @@ fn create_major_comparisons() -> Vec<ComparisonData> {
 
     let ids = display_texts
         .iter()
-        .map(|text|
-            format!("{}_{}", "major", text.to_lowercase().replace(" ", "_").replace("/", "_"))
-        )
+        .map(|text| {
+            format!(
+                "{}_{}",
+                "major",
+                text.to_lowercase().replace(" ", "_").replace("/", "_")
+            )
+        })
         .collect::<Vec<String>>();
 
-    ids.iter().zip(display_texts).map(|(id, display_text)| {
-        create_major_comparison(id, display_text)
-    })
+    ids.iter()
+        .zip(display_texts)
+        .map(|(id, display_text)| create_major_comparison(id, display_text))
         .collect::<Vec<ComparisonData>>()
 }
 
@@ -280,13 +283,11 @@ fn make_comp_list() -> Vec<ComparisonData> {
         "Academic Information",
         "Math SAT Score > 650",
     );
-    
+
     let service_hours_20 = ComparisonData::new(
         "service_hours_20",
         "service_hours",
-        ComparisonType::Number(
-            NumberComparison::GreaterThanOrEqual
-        ),
+        ComparisonType::Number(NumberComparison::GreaterThanOrEqual),
         ValueType::Number(Some(20.to_string())),
         "Community Service",
         "20+ service hours",
@@ -295,9 +296,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
     let service_hours_25 = ComparisonData::new(
         "service_hours_25",
         "service_hours",
-        ComparisonType::Number(
-            NumberComparison::GreaterThanOrEqual
-        ),
+        ComparisonType::Number(NumberComparison::GreaterThanOrEqual),
         ValueType::Number(Some(25.to_string())),
         "Community Service",
         "25+ service hours",
@@ -306,9 +305,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
     let service_hours_30 = ComparisonData::new(
         "service_hours_30",
         "service_hours",
-        ComparisonType::Number(
-            NumberComparison::GreaterThanOrEqual
-        ),
+        ComparisonType::Number(NumberComparison::GreaterThanOrEqual),
         ValueType::Number(Some(30.to_string())),
         "Community Service",
         "30+ service hours",
@@ -334,7 +331,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
 
     let attended_bas = ComparisonData::new(
         "attended_bas",
-        "attended_bas",
+        "attend_bas",
         ComparisonType::Text(TextComparison::Matches),
         ValueType::String(Some("Yes".to_string())),
         "Additional Eligibility Factors",
@@ -365,7 +362,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
         ComparisonType::Text(TextComparison::Matches),
         ValueType::String(Some("Yes".to_string())),
         "Additional Eligibility Factors",
-        "Participated in Pomperaug Youth Baseball"
+        "Participated in Pomperaug Youth Baseball",
     );
 
     let aquatic_club = ComparisonData::new(
@@ -374,25 +371,25 @@ fn make_comp_list() -> Vec<ComparisonData> {
         ComparisonType::Text(TextComparison::Matches),
         ValueType::String(Some("Yes".to_string())),
         "Additional Eligibility Factors",
-        "Participated in Panthers Aquatic Club"
+        "Participated in Panthers Aquatic Club",
     );
-    
+
     let pea_member = ComparisonData::new(
         "pea_member",
         "pea_member",
         ComparisonType::Text(TextComparison::Matches),
         ValueType::String(Some("Yes".to_string())),
         "Additional Eligibility Factors",
-        "Has a Parent in the PEA"
+        "Has a Parent in the PEA",
     );
-    
+
     let music_program = ComparisonData::new(
         "music_program",
         "music_program",
         ComparisonType::Text(TextComparison::Matches),
         ValueType::String(Some("Yes".to_string())),
         "Sports Participation",
-        "PHS Music Program"
+        "PHS Music Program",
     );
 
     let mut sports_comps = create_sports_comparisons();
@@ -412,7 +409,7 @@ fn make_comp_list() -> Vec<ComparisonData> {
         youth_baseball,
         aquatic_club,
         pea_member,
-        music_program
+        music_program,
     ];
 
     comp_list.append(&mut sports_comps);
@@ -453,12 +450,7 @@ pub async fn get_comparison_info() -> Result<Vec<ComparisonData>, ServerFnError>
 
     // Query the database for all comparisons. The client is only going to use the
     // id and display text, but we'll return the whole thing.
-    match client
-        .scan()
-        .table_name(COMPARISONS_TABLE)
-        .send()
-        .await
-    {
+    match client.scan().table_name(COMPARISONS_TABLE).send().await {
         Ok(output) => {
             if let Some(items) = output.items {
                 log!("Found comparisons from API: {:?}", items);
@@ -475,16 +467,12 @@ pub async fn get_comparison_info() -> Result<Vec<ComparisonData>, ServerFnError>
 }
 
 #[server]
-pub async fn get_comparisons_categorized() -> Result<HashMap<String, Vec<ComparisonData>>, ServerFnError> {
+pub async fn get_comparisons_categorized()
+-> Result<HashMap<String, Vec<ComparisonData>>, ServerFnError> {
     let client = create_dynamo_client().await;
     log!("Getting all comparisons from the database, by category.");
 
-    match client
-        .scan()
-        .table_name(COMPARISONS_TABLE)
-        .send()
-        .await
-    {
+    match client.scan().table_name(COMPARISONS_TABLE).send().await {
         Ok(output) => {
             if let Some(items) = output.items {
                 log!("Found comparisons, categorizing.");
@@ -492,14 +480,15 @@ pub async fn get_comparisons_categorized() -> Result<HashMap<String, Vec<Compari
                 let items: Vec<ComparisonData> = serde_dynamo::from_items(items)?;
 
                 let categorized = items.iter().fold(
-                    HashMap::<String, Vec<ComparisonData>>::new(), |mut map, comp| {
-                    // Load each comparison into a map, then return that map.
+                    HashMap::<String, Vec<ComparisonData>>::new(),
+                    |mut map, comp| {
+                        // Load each comparison into a map, then return that map.
                         map.entry(comp.category.clone())
                             .and_modify(|vec| vec.push(comp.clone()))
                             .or_insert(vec![comp.clone()]);
 
                         map
-                    }
+                    },
                 );
 
                 Ok(categorized)
