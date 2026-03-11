@@ -40,7 +40,8 @@ pub fn StudentAthleticsPage() -> impl IntoView {
                                 "Lacrosse",
                                 "Softball",
                                 "Tennis",
-                                "Baseball"
+                                "Baseball",
+                                "Volleyball"
                             ]
                             ),
                             input!(
