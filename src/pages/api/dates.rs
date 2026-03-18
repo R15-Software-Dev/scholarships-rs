@@ -8,10 +8,10 @@ use super::DATES_TABLE;
 
 #[cfg(feature = "ssr")]
 use crate::utils::server::create_dynamo_client;
-use aws_sdk_dynamodb::error::ProvideErrorMetadata;
 #[cfg(feature = "ssr")]
 use aws_sdk_dynamodb::{
     Client as DynamoClient,
+    error::ProvideErrorMetadata,
     types::{PutRequest, WriteRequest},
 };
 
