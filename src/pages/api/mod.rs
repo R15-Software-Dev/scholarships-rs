@@ -2,11 +2,11 @@ mod admin;
 mod comparisons;
 mod dates;
 pub mod exports;
+pub mod files;
 mod providers;
 mod scholarships;
 pub mod students;
-pub mod files;
-mod tokens;
+pub(crate) mod tokens;
 
 pub use admin::*;
 pub use comparisons::*;
