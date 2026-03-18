@@ -104,23 +104,24 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                             debug_log!(
                                 "Resolved requirements: {:?}", resolved_requirements.iter().flatten().map(|rel| rel.display_text.clone()).collect::<Vec<String>>()
                             );
-                            let valid = !scholarship_name.is_empty() && resolved_requirements
-                                .iter()
-                                .all(|list| {
-                                    list.iter()
-                                        .fold(
-                                            false,
-                                            |prev, requirement| {
-                                                let result = requirement
-                                                    .compare(&student_info)
-                                                    .unwrap_or_else(|err| {
-                                                        debug_log!("Requirement failed: {err}");
-                                                        false
-                                                    });
-                                                if prev { prev } else { result }
-                                            },
-                                        )
-                                });
+                            let valid = !scholarship_name.is_empty()
+                                && resolved_requirements
+                                    .iter()
+                                    .all(|list| {
+                                        list.iter()
+                                            .fold(
+                                                false,
+                                                |prev, requirement| {
+                                                    let result = requirement
+                                                        .compare(&student_info)
+                                                        .unwrap_or_else(|err| {
+                                                            debug_log!("Requirement failed: {err}");
+                                                            false
+                                                        });
+                                                    if prev { prev } else { result }
+                                                },
+                                            )
+                                    });
                             if valid {
                                 debug_log!("Scholarship is valid.");
                                 let scholarship_id = StoredValue::new(scholarship.subject.clone());

@@ -1,15 +1,11 @@
 #[cfg(feature = "ssr")]
 mod imports {
-    pub use leptos::logging::debug_log;
-    pub use aws_sdk_dynamodb::{
-        types::AttributeValue,
-        error::ProvideErrorMetadata,
-    };
-    pub use leptos::leptos_dom::log;
-    pub use uuid::Uuid;
-    pub use crate::utils::server::{create_dynamo_client};
-    pub use crate::common::ValueType;
     pub use super::super::SCHOLARSHIPS_TABLE;
+    pub use crate::common::ValueType;
+    pub use crate::utils::server::create_dynamo_client;
+    pub use aws_sdk_dynamodb::{error::ProvideErrorMetadata, types::AttributeValue};
+    pub use leptos::logging::{debug_log, error, log};
+    pub use uuid::Uuid;
 }
 
 use crate::common::ExpandableInfo;
@@ -20,7 +16,7 @@ use leptos::server_fn::codec::Json;
 #[server(GetScholarshipInfo)]
 pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFnError> {
     use imports::*;
-    
+
     let client = create_dynamo_client().await;
 
     // Perform the operation - we just want to return all data that's contained in this entry,
@@ -39,11 +35,14 @@ pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFn
                 Ok(serde_dynamo::from_item(item)?)
             } else {
                 log!("Couldn't find scholarship with ID {:?}", id);
-                Err(ServerFnError::new("Couldn't find scholarship with given ID."))
+                Err(ServerFnError::new(
+                    "Couldn't find scholarship with given ID.",
+                ))
             }
         }
         Err(err) => {
             let msg = err.message().unwrap_or("An unknown error occurred");
+            error!("{}", msg);
             Err(ServerFnError::new(msg))
         }
     }
@@ -51,12 +50,15 @@ pub async fn get_scholarship_info(id: String) -> Result<ExpandableInfo, ServerFn
 
 #[server(CreateScholarshipInfo, input = Json)]
 pub async fn create_scholarship_info(info: ExpandableInfo) -> Result<(), ServerFnError> {
-    use imports::*;
     use aws_sdk_dynamodb::error::ProvideErrorMetadata;
+    use imports::*;
 
     let client = create_dynamo_client().await;
 
-    log!("Creating or updating scholarship with ID {:?}", info.subject);
+    log!(
+        "Creating or updating scholarship with ID {:?}",
+        info.subject
+    );
 
     match client
         .put_item()
@@ -68,6 +70,7 @@ pub async fn create_scholarship_info(info: ExpandableInfo) -> Result<(), ServerF
         Ok(_) => Ok(()),
         Err(err) => {
             let msg = err.message().unwrap_or("An unknown error occurred");
+            error!("{}", msg);
             Err(ServerFnError::new(msg))
         }
     }
@@ -76,24 +79,20 @@ pub async fn create_scholarship_info(info: ExpandableInfo) -> Result<(), ServerF
 #[server(GetAllScholarshipInfo)]
 pub async fn get_all_scholarship_info() -> Result<Vec<ExpandableInfo>, ServerFnError> {
     use imports::*;
-    
+
     let client = create_dynamo_client().await;
     debug_log!("Getting all scholarship info");
-    match client
-        .scan()
-        .table_name(SCHOLARSHIPS_TABLE)
-        .send()
-        .await
-    {
+    match client.scan().table_name(SCHOLARSHIPS_TABLE).send().await {
         Ok(output) => {
             if let Some(items) = output.items {
                 Ok(serde_dynamo::from_items(items)?)
             } else {
                 Ok(Vec::new())
             }
-        },
+        }
         Err(err) => {
-            let msg = err.message().unwrap_or("An unknown error occurred");
+            let msg = err.message().unwrap_or("Unknown error occurred");
+            error!("{}", msg);
             Err(ServerFnError::new(msg))
         }
     }
@@ -101,17 +100,25 @@ pub async fn get_all_scholarship_info() -> Result<Vec<ExpandableInfo>, ServerFnE
 
 /// Gets all scholarships that are associated with the given scholarship provider's ID.
 #[server(GetProviderScholarships)]
-pub async fn get_provider_scholarships(provider_id: String) -> Result<Vec<ExpandableInfo>, ServerFnError> {
+pub async fn get_provider_scholarships(
+    provider_id: String,
+) -> Result<Vec<ExpandableInfo>, ServerFnError> {
     use imports::*;
-    
+
     let client = create_dynamo_client().await;
-    
-    debug_log!("Getting provider scholarships for provider with ID {:?}", provider_id);
-    
+
+    debug_log!(
+        "Getting provider scholarships for provider with ID {:?}",
+        provider_id
+    );
+
     match client
         .scan()
         .table_name(SCHOLARSHIPS_TABLE)
-        .expression_attribute_values(":id", serde_dynamo::to_attribute_value(ValueType::String(Some(provider_id)))?)
+        .expression_attribute_values(
+            ":id",
+            serde_dynamo::to_attribute_value(ValueType::String(Some(provider_id)))?,
+        )
         .filter_expression("provider_id = :id")
         .send()
         .await
@@ -124,7 +131,8 @@ pub async fn get_provider_scholarships(provider_id: String) -> Result<Vec<Expand
             }
         }
         Err(err) => {
-            let msg = err.message().unwrap_or("An unknown error occurred");
+            let msg = err.message().unwrap_or("Unknown error occurred");
+            error!("{}", msg);
             Err(ServerFnError::new(msg))
         }
     }
@@ -134,14 +142,20 @@ pub async fn get_provider_scholarships(provider_id: String) -> Result<Vec<Expand
 #[server(RegisterScholarship)]
 pub async fn register_scholarship(provider_id: String) -> Result<String, ServerFnError> {
     use imports::*;
-    
+
     let client = create_dynamo_client().await;
-    
-    debug_log!("Creating scholarship for provider with ID {:?}", provider_id);
-    
+
+    debug_log!(
+        "Creating scholarship for provider with ID {:?}",
+        provider_id
+    );
+
     let mut current_uuid = Uuid::new_v4().to_string();
     let mut item = ExpandableInfo::new(current_uuid.clone());
-    item.data.insert("provider_id".to_string(), ValueType::String(Some(provider_id)));
+    item.data.insert(
+        "provider_id".to_string(),
+        ValueType::String(Some(provider_id)),
+    );
     loop {
         let ser_item = serde_dynamo::to_item(&item)?;
         match client
@@ -165,10 +179,12 @@ pub async fn register_scholarship(provider_id: String) -> Result<String, ServerF
                         log!("Current error: {:?}", err);
                         current_uuid = Uuid::new_v4().to_string();
                         item.subject = current_uuid.clone();
-                        continue
+                        continue;
                     }
                     _ => {
-                        return Err(ServerFnError::new(err.message().unwrap_or("An unknown error occurred")));
+                        return Err(ServerFnError::new(
+                            err.message().unwrap_or("Unknown error occurred"),
+                        ));
                     }
                 }
             }
@@ -178,41 +194,51 @@ pub async fn register_scholarship(provider_id: String) -> Result<String, ServerF
 
 /// Deletes a provider's scholarship given their provider ID and scholarship ID.
 #[server(DeleteProviderScholarship)]
-pub async fn delete_provider_scholarship(provider_id: String, scholarship_id: String) -> Result<(), ServerFnError> {
+pub async fn delete_provider_scholarship(
+    provider_id: String,
+    scholarship_id: String,
+) -> Result<(), ServerFnError> {
     use imports::*;
-    
+
     let client = create_dynamo_client().await;
-    
-    debug_log!("Deleting scholarship with ID {:?} for provider with ID {:?}", scholarship_id, provider_id);
-    
+
+    debug_log!(
+        "Deleting scholarship with ID {:?} for provider with ID {:?}",
+        scholarship_id,
+        provider_id
+    );
+
     // When we delete a scholarship, we need to ensure that the provider's ID matches the scholarship,
     // otherwise everyone can delete anyone else's scholarships.
     match client
         .delete_item()
         .table_name(SCHOLARSHIPS_TABLE)
         .key("subject", AttributeValue::S(scholarship_id))
-        .expression_attribute_values(":provider_id", serde_dynamo::to_attribute_value(ValueType::String(Some(provider_id)))?)
+        .expression_attribute_values(
+            ":provider_id",
+            serde_dynamo::to_attribute_value(ValueType::String(Some(provider_id)))?,
+        )
         .condition_expression("provider_id = :provider_id")
         .send()
         .await
     {
-        Ok(_) => {
-            Ok(())
-        }
+        Ok(_) => Ok(()),
         Err(err) => {
-            let msg = err.message().unwrap_or("An unknown error occurred");
+            let msg = err.message().unwrap_or("Unknown error occurred");
+            error!("{}", msg);
             Err(ServerFnError::new(msg))
         }
     }
 }
 
 #[server]
-pub async fn get_all_scholarships() -> Result<Vec<std::collections::HashMap<String, crate::common::ValueType>>, ServerFnError> {
+pub async fn get_all_scholarships()
+-> Result<Vec<std::collections::HashMap<String, crate::common::ValueType>>, ServerFnError> {
     use imports::*;
     use std::collections::HashMap;
-    
+
     let client = create_dynamo_client().await;
-    
+
     client
         .scan()
         .table_name(SCHOLARSHIPS_TABLE)
@@ -222,12 +248,20 @@ pub async fn get_all_scholarships() -> Result<Vec<std::collections::HashMap<Stri
             let Some(items) = output.items else {
                 return Vec::new();
             };
-            
-            items.iter().map(|item| {
-                // Each item should be simply converted from an AttributeValue to a ValueType.
-                item.iter().map(|(k, v)| (k.clone(), ValueType::from(v)))
-                    .collect::<HashMap<String, ValueType>>()
-            }).collect::<Vec<_>>()
+
+            items
+                .iter()
+                .map(|item| {
+                    // Each item should be simply converted from an AttributeValue to a ValueType.
+                    item.iter()
+                        .map(|(k, v)| (k.clone(), ValueType::from(v)))
+                        .collect::<HashMap<String, ValueType>>()
+                })
+                .collect::<Vec<_>>()
         })
-        .map_err(ServerFnError::from)
+        .map_err(|err| {
+            let msg = err.message().unwrap_or("Unknown error occurred");
+            error!("{}", msg);
+            ServerFnError::new(msg)
+        })
 }
