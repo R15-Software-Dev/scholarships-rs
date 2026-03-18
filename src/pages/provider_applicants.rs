@@ -1,20 +1,18 @@
-﻿use crate::common::ValueType;
+﻿use crate::common::{ExpandableInfo, ValueType};
 use crate::components::{Banner, Loading};
-use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_oidc::AuthSignal;
+use leptos_router::components::Outlet;
+use leptos_router::hooks::use_navigate;
 
 #[component]
 pub fn ApplicantsPageFallback() -> impl IntoView {
     view! {
-        <Banner title="R15 Scholarships" logo="/PHS_Stacked_Acronym.png" path="/providers" />
-        <div class="flex flex-col gap-4 mt-3 items-center justify-center">
-            <h1 class="text-3xl font-bold">"Applicants Page"</h1>
-
-            <p>
-                "This page is under construction! It will show all the students that are eligible for your scholarship(s)."
+        <div class="flex flex-col flex-1 gap-2">
+            <h1 class="flex-1 text-center font-bold text-2xl">"Scholarship Applicants"</h1>
+            <p class="text-center text-lg">
+                "Please select a scholarship from the left to view the eligible applicants."
             </p>
-            <p>"Come back soon!"</p>
         </div>
     }
 }
@@ -29,7 +27,19 @@ pub fn ApplicantsPageShell() -> impl IntoView {
     // The content will be shown within the right side, but only as a result of some subroutes,
     // each of which is still considered a single page.
 
-    view! { <div></div> }
+    view! {
+        <Banner title="R15 Scholarships" logo="/PHS_Stacked_Acronym.png" path="/providers" />
+        <div class="flex flex-row mt-5">
+            <div class="flex-1" />
+            <div class="flex-3 flex flex-row">
+                <ApplicantsScholarshipList />
+                <div class="flex-3 text-center">
+                    <Outlet />
+                </div>
+            </div>
+            <div class="flex-1" />
+        </div>
+    }
 }
 
 #[component]
@@ -82,8 +92,17 @@ fn ApplicantsScholarshipList() -> impl IntoView {
         },
     );
 
+    let navigate = use_navigate();
+
+    // This closure returns another closure that's using the correct scholarship ID.
+    // It avoids having to define it within the Transition component. It's wrapped in a Callback
+    // because this makes it Send + Sync.
+    let on_view_click = Callback::new(move |scholarship_id: String| {
+        navigate(&*scholarship_id, Default::default());
+    });
+
     view! {
-        <div class="flex flex-col rounded-md shadow-lg/33 p-2">
+        <div class="flex flex-col flex-1 rounded-md shadow-lg/33 p-2 gap-3">
             <h2 class="text-xl font-bold flex-1 text-center">"Scholarships"</h2>
             <Transition fallback=Loading>
                 {move || {
@@ -93,26 +112,28 @@ fn ApplicantsScholarshipList() -> impl IntoView {
                             let items = match items_res {
                                 Ok(items) => items,
                                 Err(e) => {
-                                    return Either::Left(
-                                        view! {
-                                            <div>
-                                                {format!("Couldn't get scholarships: {}", e.to_string())}
-                                            </div>
-                                        }
-                                            .into_any(),
-                                    );
+                                    return view! {
+                                        <div>
+                                            {format!("Couldn't get scholarships: {}", e.to_string())}
+                                        </div>
+                                    }
+                                        .into_any();
                                 }
                             };
-                            Either::Right(
-                                items
-                                    .into_iter()
-                                    .map(|item| {
 
-                                        view! { <ApplicantsScholarshipEntry /> }
-                                            .into_any()
-                                    })
-                                    .collect_view(),
-                            )
+                            view! {
+                                <For
+                                    each=move || items.clone()
+                                    key=|item| item.subject.clone()
+                                    let(item)
+                                >
+                                    <ApplicantsScholarshipEntry
+                                        item=item
+                                        on_view_click=on_view_click
+                                    />
+                                </For>
+                            }
+                                .into_any()
                         })
                         .collect_view()
                 }}
@@ -122,7 +143,36 @@ fn ApplicantsScholarshipList() -> impl IntoView {
 }
 
 #[component]
-fn ApplicantsScholarshipEntry() -> impl IntoView {}
+fn ApplicantsScholarshipEntry(
+    #[prop()] item: ExpandableInfo,
+    #[prop(into)] on_view_click: Callback<String, ()>,
+) -> impl IntoView {
+    // Store the item's subject.
+    let subject = StoredValue::new(item.subject);
+    let scholarship_name = Memo::new(move |_| {
+        item.data
+            .get("name")
+            .map(|name| name.as_string().ok().flatten())
+            .flatten()
+            .unwrap_or("<unnamed scholarship>".to_string())
+    });
+
+    let on_click = move |_| {
+        on_view_click.run(subject.get_value());
+    };
+
+    view! {
+        <div class="flex flex-col rounded-md shadow-md hover:shadow-lg/33 transition-shadow">
+            <div class="text-center p-2">{scholarship_name}</div>
+            <div
+                class="flex-1 font-bold text-white rounded-b-md text-center cursor-pointer bg-red-800 hover:bg-red-900 p-2 transition-bg"
+                on:click=on_click
+            >
+                "View Applicants"
+            </div>
+        </div>
+    }
+}
 
 #[component]
 fn ApplicantsStudentList() -> impl IntoView {}
