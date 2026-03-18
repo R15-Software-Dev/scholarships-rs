@@ -1,4 +1,5 @@
-﻿use leptos::logging::debug_log;
+﻿use leptos::leptos_dom::error;
+use leptos::logging::debug_log;
 use leptos::prelude::*;
 use server_fn::codec::{MultipartData, MultipartFormData};
 
@@ -83,10 +84,12 @@ pub async fn upload_file(data: MultipartData) -> Result<String, ServerFnError> {
         .await
         .map(|_| ())
         .map_err(|e| {
-            ServerFnError::new(format!(
+            let msg = format!(
                 "Couldn't put file to S3: {}",
-                e.message().unwrap_or_default()
-            ))
+                e.message().unwrap_or("Unknown error occurred")
+            );
+            error!("{}", msg);
+            ServerFnError::new(msg)
         })?;
 
     // Besides uploading the file to S3, we also want to store a FILE entry in Dynamo.
@@ -113,11 +116,13 @@ pub async fn upload_file(data: MultipartData) -> Result<String, ServerFnError> {
         .item("file_key".to_string(), AttributeValue::S(key.clone()))
         .send()
         .await
-        .map_err(|e| {
-            ServerFnError::new(format!(
+        .map_err(|err| {
+            let msg = format!(
                 "Couldn't put file to Dynamo, file rolled back: {}",
-                e.message().unwrap_or_default()
-            ))
+                err.message().unwrap_or("Unknown error occurred")
+            );
+            error!("{}", msg);
+            ServerFnError::new(msg)
         });
 
     // If Dynamo fails, we want to handle the error by rolling back the file. Then, we return a failure.
@@ -128,11 +133,13 @@ pub async fn upload_file(data: MultipartData) -> Result<String, ServerFnError> {
             .key(&key)
             .send()
             .await
-            .map_err(|e| {
-                ServerFnError::new(format!(
-                    "Couldn't roll back S3 operation: {}",
-                    e.message().unwrap_or_default()
-                ))
+            .map_err(|err| {
+                let msg = format!(
+                    "Failed to rollback Dynamo entry: {}",
+                    err.message().unwrap_or("Unknown error occurred")
+                );
+                error!("{}", msg);
+                ServerFnError::new(msg)
             })?;
 
         return Err(err);
@@ -179,7 +186,14 @@ pub async fn delete_file(
         .key(key)
         .send()
         .await
-        .map_err(ServerFnError::from);
+        .map_err(|err| {
+            let msg = format!(
+                "Failed to put file into S3: {}",
+                err.message().unwrap_or("Unknown error occurred")
+            );
+            error!("{}", msg);
+            ServerFnError::new(msg)
+        });
 
     if let Err(err) = s3_result {
         // Add the key back to Dynamo and return an error.
@@ -190,10 +204,12 @@ pub async fn delete_file(
             .send()
             .await
             .map_err(|err| {
-                ServerFnError::new(format!(
-                    "Couldn't roll back Dynamo operation: {}",
-                    err.message().unwrap_or_default()
-                ))
+                let msg = format!(
+                    "Failed to rollback Dynamo entry: {}",
+                    err.message().unwrap_or("Unknown error occurred")
+                );
+                error!("{}", msg);
+                ServerFnError::new(msg)
             })?;
 
         return Err(err);
@@ -242,10 +258,12 @@ pub async fn list_files(
                 })
                 .collect::<Vec<String>>()
         })
-        .map_err(|e| {
-            ServerFnError::new(format!(
-                "Couldn't list files: {}",
-                e.message().unwrap_or_default()
-            ))
+        .map_err(|err| {
+            let msg = format!(
+                "Failed to get files: {}",
+                err.message().unwrap_or("Unknown error occurred")
+            );
+            error!("{}", msg);
+            ServerFnError::new(msg)
         })
 }
