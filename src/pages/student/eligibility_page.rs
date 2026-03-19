@@ -4,7 +4,7 @@ use crate::pages::api::files::list_files;
 use crate::pages::api::students::get_all_student_data;
 use crate::pages::api::{get_all_scholarship_info, get_comparison_info};
 use crate::utils::get_user_claims;
-use leptos::logging::debug_log;
+use leptos::logging::{debug_log, debug_error};
 use leptos::prelude::*;
 use leptos_oidc::AuthSignal;
 
@@ -63,8 +63,7 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                 .get("name")
                                 .unwrap_or(&ValueType::String(None))
                                 .as_string()
-                                .ok()
-                                .flatten()
+                                .ok()?
                                 .unwrap_or_default();
                             debug_log!("Checking scholarship: {}", scholarship_name);
                             let requirements_map = scholarship
@@ -72,8 +71,7 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                 .get("requirements")
                                 .unwrap_or(&ValueType::Map(None))
                                 .as_map()
-                                .ok()
-                                .flatten()
+                                .ok()?
                                 .unwrap_or_default()
                                 .values()
                                 .cloned()
@@ -108,19 +106,25 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                 && resolved_requirements
                                     .iter()
                                     .all(|list| {
-                                        list.iter()
-                                            .fold(
-                                                false,
-                                                |prev, requirement| {
-                                                    let result = requirement
-                                                        .compare(&student_info)
-                                                        .unwrap_or_else(|err| {
-                                                            debug_log!("Requirement failed: {err}");
-                                                            false
-                                                        });
-                                                    if prev { prev } else { result }
-                                                },
-                                            )
+                                        debug_log!("Checking list: {:?}", list);
+                                        if list.is_empty() {
+                                            true
+                                        } else {
+                                            list.iter()
+                                                .any(
+                                                    |requirement| {
+                                                        let result = requirement
+                                                            .compare(&student_info);
+
+                                                        match result.as_ref() {
+                                                            Ok(_) => debug_log!("Requirement with id {} success", requirement.id),
+                                                            Err(e) => debug_error!("Requirement with id {} failed: {}", requirement.id, e)
+                                                        };
+
+                                                        result.is_ok()
+                                                    },
+                                                )
+                                        }
                                     });
                             if valid {
                                 debug_log!("Scholarship is valid.");
