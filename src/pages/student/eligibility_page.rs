@@ -117,11 +117,15 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                                             .compare(&student_info);
 
                                                         match result.as_ref() {
-                                                            Ok(_) => debug_log!("Requirement with id {} success", requirement.id),
-                                                            Err(e) => debug_error!("Requirement with id {} failed: {}", requirement.id, e)
-                                                        };
-
-                                                        result.is_ok()
+                                                            Ok(status) => {
+                                                                debug_log!("Requirement with id {} is Ok({})", requirement.id, status);
+                                                                status.clone()
+                                                            },
+                                                            Err(e) => {
+                                                                debug_error!("Requirement with id {} failed: {}", requirement.id, e);
+                                                                false
+                                                            }
+                                                        }
                                                     },
                                                 )
                                         }
