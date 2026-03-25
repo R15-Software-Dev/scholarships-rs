@@ -146,7 +146,7 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                     ),
                                     async move |(access_token, form_id, scholarship_id)| {
                                         let Some(access_token) = access_token else {
-                                            return Ok(Vec::new());
+                                            return Err(ServerFnError::new("Couldn't find access token"));
                                         };
                                         list_files(access_token, form_id, scholarship_id).await
                                     },
