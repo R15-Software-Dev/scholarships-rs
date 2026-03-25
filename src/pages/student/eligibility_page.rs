@@ -4,7 +4,7 @@ use crate::pages::api::files::list_files;
 use crate::pages::api::students::get_all_student_data;
 use crate::pages::api::{get_all_scholarship_info, get_comparison_info};
 use crate::utils::get_user_claims;
-use leptos::logging::{debug_log, debug_error};
+use leptos::logging::{debug_error, debug_log};
 use leptos::prelude::*;
 use leptos_oidc::AuthSignal;
 
@@ -23,6 +23,11 @@ pub fn StudentEligibilityPage() -> impl IntoView {
     let auth = expect_context::<AuthSignal>();
     let user_claims = get_user_claims();
     let user_id = Memo::new(move |_| user_claims.get().map(|info| info.claims.subject.clone()));
+    let access_token = Memo::new(move |_| auth.get().authenticated().map(|a| a.access_token()));
+
+    Effect::new(move || {
+        debug_log!("User ID was updated: {}", user_id.get().unwrap_or_default());
+    });
 
     let form_id = StoredValue::new("scholarship_essays".to_string());
 
@@ -111,23 +116,23 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                             true
                                         } else {
                                             list.iter()
-                                                .any(
-                                                    |requirement| {
-                                                        let result = requirement
-                                                            .compare(&student_info);
-
-                                                        match result.as_ref() {
-                                                            Ok(status) => {
-                                                                debug_log!("Requirement with id {} is Ok({})", requirement.id, status);
-                                                                status.clone()
-                                                            },
-                                                            Err(e) => {
-                                                                debug_error!("Requirement with id {} failed: {}", requirement.id, e);
-                                                                false
-                                                            }
+                                                .any(|requirement| {
+                                                    let result = requirement.compare(&student_info);
+                                                    match result.as_ref() {
+                                                        Ok(status) => {
+                                                            debug_log!(
+                                                                "Requirement with id {} is Ok({})", requirement.id, status
+                                                            );
+                                                            status.clone()
                                                         }
-                                                    },
-                                                )
+                                                        Err(e) => {
+                                                            debug_error!(
+                                                                "Requirement with id {} failed: {}", requirement.id, e
+                                                            );
+                                                            false
+                                                        }
+                                                    }
+                                                })
                                         }
                                     });
                             if valid {
@@ -135,19 +140,15 @@ pub fn StudentEligibilityPage() -> impl IntoView {
                                 let scholarship_id = StoredValue::new(scholarship.subject.clone());
                                 let resource = Resource::new(
                                     move || (
-                                        auth
-                                            .try_with(|a| a.authenticated().map(|a| a.access_token()))
-                                            .flatten(),
+                                        access_token.get(),
                                         form_id.get_value(),
                                         scholarship_id.get_value(),
                                     ),
                                     async move |(access_token, form_id, scholarship_id)| {
-                                        list_files(
-                                                access_token.unwrap_or_default(),
-                                                form_id,
-                                                scholarship_id,
-                                            )
-                                            .await
+                                        let Some(access_token) = access_token else {
+                                            return Ok(Vec::new());
+                                        };
+                                        list_files(access_token, form_id, scholarship_id).await
                                     },
                                 );
                                 Some((scholarship.clone(), resource))
