@@ -1,10 +1,10 @@
-use std::collections::HashMap;
-use leptos::prelude::*;
-use uuid::Uuid;
 use crate::common::ValueType;
 use crate::components::{Toast, ToastContext};
-use crate::pages::api::students::{get_student_data, PutStudentData};
+use crate::pages::api::students::{PutStudentData, get_student_data};
 use crate::utils::get_user_claims;
+use leptos::prelude::*;
+use std::collections::HashMap;
+use uuid::Uuid;
 
 pub struct StudentFormInfo {
     pub data_map: RwSignal<HashMap<String, ValueType>>,
@@ -20,22 +20,21 @@ pub fn use_student_form(
     enable_toasts: bool,
 ) -> StudentFormInfo {
     let form_type = form_type.into();
-    
+
     let user_claims = get_user_claims();
-    let user_id = Memo::new(move |_| {
-        user_claims.get()
-            .map(|info| info.claims.subject.clone())
-    });
+    let user_id = Memo::new(move |_| user_claims.get().map(|info| info.claims.subject.clone()));
 
     let data_map = RwSignal::new(HashMap::new());
 
     let refresh_trigger = Trigger::new();
     let data_resource = Resource::new(
-        move || (user_id.get().unwrap_or_default(), form_type.get(), refresh_trigger.track()),
-        async move |(id, form_type, _)| get_student_data(
-            id,
-            form_type,
-        ).await
+        move || (user_id.get(), form_type.get(), refresh_trigger.track()),
+        async move |(id, form_type, _)| {
+            let Some(id) = id else {
+                return Ok(HashMap::new());
+            };
+            get_student_data(id, form_type).await
+        },
     );
 
     Effect::new(move || {
@@ -50,13 +49,15 @@ pub fn use_student_form(
 
     let submit_action = ServerAction::<PutStudentData>::new();
     let on_submit = move || {
-        submit_action.dispatch(PutStudentData {
-            subject: user_id.get().unwrap_or_default(),
-            data_type: form_type.get(),
-            data_map: data_map.get()
-        });
+        if let Some(id) = user_id.get() {
+            submit_action.dispatch(PutStudentData {
+                subject: id,
+                data_type: form_type.get(),
+                data_map: data_map.get(),
+            });
+        }
     };
-    
+
     if enable_toasts {
         let mut toasts = expect_context::<ToastContext>();
         Effect::watch(
@@ -74,13 +75,13 @@ pub fn use_student_form(
                     Err(e) => Toast::new()
                         .id(Uuid::new_v4())
                         .header("Submission Failed")
-                        .msg(e.to_string())
+                        .msg(e.to_string()),
                 };
 
                 toasts.toast(toast);
                 untrack(move || submit_action.clear());
             },
-            false
+            false,
         );
     }
 
@@ -90,6 +91,6 @@ pub fn use_student_form(
         data_resource,
         user_id,
         submit_action: on_submit.into(),
-        submit_pending: submit_action.pending()
+        submit_pending: submit_action.pending(),
     }
 }

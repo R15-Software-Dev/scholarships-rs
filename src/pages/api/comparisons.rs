@@ -435,6 +435,7 @@ pub async fn create_test_comparisons() -> Result<(), ServerFnError> {
             .await
         {
             let msg = err.message().unwrap_or("An unknown error occurred");
+            leptos::logging::error!("{}", msg);
             return Err(ServerFnError::new(msg));
         }
     }
@@ -453,7 +454,6 @@ pub async fn get_comparison_info() -> Result<Vec<ComparisonData>, ServerFnError>
     match client.scan().table_name(COMPARISONS_TABLE).send().await {
         Ok(output) => {
             if let Some(items) = output.items {
-                log!("Found comparisons from API: {:?}", items);
                 Ok(serde_dynamo::from_items(items)?)
             } else {
                 Ok(vec![])
@@ -461,6 +461,7 @@ pub async fn get_comparison_info() -> Result<Vec<ComparisonData>, ServerFnError>
         }
         Err(err) => {
             let msg = err.message().unwrap_or("An unknown error occurred");
+            leptos::logging::error!("{}", msg);
             Err(ServerFnError::new(msg))
         }
     }
@@ -493,11 +494,14 @@ pub async fn get_comparisons_categorized()
 
                 Ok(categorized)
             } else {
-                Err(ServerFnError::new("Couldn't find any comparisons."))
+                let msg = "Couldn't find any comparisons.";
+                leptos::logging::error!("{}", msg);
+                Err(ServerFnError::new(msg))
             }
         }
         Err(err) => {
             let msg = err.message().unwrap_or("An unknown error occurred");
+            leptos::logging::error!("{}", msg);
             Err(ServerFnError::new(msg))
         }
     }

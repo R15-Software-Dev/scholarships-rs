@@ -1,8 +1,8 @@
-﻿use leptos::prelude::*;
-use leptos::logging::debug_log;
-use std::collections::HashMap;
+﻿use crate::common::ValueType;
+use leptos::logging::{debug_log, error};
+use leptos::prelude::*;
 use leptos::server_fn::codec::Json;
-use crate::common::ValueType;
+use std::collections::HashMap;
 
 #[cfg(feature = "ssr")]
 use crate::utils::server::{create_dynamo_client, into_attr_map};
@@ -12,8 +12,8 @@ static PROVIDER_CONTACT_TABLE: &str = "leptos-provider-contacts";
 
 #[server]
 pub async fn get_provider_contact(id: String) -> Result<HashMap<String, ValueType>, ServerFnError> {
-    use aws_sdk_dynamodb::types::AttributeValue;
     use aws_sdk_dynamodb::error::ProvideErrorMetadata;
+    use aws_sdk_dynamodb::types::AttributeValue;
 
     let client = create_dynamo_client().await;
 
@@ -31,29 +31,39 @@ pub async fn get_provider_contact(id: String) -> Result<HashMap<String, ValueTyp
                 return Ok(HashMap::new());
             };
 
-            let map = item.iter().map(|(key, val)| {
-                let val_type = ValueType::from(val);
+            let map = item
+                .iter()
+                .map(|(key, val)| {
+                    let val_type = ValueType::from(val);
 
-                (key.clone(), val_type)
-            }).collect::<HashMap<String, ValueType>>();
+                    (key.clone(), val_type)
+                })
+                .collect::<HashMap<String, ValueType>>();
 
             Ok(map)
         }
         Err(err) => {
             let msg = err.message().unwrap_or("An unknown error occurred.");
+            error!("{}", msg);
             Err(ServerFnError::new(msg))
         }
     }
 }
 
 #[server(input = Json)]
-pub async fn put_provider_contact(id: String, contact_info: HashMap<String, ValueType>) -> Result<(), ServerFnError> {
+pub async fn put_provider_contact(
+    id: String,
+    contact_info: HashMap<String, ValueType>,
+) -> Result<(), ServerFnError> {
     use aws_sdk_dynamodb::error::ProvideErrorMetadata;
 
     let client = create_dynamo_client().await;
 
     let mut item = into_attr_map(contact_info);
-    item.insert("subject".to_owned(), aws_sdk_dynamodb::types::AttributeValue::S(id));
+    item.insert(
+        "subject".to_owned(),
+        aws_sdk_dynamodb::types::AttributeValue::S(id),
+    );
 
     match client
         .put_item()
@@ -65,6 +75,7 @@ pub async fn put_provider_contact(id: String, contact_info: HashMap<String, Valu
         Ok(_) => Ok(()),
         Err(err) => {
             let msg = err.message().unwrap_or("An unknown error occurred.");
+            error!("{}", msg);
             Err(ServerFnError::new(msg))
         }
     }

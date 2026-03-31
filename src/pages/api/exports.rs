@@ -231,7 +231,6 @@ pub async fn get_scholarship_csv() -> Result<Vec<u8>, ServerFnError> {
     writer.flush()?;
 
     let result = writer.into_inner()?;
-    debug_log!("{:?}", String::from_utf8(result.clone()));
 
     Ok(result)
 }

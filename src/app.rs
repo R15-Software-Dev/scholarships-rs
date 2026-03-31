@@ -3,9 +3,9 @@ use crate::components::login::ProviderLoginContext;
 use crate::pages::{
     AdminHomePage, AdminProviderPage, AdminScholarshipPage, AdminShell, AdminUtilsPage,
     ApplicantsPageFallback, AuthCallbackPage, LoanerBorrowForm, LoanerFallback, LoanerReturnForm,
-    LoanerShell, ProviderContactPage, ProviderPortal, ScholarshipInfoPage,
+    LoanerShell, ProviderContactPage, ProviderPortal,
 };
-use crate::pages::{ApplicantsPageShell, student};
+use crate::pages::{FormClosedPage, ApplicantsPageShell, student};
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_oidc::AuthSignal;
@@ -91,11 +91,11 @@ fn ProviderRoutes() -> impl MatchNestedRoutes + Clone {
             </ParentRoute>
             <Route path=path!("/callback") view=AuthCallbackPage />
             <Route path=path!("/profile") view=ProviderContactPage />
-            // <Route path=path!("/scholarships") view=FormClosedPage />
-            <ParentRoute path=path!("/scholarships") view=ScholarshipInfoPage>
-                <Route path=path!(":id") view=ScholarshipInfoPage />
-                <Route path=path!("") view=ScholarshipInfoPage />
-            </ParentRoute>
+            <Route path=path!("/scholarships") view=FormClosedPage />
+        // <ParentRoute path=path!("/scholarships") view=ScholarshipInfoPage>
+        // <Route path=path!(":id") view=ScholarshipInfoPage />
+        // <Route path=path!("") view=ScholarshipInfoPage />
+        // </ParentRoute>
         </ParentRoute>
     }
     .into_inner()

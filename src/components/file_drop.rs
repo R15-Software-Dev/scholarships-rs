@@ -1,6 +1,6 @@
 use crate::pages::api::files::{DeleteFile, upload_file};
 use leptos::html::{Input, Label};
-use leptos::logging::debug_log;
+use leptos::logging::{debug_error, debug_log};
 use leptos::prelude::*;
 use leptos::web_sys::{File, FormData};
 use leptos_icons::Icon;
@@ -28,6 +28,7 @@ pub fn FileDrop(
 
     let file_name_list = RwSignal::new(Vec::new());
     let hovering = RwSignal::new(false);
+    let error_msg = RwSignal::new(String::new());
     let name = StoredValue::new(name);
     let form_id = StoredValue::new(form_id);
     let auth = expect_context::<AuthSignal>();
@@ -172,10 +173,18 @@ pub fn FileDrop(
             existing_files
                 .get()
                 .map(|result| {
-                    if let Ok(files) = result {
-                        file_name_list.set(files);
+                    match result {
+                        Ok(files) => {
+                            error_msg.set("".to_string());
+                            file_name_list.set(files);
+                        }
+                        Err(err) => {
+                            let msg = err.to_string();
+                            debug_error!("Error while getting files: {}", msg);
+                            error_msg.set(msg);
+                        }
                     }
-                })
+                });
         }}
         <label
             node_ref=zone_ref
@@ -194,6 +203,9 @@ pub fn FileDrop(
             <div class="text-sm text-gray-400">"Or click to select a file"</div>
             <input node_ref=input_ref type="file" class="hidden" on:change=on_input_change />
         </label>
+        <Show when=move || !error_msg.get().is_empty()>
+            <div class="flex-1">{error_msg}</div>
+        </Show>
         <For
             each=move || file_name_list.get()
             key=|file| file.clone()
