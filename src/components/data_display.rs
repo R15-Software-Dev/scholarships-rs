@@ -10,7 +10,9 @@ use std::collections::HashMap;
 #[component]
 pub fn ValueDisplay(
     #[prop(into)] schema: Signal<SchemaNode>,
-    #[prop(into, optional)] data_member: Signal<String>,
+    /// The starting member. Starts display from this member in the `data_map`, if it exists.
+    #[prop(into, optional)]
+    data_member: Signal<String>,
     #[prop(into)] data_map: Signal<HashMap<String, ValueType>>,
 ) -> impl IntoView {
     let data_value = Memo::new(move |_| {

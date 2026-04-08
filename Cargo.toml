@@ -25,7 +25,6 @@ leptos_oidc = "0.9.0"
 base64 = "0.22"
 chrono = "0.4"
 leptos_animate = "0.1"
-
 macros = { path = "./macros" }
 traits = { path = "./traits" }
 icondata = { version = "0.7.0", features = ["font-awesome"] }

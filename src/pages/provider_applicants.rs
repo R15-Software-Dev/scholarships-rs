@@ -1,9 +1,16 @@
-﻿use crate::common::{ExpandableInfo, ValueType};
-use crate::components::{Banner, Loading};
+﻿use crate::common::{ComparisonData, ExpandableInfo, SchemaNode, SchemaType, ValueType};
+use crate::components::{Banner, Loading, ValueDisplay};
+use crate::pages::UnauthenticatedPage;
+use crate::pages::api::get_comparison_info;
+use crate::pages::api::students::{get_all_student_data, get_student_data};
+use leptos::ev::{Event, MouseEvent};
+use leptos::html::Dialog;
+use leptos::logging::debug_log;
 use leptos::prelude::*;
-use leptos_oidc::AuthSignal;
+use leptos_oidc::{AuthLoaded, AuthSignal, Authenticated};
 use leptos_router::components::Outlet;
-use leptos_router::hooks::use_navigate;
+use leptos_router::hooks::{query_signal, use_navigate};
+use std::collections::HashMap;
 
 #[component]
 pub fn ApplicantsPageFallback() -> impl IntoView {
@@ -28,17 +35,25 @@ pub fn ApplicantsPageShell() -> impl IntoView {
     // each of which is still considered a single page.
 
     view! {
-        <Banner title="R15 Scholarships" logo="/PHS_Stacked_Acronym.png" path="/providers" />
-        <div class="flex flex-row mt-5">
-            <div class="flex-1" />
-            <div class="flex-3 flex flex-row">
-                <ApplicantsScholarshipList />
-                <div class="flex-3 text-center">
-                    <Outlet />
+        <AuthLoaded fallback=Loading>
+            <Authenticated unauthenticated=UnauthenticatedPage>
+                <Banner
+                    title="R15 Scholarships"
+                    logo="/PHS_Stacked_Acronym.png"
+                    path="/providers"
+                />
+                <div class="flex flex-row mt-5">
+                    <div class="flex-1" />
+                    <div class="flex-3 flex flex-row items-start">
+                        <ApplicantsScholarshipList />
+                        <div class="flex-3 text-center">
+                            <Outlet />
+                        </div>
+                    </div>
+                    <div class="flex-1" />
                 </div>
-            </div>
-            <div class="flex-1" />
-        </div>
+            </Authenticated>
+        </AuthLoaded>
     }
 }
 
@@ -98,7 +113,8 @@ fn ApplicantsScholarshipList() -> impl IntoView {
     // It avoids having to define it within the Transition component. It's wrapped in a Callback
     // because this makes it Send + Sync.
     let on_view_click = Callback::new(move |scholarship_id: String| {
-        navigate(&*scholarship_id, Default::default());
+        let path = format!("/providers/applicants/{}", scholarship_id);
+        navigate(&path, Default::default());
     });
 
     view! {
@@ -175,4 +191,389 @@ fn ApplicantsScholarshipEntry(
 }
 
 #[component]
-fn ApplicantsStudentList() -> impl IntoView {}
+pub fn ApplicantsStudentList() -> impl IntoView {
+    use crate::pages::api::get_scholarship_info;
+    use crate::pages::api::students::get_completed_students;
+    use leptos_router::hooks::use_params;
+    use leptos_router::params::Params;
+
+    /// The parameters for the page that displays this component. This may be moved to the page-level
+    /// rather than the component-level.
+    #[derive(Params, PartialEq)]
+    struct StudentListParams {
+        scholarship_id: Option<String>,
+    }
+
+    // This is in charge of finding all student information and running the comparisons.
+    // It will then display all the eligible students.
+
+    let params = use_params::<StudentListParams>();
+    let auth = expect_context::<AuthSignal>();
+    let access_token =
+        Memo::new(move |_| auth.with(|a| a.authenticated().map(|a| a.access_token())));
+
+    let scholarship_id = Memo::new(move |_| {
+        params
+            .read()
+            .as_ref()
+            .ok()
+            .and_then(|params| params.scholarship_id.clone())
+    });
+
+    #[server]
+    async fn get_eligibility_info(
+        token: String,
+        scholarship_id: String,
+    ) -> Result<
+        (
+            HashMap<String, HashMap<String, ValueType>>,
+            ExpandableInfo,
+            Vec<ComparisonData>,
+        ),
+        ServerFnError,
+    > {
+        let (students, scholarships, requirements_list) = tokio::join!(
+            get_completed_students(token),
+            get_scholarship_info(scholarship_id),
+            get_comparison_info()
+        );
+
+        Ok((students?, scholarships?, requirements_list?))
+    }
+
+    let resource = Resource::new(
+        move || (access_token.get(), scholarship_id.get()),
+        move |(access_token, scholarship_id)| async move {
+            let Some(token) = access_token else {
+                return Err(ServerFnError::new("Couldn't find access token"));
+            };
+            let Some(scholarship_id) = scholarship_id else {
+                return Err(ServerFnError::new("Couldn't find scholarship ID"));
+            };
+
+            get_eligibility_info(token, scholarship_id).await
+        },
+    );
+
+    view! {
+        <div class="flex flex-col flex-1">
+            <Suspense fallback=Loading>
+                {move || {
+                    resource
+                        .get()
+                        .map(|result| {
+                            match result {
+                                Ok((students, scholarship, requirements_list)) => {
+                                    view! {
+                                        <div>"Showing students here."</div>
+                                        <ApplicantsStudentListView
+                                            students=students
+                                            scholarship=scholarship
+                                            requirements=requirements_list
+                                        />
+                                    }
+                                        .into_any()
+                                }
+                                Err(e) => {
+                                    view! {
+                                        <div>
+                                            "Error while getting eligible students: "{e.to_string()}
+                                        </div>
+                                    }
+                                        .into_any()
+                                }
+                            }
+                        })
+                }}
+            </Suspense>
+        </div>
+    }
+}
+
+#[component]
+fn ApplicantsStudentListView(
+    #[prop(into)] students: Signal<HashMap<String, HashMap<String, ValueType>>>,
+    #[prop(into)] scholarship: Signal<ExpandableInfo>,
+    #[prop(into)] requirements: Signal<Vec<ComparisonData>>,
+) -> impl IntoView {
+    let eligible_students = RwSignal::new(HashMap::new());
+    let error_msg = RwSignal::new(String::new());
+    // let (current_student_id, set_current_student_id) = query_signal::<String>("student_id");
+    let current_student_id = RwSignal::new(None);
+    let navigate_student = Callback::new(move |id: String| {
+        current_student_id.set(Some(id));
+    });
+    let dialog_visible =
+        Signal::derive(move || !current_student_id.get().unwrap_or_default().is_empty());
+    let on_dialog_close = Callback::new(move |_| {
+        current_student_id.set(None);
+    });
+
+    fn get_eligible_students(
+        students: HashMap<String, HashMap<String, ValueType>>,
+        scholarship: ExpandableInfo,
+        requirements: Vec<ComparisonData>,
+    ) -> Result<HashMap<String, HashMap<String, ValueType>>, Error> {
+        let requires_essay = !scholarship
+            .data
+            .get("essay_prompt")
+            .unwrap_or(&ValueType::String(None))
+            .as_string()
+            .map_err(|_| "Couldn't get essay as a string")?
+            .unwrap_or_default()
+            .is_empty();
+
+        // Get the full map of requirements. Each key contains a list of IDs.
+        let scholarship_requirements = scholarship
+            .data
+            .get("requirements")
+            .map(|val| val.as_map().ok()?)
+            .flatten()
+            .unwrap_or_default();
+
+        // Get the lists of requirements. Maps into string IDs and discards invalid ValueTypes.
+        let requirement_lists = scholarship_requirements
+            .into_iter()
+            .filter_map(|(_, list_val)| {
+                let list = list_val.as_list().ok().flatten()?;
+                let string_list = list
+                    .into_iter()
+                    .filter_map(|v| v.as_string().ok().flatten())
+                    .collect::<Vec<String>>();
+
+                Some(string_list)
+            })
+            .collect::<Vec<Vec<String>>>();
+
+        // Resolve the requirement IDs. Discards all IDs that do not resolve.
+        let resolved_requirements = requirement_lists
+            .into_iter()
+            .map(|list| {
+                list.into_iter()
+                    .filter_map(|id| {
+                        requirements
+                            .iter()
+                            .cloned()
+                            .find(|requirement| requirement.id == id)
+                    })
+                    .collect::<Vec<ComparisonData>>()
+            })
+            .collect::<Vec<Vec<ComparisonData>>>();
+
+        // Check student eligibility. These are all students that have completed the demographics
+        // forms.
+        let eligible_students = students
+            .into_iter()
+            .filter_map(|(id, student)| {
+                // The student needs to pass one requirement from each list.
+                let result = resolved_requirements.iter().all(|list| {
+                    if list.is_empty() {
+                        return true;
+                    }
+
+                    list.iter()
+                        .any(|requirement| requirement.compare(&student).unwrap_or(false))
+                });
+
+                if result { Some((id, student)) } else { None }
+            })
+            .collect::<HashMap<String, HashMap<String, ValueType>>>();
+
+        // debug_log!("Total number of eligible students: {}", eligible_students.len());
+
+        Ok(eligible_students)
+    }
+
+    Effect::new(move || {
+        debug_log!("Running eligibility check on students");
+        let eligible_res =
+            get_eligible_students(students.get(), scholarship.get(), requirements.get());
+
+        match eligible_res {
+            Ok(list) => {
+                debug_log!("Total number of eligible students: {}", list.len());
+                eligible_students.set(list);
+            }
+            Err(e) => error_msg.set(format!("Failed to get eligible students list: {e}")),
+        }
+    });
+
+    // This is actually just a display of all the information from the students list.
+    // As defined in the ApplicantsStudentList component, this will already be wrapped in a
+    // flex container.
+    view! {
+        <StudentInformationDialog
+            student_id=current_student_id
+            visible=dialog_visible
+            on_close=on_dialog_close
+        />
+        <Show when=move || !error_msg.get().is_empty()>
+            <div>"Error checking student eligibility: "{error_msg}</div>
+        </Show>
+        <div class="flex flex-col">
+            <For
+                each=move || eligible_students.get()
+                key=|(id, _)| id.clone()
+                children=move |(student_id, student)| {
+                    let student = StoredValue::new(student);
+                    let first_name = Memo::new(move |_| {
+                        student
+                            .get_value()
+                            .get("first_name")
+                            .map(|n| n.as_string().ok().flatten())
+                            .unwrap_or_default()
+                    });
+                    let last_name = Memo::new(move |_| {
+                        student
+                            .get_value()
+                            .get("last_name")
+                            .map(|n| n.as_string().ok().flatten())
+                            .unwrap_or_default()
+                    });
+                    let on_click = move |_| {
+                        navigate_student.run(student_id.clone());
+                    };
+                    // For now, we'll just display each student's first and last name.
+                    // Now I'll add a container with some links. These links will just be appended
+                    // to the end of the current path.
+
+                    view! {
+                        <div class="text-lg" on:click=on_click>
+                            {first_name}
+                            " "
+                            {last_name}
+                        </div>
+                    }
+                }
+            />
+        </div>
+    }
+}
+
+#[component]
+fn StudentInformationDialog(
+    #[prop(into)] student_id: Signal<Option<String>>,
+    // #[prop(into)] scholarship_info: StoredValue<ExpandableInfo>,
+    #[prop(into)] visible: Signal<bool>,
+    #[prop(into)] on_close: Callback<()>,
+) -> impl IntoView {
+    // This component needs to just display all student information.
+    // Specifically, it needs to know what information to display, like whether the scholarship
+    // requested an essay or financial information.
+
+    let dialog_ref = NodeRef::<Dialog>::new();
+
+    let demographics_schema = StoredValue::new(
+        SchemaNode::new(SchemaType::Map)
+            .header("Demographics Information")
+            .child(
+                "first_name",
+                SchemaNode::new(SchemaType::String).header("First Name"),
+            )
+            .child(
+                "last_name",
+                SchemaNode::new(SchemaType::String).header("Last Name"),
+            )
+            .child(
+                "dob",
+                SchemaNode::new(SchemaType::String).header("Date of Birth"),
+            )
+            .child(
+                "gender",
+                SchemaNode::new(SchemaType::String).header("Gender"),
+            )
+            .child(
+                "phone_number",
+                SchemaNode::new(SchemaType::String).header("Preferred Phone Number"),
+            )
+            .child(
+                "email",
+                SchemaNode::new(SchemaType::String).header("Preferred Email Address"),
+            )
+            .child(
+                "street_address",
+                SchemaNode::new(SchemaType::String).header("Street Address"),
+            )
+            .child("town", SchemaNode::new(SchemaType::String).header("Town")),
+    );
+
+    let sports_schema = StoredValue::new(
+        SchemaNode::new(SchemaType::List)
+            .header("Sports Activities")
+            .item_template(
+                SchemaNode::new(SchemaType::Map)
+                    .header("Sport")
+                    .child(
+                        "sport_name",
+                        SchemaNode::new(SchemaType::String).header("Sport Name"),
+                    )
+                    .child(
+                        "achievements",
+                        SchemaNode::new(SchemaType::String).header("Special Achievements"),
+                    ),
+            ),
+    );
+
+    let extracurricular_schema =
+        StoredValue::new(SchemaNode::new(SchemaType::Map).header("Extracurricular Activities"));
+
+    Effect::new(move || {
+        if let Some(dialog) = dialog_ref.get() {
+            let open = visible.get();
+            if open {
+                let _ = dialog.show_modal();
+                debug_log!("Modal should be visible.");
+            } else {
+                dialog.close();
+                debug_log!("Closed modal.");
+            }
+        }
+    });
+
+    view! {
+        <dialog
+            node_ref=dialog_ref
+            on:cancel=move |_: Event| on_close.run(())
+            on:click=move |_| on_close.run(())
+            class="w-1/2 m-auto rounded-lg shadow-xl/50
+            backdrop:backdrop-blur-xs backdrop:transition-backdrop-filter
+            [open]:flex flex-col items-center transition-all duration-200"
+        >
+            <div class="p-5" on:click=move |e: MouseEvent| e.stop_propagation()>
+                <Suspense fallback=Loading>
+                    {move || Suspend::new(async move {
+                        get_student_data(
+                                student_id.get().unwrap_or_default(),
+                                "demographics".to_string(),
+                            )
+                            .await
+                            .map(|student_info| {
+                                view! {
+                                    <ValueDisplay
+                                        schema=demographics_schema.get_value()
+                                        data_map=student_info
+                                    />
+                                }
+                            })
+                    })}
+                    {move || Suspend::new(async move {
+                        get_student_data(
+                                student_id.get().unwrap_or_default(),
+                                "athletics".to_string(),
+                            )
+                            .await
+                            .map(|student_info| {
+                                view! {
+                                    <ValueDisplay
+                                        schema=sports_schema.get_value()
+                                        data_map=student_info
+                                        data_member="sports_participation"
+                                    />
+                                }
+                            })
+                    })}
+                </Suspense>
+            </div>
+        </dialog>
+    }
+}
