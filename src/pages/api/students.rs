@@ -210,3 +210,54 @@ pub async fn get_completed_students(
 
     Ok(output)
 }
+
+/// # Get Student File API
+/// This function gets a file from the corresponding S3 file key. If the subject found from the
+/// `access_token` does not match the owner of the requested file, the requesting user must have
+/// provider-level access or higher.
+///
+/// ## Possible errors
+/// Please check the [`validate_and_get_token_info`] function for all token parsing errors. Otherwise,
+/// if the requesting user does not have the correct permissions, it will return a message indicating
+/// such. If the file is not found, an error containing "File not found" will be returned.
+#[server]
+pub async fn get_student_file(
+    access_token: String,
+    file_key: String,
+) -> Result<Vec<u8>, ServerFnError> {
+    use imports::*;
+
+    let user_claims = validate_and_get_token_info(access_token).await?;
+
+    // Check if the user's subject is contained in the file_key (since all files are keyed by the
+    // user's subject)
+    if !file_key.contains(&user_claims.subject) {
+        // Check that the user is a provider.
+        if !user_claims
+            .groups
+            .contains(&"ScholarshipProviders".to_string())
+        {
+            return Err(ServerFnError::new(
+                "Access denied: user is not the student or a provider",
+            ));
+        }
+    }
+
+    // We now just need to get the actual file.
+    let client = aws_sdk_s3::Client::new(&create_aws_config().await);
+
+    let result = client
+        .get_object()
+        .key(file_key)
+        .send()
+        .await
+        .map_err(|e| {
+            let msg = e.message().unwrap_or("Unknown error occurred");
+            error!("{}", msg);
+            ServerFnError::new(msg)
+        })?;
+
+    let bytes = result.body.collect().await?;
+
+    Ok(bytes.to_vec())
+}
