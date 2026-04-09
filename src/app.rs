@@ -134,26 +134,17 @@ fn StudentRoutes() -> impl MatchNestedRoutes + Clone {
         <ParentRoute path=path!("students") view=student::StudentShell>
             <Route path=path!("callback") view=AuthCallbackPage />
             <Route path=path!("home") view=student::StudentHomePage />
-            <Route path=path!("demographics") view=student::StudentDemographicsPage />
-            <Route path=path!("eligibility") view=student::StudentEligibilityPage />
-            <Route path=path!("additional") view=student::AdditionalPage />
-            <Route path=path!("additional/academics") view=student::StudentAcademicsPage />
-            <Route path=path!("additional/athletics") view=student::StudentAthleticsPage />
-            <Route
-                path=path!("additional/extracurriculars")
-                view=student::StudentExtracurricularsPage
-            />
-            <Route
-                path=path!("additional/work-experience")
-                view=student::StudentWorkExperiencePage
-            />
-            <Route path=path!("additional/university") view=student::StudentUniversityPage />
-            <Route path=path!("additional/family-info") view=student::StudentFamilyPage />
-            <Route path=path!("additional/financials") view=student::StudentFinancialPage />
-            <Route
-                path=path!("additional/specifics")
-                view=student::StudentSpecificRequirementsPage
-            />
+            <Route path=path!("demographics") view=student::ClosedForm />
+            <Route path=path!("eligibility") view=student::ClosedForm />
+            <Route path=path!("additional") view=student::ClosedForm />
+            <Route path=path!("additional/academics") view=student::ClosedForm />
+            <Route path=path!("additional/athletics") view=student::ClosedForm />
+            <Route path=path!("additional/extracurriculars") view=student::ClosedForm />
+            <Route path=path!("additional/work-experience") view=student::ClosedForm />
+            <Route path=path!("additional/university") view=student::ClosedForm />
+            <Route path=path!("additional/family-info") view=student::ClosedForm />
+            <Route path=path!("additional/financials") view=student::ClosedForm />
+            <Route path=path!("additional/specifics") view=student::ClosedForm />
         </ParentRoute>
     }
     .into_inner()
