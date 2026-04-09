@@ -1,5 +1,5 @@
 ﻿use crate::common::{ComparisonData, ExpandableInfo, SchemaNode, SchemaType, ValueType};
-use crate::components::{Banner, Loading, ValueDisplay};
+use crate::components::{ActionButton, Banner, Loading, ValueDisplay};
 use crate::pages::UnauthenticatedPage;
 use crate::pages::api::get_comparison_info;
 use crate::pages::api::students::{get_all_student_data, get_student_data};
@@ -530,6 +530,11 @@ fn StudentInformationDialog(
         }
     });
 
+    let on_click_fafsa = move |_| {
+        let fafsa_key = format!("financial_info/user_id/fafsa/file_name");
+        debug_log!("Getting FAFSA file with key {fafsa_key}");
+    };
+
     view! {
         <dialog
             node_ref=dialog_ref
@@ -541,6 +546,7 @@ fn StudentInformationDialog(
         >
             <div class="p-5" on:click=move |e: MouseEvent| e.stop_propagation()>
                 <Suspense fallback=Loading>
+                    <ActionButton on:click=on_click_fafsa>"Get FAFSA"</ActionButton>
                     {move || Suspend::new(async move {
                         get_student_data(
                                 student_id.get().unwrap_or_default(),

@@ -261,3 +261,65 @@ pub async fn get_student_file(
 
     Ok(bytes.to_vec())
 }
+
+/// # Batch Get Student Files API
+/// Gets all indicated files and returns a single `.zip` file containing all of them. They will be
+/// organized based on their file key.
+///
+/// This is more efficient than calling the [`get_student_file`] function as it makes use of S3's
+/// `batch_get_object` function.
+#[server]
+pub async fn batch_get_student_files() -> Result<Vec<u8>, ServerFnError> {
+    todo!()
+}
+
+/// # Get Student File Names API
+/// Gets a list of file names given a student's ID and the corresponding input ID from the forms.
+/// These file names can be used to construct a file key for S3.
+///
+/// This API is only accessible by provider-level users.
+#[server]
+pub async fn get_student_file_names(
+    access_token: String,
+    student_id: String,
+    form_name: String,
+    question_id: String,
+) -> Result<Vec<String>, ServerFnError> {
+    use imports::*;
+
+    let claims = validate_and_get_token_info(access_token).await?;
+
+    // Check if the user has permission to get these files.
+    if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
+        return Err(ServerFnError::new("Access denied: user is not a provider"));
+    }
+
+    let client = create_dynamo_client().await;
+
+    client
+        .query()
+        .table_name(MAIN_TABLE_NAME)
+        .expression_attribute_values(":hk", AttributeValue::S(format!("STUDENT#{student_id}")))
+        .expression_attribute_values(
+            ":sk",
+            AttributeValue::S(format!("FILE#{form_name}#{question_id}")),
+        )
+        .key_condition_expression("HK = :hk and begins_with(SK, :sk)")
+        .send()
+        .await
+        .map_err(|e| {
+            let msg = e.message().unwrap_or("Unknown error occurred");
+            error!("{}", msg);
+            ServerFnError::new(msg)
+        })
+        .map(|output| {
+            let Some(items) = output.items else {
+                return Vec::new();
+            };
+
+            items
+                .into_iter()
+                .filter_map(|item| item.get("SK")?.as_s().ok().cloned())
+                .collect::<Vec<String>>()
+        })
+}
