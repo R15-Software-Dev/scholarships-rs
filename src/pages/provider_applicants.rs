@@ -2,7 +2,10 @@
 use crate::components::{ActionButton, Banner, Loading, ValueDisplay};
 use crate::pages::UnauthenticatedPage;
 use crate::pages::api::get_comparison_info;
-use crate::pages::api::students::{get_all_student_data, get_student_data};
+use crate::pages::api::students::{
+    BatchGetStudentFiles, GetStudentFile, GetStudentFileNames, get_all_input_files,
+    get_all_student_data, get_student_data, get_student_file_names,
+};
 use leptos::ev::{Event, MouseEvent};
 use leptos::html::Dialog;
 use leptos::logging::debug_log;
@@ -267,6 +270,7 @@ pub fn ApplicantsStudentList() -> impl IntoView {
                                     view! {
                                         <div>"Showing students here."</div>
                                         <ApplicantsStudentListView
+                                            access_token=access_token
                                             students=students
                                             scholarship=scholarship
                                             requirements=requirements_list
@@ -292,6 +296,7 @@ pub fn ApplicantsStudentList() -> impl IntoView {
 
 #[component]
 fn ApplicantsStudentListView(
+    #[prop(into)] access_token: Signal<Option<String>>,
     #[prop(into)] students: Signal<HashMap<String, HashMap<String, ValueType>>>,
     #[prop(into)] scholarship: Signal<ExpandableInfo>,
     #[prop(into)] requirements: Signal<Vec<ComparisonData>>,
@@ -309,20 +314,79 @@ fn ApplicantsStudentListView(
         current_student_id.set(None);
     });
 
+    let fafsa_required = Memo::new(move |_| {
+        let required = scholarship
+            .get()
+            .data
+            .get("fafsa_required")
+            .map(|v| v.as_string().ok().flatten())
+            .flatten()
+            .unwrap_or_default();
+
+        required == "Yes"
+    });
+
+    let essay_required = Memo::new(move |_| {
+        let prompt = scholarship
+            .get()
+            .data
+            .get("essay_prompt")
+            .map(|v| v.as_string().ok().flatten())
+            .flatten()
+            .unwrap_or_default();
+
+        !prompt.is_empty()
+    });
+
+    let fafsa_resource = Resource::new(
+        move || (fafsa_required.get(), access_token.get()),
+        move |(fafsa_required, access_token)| async move {
+            // Only get this information if the FAFSA is required. Otherwise, return a blank result.
+            let Some(access_token) = access_token else {
+                return Err(ServerFnError::new("Couldn't find access token"));
+            };
+            if !fafsa_required {
+                return Ok(HashMap::new());
+            }
+
+            get_all_input_files(
+                access_token,
+                "financial_info".to_string(),
+                "fafsa".to_string(),
+            )
+            .await
+        },
+    );
+    let essay_resource = Resource::new(
+        move || (essay_required.get(), access_token.get()),
+        move |(essay_required, access_token)| async move {
+            // Only get this information if the scholarship requested it. Otherwise, return a blank
+            // result.
+            let Some(access_token) = access_token else {
+                return Err(ServerFnError::new("Couldn't find access token"));
+            };
+            if !essay_required {
+                return Ok(HashMap::new());
+            }
+
+            get_all_input_files(
+                access_token,
+                "scholarship_essays".to_string(),
+                scholarship.get().subject,
+            )
+            .await
+        },
+    );
+
     fn get_eligible_students(
         students: HashMap<String, HashMap<String, ValueType>>,
         scholarship: ExpandableInfo,
         requirements: Vec<ComparisonData>,
+        essay_required: bool,
+        fafsa_required: bool,
+        fafsa_list: HashMap<String, Vec<String>>,
+        essay_list: HashMap<String, Vec<String>>,
     ) -> Result<HashMap<String, HashMap<String, ValueType>>, Error> {
-        let requires_essay = !scholarship
-            .data
-            .get("essay_prompt")
-            .unwrap_or(&ValueType::String(None))
-            .as_string()
-            .map_err(|_| "Couldn't get essay as a string")?
-            .unwrap_or_default()
-            .is_empty();
-
         // Get the full map of requirements. Each key contains a list of IDs.
         let scholarship_requirements = scholarship
             .data
@@ -366,6 +430,26 @@ fn ApplicantsStudentListView(
             .into_iter()
             .filter_map(|(id, student)| {
                 // The student needs to pass one requirement from each list.
+                // The easiest ones to check first are whether the scholarship requires a student
+                // essay and/or their fafsa information. If the student does not have these things,
+                // they are skipped.
+
+                if fafsa_required && !fafsa_list.contains_key(&id) {
+                    // Get the student files related to their fafsa and continue. Return false if not there.
+                    debug_log!(
+                        "Student with id {id} failed - FAFSA is required but was not found."
+                    );
+                    return None;
+                }
+
+                if essay_required && !essay_list.contains_key(&id) {
+                    // Get the student's files related to their essays and continue. Return false if not there.
+                    debug_log!(
+                        "Student with id {id} failed - essay is required but was not found."
+                    );
+                    return None;
+                }
+
                 let result = resolved_requirements.iter().all(|list| {
                     if list.is_empty() {
                         return true;
@@ -385,16 +469,30 @@ fn ApplicantsStudentListView(
     }
 
     Effect::new(move || {
-        debug_log!("Running eligibility check on students");
-        let eligible_res =
-            get_eligible_students(students.get(), scholarship.get(), requirements.get());
+        // We have to wait until we've gotten fafsa/essay requirements.
+        debug_log!("Waiting on essay and FAFSA resources...");
+        if let (Some(fafsa_list), Some(essay_list)) = (fafsa_resource.get(), essay_resource.get()) {
+            debug_log!(
+                "Running eligibility check on {} students",
+                students.get().len()
+            );
+            let eligible_res = get_eligible_students(
+                students.get(),
+                scholarship.get(),
+                requirements.get(),
+                essay_required.get(),
+                fafsa_required.get(),
+                fafsa_list.unwrap_or_default(),
+                essay_list.unwrap_or_default(),
+            );
 
-        match eligible_res {
-            Ok(list) => {
-                debug_log!("Total number of eligible students: {}", list.len());
-                eligible_students.set(list);
+            match eligible_res {
+                Ok(list) => {
+                    debug_log!("Total number of eligible students: {}", list.len());
+                    eligible_students.set(list);
+                }
+                Err(e) => error_msg.set(format!("Failed to get eligible students list: {e}")),
             }
-            Err(e) => error_msg.set(format!("Failed to get eligible students list: {e}")),
         }
     });
 
@@ -463,6 +561,8 @@ fn StudentInformationDialog(
 
     let dialog_ref = NodeRef::<Dialog>::new();
 
+    //#region Schema Definitions
+
     let demographics_schema = StoredValue::new(
         SchemaNode::new(SchemaType::Map)
             .header("Demographics Information")
@@ -517,6 +617,8 @@ fn StudentInformationDialog(
     let extracurricular_schema =
         StoredValue::new(SchemaNode::new(SchemaType::Map).header("Extracurricular Activities"));
 
+    //#endregion
+
     Effect::new(move || {
         if let Some(dialog) = dialog_ref.get() {
             let open = visible.get();
@@ -530,7 +632,12 @@ fn StudentInformationDialog(
         }
     });
 
+    // We want to get the student's uploaded files - only the ones that are relevant to the current
+    // scholarship, meaning their essays and/or FAFSA by request.
+
     let on_click_fafsa = move |_| {
+        // We need to get the student's file names/keys and then tell the server that we want to
+        // download them.
         let fafsa_key = format!("financial_info/user_id/fafsa/file_name");
         debug_log!("Getting FAFSA file with key {fafsa_key}");
     };

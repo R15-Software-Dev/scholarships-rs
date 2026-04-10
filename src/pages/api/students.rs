@@ -323,3 +323,66 @@ pub async fn get_student_file_names(
                 .collect::<Vec<String>>()
         })
 }
+
+/// # Get All Input Files API
+/// Gets all files that have been uploaded to the given input. For example, getting all the FAFSA
+/// files that were uploaded to the FAFSA file input on the Financial Info page.
+///
+/// Returns a `HashMap` keyed by the submitting user's ID, with a value of all files that were
+/// uploaded by that user.
+///
+/// This is only usable by users with provider-level access.
+#[server]
+pub async fn get_all_input_files(
+    access_token: String,
+    form_name: String,
+    input_name: String,
+) -> Result<HashMap<String, Vec<String>>, ServerFnError> {
+    use imports::*;
+
+    let claims = validate_and_get_token_info(access_token).await?;
+
+    if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
+        return Err(ServerFnError::new("Access denied: user is not a provider"));
+    }
+
+    let client = create_dynamo_client().await;
+
+    let res = client
+        .scan()
+        .table_name(MAIN_TABLE_NAME)
+        .filter_expression("begins_with(SK, :sk)")
+        .expression_attribute_values(
+            ":sk",
+            AttributeValue::S(format!("FILE#{form_name}#{input_name}")),
+        )
+        .send()
+        .await
+        .map_err(|e| {
+            let msg = e.message().unwrap_or("Unknown error occurred");
+            error!("{}", msg);
+            ServerFnError::new(msg)
+        })?;
+
+    let mut result_map = HashMap::<String, Vec<String>>::new();
+    res.items.unwrap_or_default().iter().for_each(|item| {
+        let id = item
+            .get("HK")
+            .map(|v| v.as_s().cloned().unwrap_or_default())
+            .unwrap_or_default()
+            .split("STUDENT#")
+            .collect::<String>();
+
+        let file_key = item
+            .get("file_key")
+            .map(|v| v.as_s().cloned().unwrap_or_default())
+            .unwrap_or_default();
+
+        result_map
+            .entry(id)
+            .and_modify(|v| v.push(file_key.clone()))
+            .or_insert(vec![file_key]);
+    });
+
+    Ok(result_map)
+}
