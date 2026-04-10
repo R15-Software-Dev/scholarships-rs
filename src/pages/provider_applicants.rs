@@ -13,7 +13,7 @@ use leptos::web_sys::HtmlAnchorElement;
 use leptos_icons::Icon;
 use leptos_oidc::{AuthLoaded, AuthSignal, Authenticated};
 use leptos_router::components::Outlet;
-use leptos_router::hooks::{query_signal, use_navigate};
+use leptos_router::hooks::use_navigate;
 use std::collections::HashMap;
 
 #[component]
@@ -269,7 +269,19 @@ pub fn ApplicantsStudentList() -> impl IntoView {
                             match result {
                                 Ok((students, scholarship, requirements_list)) => {
                                     view! {
-                                        <div>"Showing students here."</div>
+                                        <h1 class="text-2xl font-bold">"Eligible Students"</h1>
+                                        <div class="text-lg">
+                                            "Click on a student's name to view their information and download any requested files."
+                                        </div>
+                                        <div class="text-lg">
+                                            "If your scholarship requires a transcript, please send an email to Sara Smith at "
+                                            <a
+                                                class="text-blue-500 underline"
+                                                href="mailto:ssmith@region15.org"
+                                            >
+                                                "ssmith@region15.org"
+                                            </a>"."
+                                        </div>
                                         <ApplicantsStudentListView
                                             access_token=access_token
                                             students=students
@@ -512,7 +524,11 @@ fn ApplicantsStudentListView(
         <Show when=move || !error_msg.get().is_empty()>
             <div>"Error checking student eligibility: "{error_msg}</div>
         </Show>
-        <div class="flex flex-col">
+        <div class="m-3 flex flex-col">
+            <div class="flex flex-row p-1 border-b-1 border-black">
+                <div class="pl-5 flex-1 text-lg font-bold text-left">"Last Name"</div>
+                <div class="pr-5 flex-1 text-lg font-bold text-left">"First Name"</div>
+            </div>
             <For
                 each=move || eligible_students.get()
                 key=|(id, _)| id.clone()
@@ -540,10 +556,12 @@ fn ApplicantsStudentListView(
                     // to the end of the current path.
 
                     view! {
-                        <div class="text-lg" on:click=on_click>
-                            {first_name}
-                            " "
-                            {last_name}
+                        <div
+                            class="flex flex-row p-1 border-y-1 border-gray-200 cursor-pointer hover:bg-yellow-100 transition-all duration-200"
+                            on:click=on_click
+                        >
+                            <div class="pl-5 flex-1 text-lg text-left">{last_name}</div>
+                            <div class="pr-5 flex-1 text-lg text-left">{first_name}</div>
                         </div>
                     }
                 }
@@ -623,8 +641,44 @@ fn StudentInformationDialog(
             ),
     );
 
-    let extracurricular_schema =
-        StoredValue::new(SchemaNode::new(SchemaType::Map).header("Extracurricular Activities"));
+    let extracurricular_schema = StoredValue::new(
+        SchemaNode::new(SchemaType::Map)
+            .header("Extracurricular Activities")
+            .child(
+                "service_hours",
+                SchemaNode::new(SchemaType::String).header("Total Number of Service Hours"),
+            )
+            .child(
+                "extracurricular",
+                SchemaNode::new(SchemaType::List)
+                    .header("List of Activities")
+                    .item_template(
+                        SchemaNode::new(SchemaType::Map)
+                            .header("Activity")
+                            .child(
+                                "activity_name",
+                                SchemaNode::new(SchemaType::String).header("Activity Name"),
+                            )
+                            .child(
+                                "num_hours",
+                                SchemaNode::new(SchemaType::String)
+                                    .header("Number of Hours Completed"),
+                            )
+                            .child(
+                                "num_weeks",
+                                SchemaNode::new(SchemaType::String)
+                                    .header("Number of Weeks Participated"),
+                            )
+                            .child(
+                                "special_involvement",
+                                SchemaNode::new(SchemaType::String).header("Special Involvement"),
+                            ), // .child(
+                               //     "grades",
+                               //     SchemaNode::new(SchemaType::String).header("Grades Participated")
+                               // )
+                    ),
+            ),
+    );
 
     //#endregion
 
@@ -647,8 +701,6 @@ fn StudentInformationDialog(
     let get_student_files = ServerAction::<GetStudentFiles>::new();
     let get_buttons_disabled = get_student_files.pending();
     let on_click_fafsa = move |_| {
-        // We need to get the student's file names/keys and then tell the server that we want to
-        // download them.
         get_student_files.dispatch(GetStudentFiles {
             access_token: access_token.get().unwrap_or_default(),
             student_id: student_id.get().unwrap_or_default(),
@@ -705,15 +757,19 @@ fn StudentInformationDialog(
                 on:click=move |e: MouseEvent| e.stop_propagation()
             >
                 <Suspense fallback=Loading>
-                    <div class="flex flex-row">
+                    <h1 class="text-2xl font-bold">"Student Information"</h1>
+                    <div class="text-lg">
+                        "Click on any header to minimize that block of information."
+                    </div>
+                    <div class="flex flex-row m-1.5">
                         <Show when=move || fafsa_required.get()>
                             <ActionButton on:click=on_click_fafsa disabled=get_buttons_disabled>
-                                "Get FAFSA File(s)"
+                                "Download FAFSA File(s)"
                             </ActionButton>
                         </Show>
                         <Show when=move || essay_required.get()>
                             <ActionButton on:click=on_click_essay disabled=get_buttons_disabled>
-                                "Get Essay File(s)"
+                                "Download Essay File(s)"
                             </ActionButton>
                         </Show>
                     </div>
@@ -744,6 +800,21 @@ fn StudentInformationDialog(
                                         schema=sports_schema.get_value()
                                         data_map=student_info
                                         data_member="sports_participation"
+                                    />
+                                }
+                            })
+                    })}
+                    {move || Suspend::new(async move {
+                        get_student_data(
+                                student_id.get().unwrap_or_default(),
+                                "demographics".to_string(),
+                            )
+                            .await
+                            .map(|student_info| {
+                                view! {
+                                    <ValueDisplay
+                                        schema=extracurricular_schema.get_value()
+                                        data_map=student_info
                                     />
                                 }
                             })
