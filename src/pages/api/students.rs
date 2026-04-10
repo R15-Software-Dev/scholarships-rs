@@ -346,8 +346,9 @@ pub async fn get_student_files(
 
     debug_log!("Writing {} files to zip file...", results.len());
     for (key, file_bytes) in results {
+        let file_name = key.split('/').last().unwrap_or_default();
         writer
-            .start_file(key.clone(), SimpleFileOptions::default())
+            .start_file(file_name, SimpleFileOptions::default())
             .map_err(ServerFnError::new)?;
         writer.write_all(&file_bytes).map_err(ServerFnError::new)?;
     }

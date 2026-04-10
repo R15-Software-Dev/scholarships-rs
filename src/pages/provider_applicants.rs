@@ -678,7 +678,7 @@ fn StudentInformationDialog(
                 .dyn_into()
                 .unwrap();
 
-            a.set_download("testing.zip");
+            a.set_download("");
             a.set_href(&data_url);
             document().body().unwrap().append_child(&a).unwrap();
             a.click();
