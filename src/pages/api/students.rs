@@ -1,6 +1,7 @@
 use leptos::prelude::*;
 use leptos::server_fn::codec::Json;
 use std::collections::HashMap;
+use std::io::Write;
 
 #[cfg(feature = "ssr")]
 mod imports {
@@ -12,6 +13,7 @@ mod imports {
     pub use aws_sdk_dynamodb::types::AttributeValue;
     pub use leptos::logging::{debug_log, error};
     pub use std::collections::HashMap;
+    pub use zip::write::SimpleFileOptions;
 }
 
 #[server(input = Json)]
@@ -211,7 +213,7 @@ pub async fn get_completed_students(
     Ok(output)
 }
 
-/// # Get Student File API
+/// # Get File by Key API
 /// This function gets a file from the corresponding S3 file key. If the subject found from the
 /// `access_token` does not match the owner of the requested file, the requesting user must have
 /// provider-level access or higher.
@@ -221,7 +223,7 @@ pub async fn get_completed_students(
 /// if the requesting user does not have the correct permissions, it will return a message indicating
 /// such. If the file is not found, an error containing "File not found" will be returned.
 #[server]
-pub async fn get_student_file(
+pub async fn get_file_by_key(
     access_token: String,
     file_key: String,
 ) -> Result<Vec<u8>, ServerFnError> {
@@ -262,29 +264,18 @@ pub async fn get_student_file(
     Ok(bytes.to_vec())
 }
 
-/// # Batch Get Student Files API
-/// Gets all indicated files and returns a single `.zip` file containing all of them. They will be
-/// organized based on their file key.
-///
-/// This is more efficient than calling the [`get_student_file`] function as it makes use of S3's
-/// `batch_get_object` function.
-#[server]
-pub async fn batch_get_student_files() -> Result<Vec<u8>, ServerFnError> {
-    todo!()
-}
-
 /// # Get Student File Names API
 /// Gets a list of file names given a student's ID and the corresponding input ID from the forms.
 /// These file names can be used to construct a file key for S3.
 ///
 /// This API is only accessible by provider-level users.
 #[server]
-pub async fn get_student_file_names(
+pub async fn get_student_files(
     access_token: String,
     student_id: String,
     form_name: String,
     question_id: String,
-) -> Result<Vec<String>, ServerFnError> {
+) -> Result<Vec<u8>, ServerFnError> {
     use imports::*;
 
     let claims = validate_and_get_token_info(access_token).await?;
@@ -296,7 +287,7 @@ pub async fn get_student_file_names(
 
     let client = create_dynamo_client().await;
 
-    client
+    let file_keys = client
         .query()
         .table_name(MAIN_TABLE_NAME)
         .expression_attribute_values(":hk", AttributeValue::S(format!("STUDENT#{student_id}")))
@@ -319,9 +310,52 @@ pub async fn get_student_file_names(
 
             items
                 .into_iter()
-                .filter_map(|item| item.get("SK")?.as_s().ok().cloned())
+                .filter_map(|item| item.get("file_key")?.as_s().ok().cloned())
                 .collect::<Vec<String>>()
+        })?;
+
+    debug_log!("Await student file futures...");
+    let futures: Vec<_> = file_keys
+        .into_iter()
+        .map(|file_key| async move {
+            debug_log!("Requesting file from API with key {file_key}");
+            // Get all files from S3. This is a batch operation.
+            let s3_client = aws_sdk_s3::Client::new(&create_aws_config().await);
+            let file_output = s3_client
+                .get_object()
+                .bucket("leptos-scholarships")
+                .key(&file_key)
+                .send()
+                .await
+                .ok()?;
+
+            let bytes = file_output.body.collect().await.ok()?.to_vec();
+
+            Some((file_key, bytes))
         })
+        .collect();
+
+    let results = futures::future::join_all(futures)
+        .await
+        .into_iter()
+        .flatten()
+        .collect::<Vec<(String, Vec<u8>)>>();
+
+    let cur = std::io::Cursor::new(Vec::new());
+    let mut writer = zip::ZipWriter::new(cur);
+
+    debug_log!("Writing {} files to zip file...", results.len());
+    for (key, file_bytes) in results {
+        writer
+            .start_file(key.clone(), SimpleFileOptions::default())
+            .map_err(ServerFnError::new)?;
+        writer.write_all(&file_bytes).map_err(ServerFnError::new)?;
+    }
+
+    debug_log!("Getting finished file");
+    let finished = writer.finish().map_err(ServerFnError::new)?;
+
+    Ok(finished.into_inner())
 }
 
 /// # Get All Input Files API

@@ -2,14 +2,14 @@
 use crate::components::{ActionButton, Banner, Loading, ValueDisplay};
 use crate::pages::UnauthenticatedPage;
 use crate::pages::api::get_comparison_info;
-use crate::pages::api::students::{
-    BatchGetStudentFiles, GetStudentFile, GetStudentFileNames, get_all_input_files,
-    get_all_student_data, get_student_data, get_student_file_names,
-};
+use crate::pages::api::students::{GetStudentFiles, get_all_input_files, get_student_data};
+use base64::Engine;
 use leptos::ev::{Event, MouseEvent};
 use leptos::html::Dialog;
 use leptos::logging::debug_log;
 use leptos::prelude::*;
+use leptos::wasm_bindgen::JsCast;
+use leptos::web_sys::HtmlAnchorElement;
 use leptos_oidc::{AuthLoaded, AuthSignal, Authenticated};
 use leptos_router::components::Outlet;
 use leptos_router::hooks::{query_signal, use_navigate};
@@ -501,9 +501,12 @@ fn ApplicantsStudentListView(
     // flex container.
     view! {
         <StudentInformationDialog
+            scholarship_id=scholarship.get().subject
             student_id=current_student_id
             visible=dialog_visible
             on_close=on_dialog_close
+            essay_required=essay_required
+            fafsa_required=fafsa_required
         />
         <Show when=move || !error_msg.get().is_empty()>
             <div>"Error checking student eligibility: "{error_msg}</div>
@@ -550,9 +553,11 @@ fn ApplicantsStudentListView(
 
 #[component]
 fn StudentInformationDialog(
+    #[prop(into)] scholarship_id: Signal<String>,
     #[prop(into)] student_id: Signal<Option<String>>,
-    // #[prop(into)] scholarship_info: StoredValue<ExpandableInfo>,
     #[prop(into)] visible: Signal<bool>,
+    #[prop(into)] fafsa_required: Signal<bool>,
+    #[prop(into)] essay_required: Signal<bool>,
     #[prop(into)] on_close: Callback<()>,
 ) -> impl IntoView {
     // This component needs to just display all student information.
@@ -560,6 +565,9 @@ fn StudentInformationDialog(
     // requested an essay or financial information.
 
     let dialog_ref = NodeRef::<Dialog>::new();
+    let auth = expect_context::<AuthSignal>();
+    let access_token =
+        Memo::new(move |_| auth.with(|auth| auth.authenticated().map(|a| a.access_token())));
 
     //#region Schema Definitions
 
@@ -635,12 +643,49 @@ fn StudentInformationDialog(
     // We want to get the student's uploaded files - only the ones that are relevant to the current
     // scholarship, meaning their essays and/or FAFSA by request.
 
+    let get_student_files = ServerAction::<GetStudentFiles>::new();
+    let get_buttons_disabled = get_student_files.pending();
     let on_click_fafsa = move |_| {
         // We need to get the student's file names/keys and then tell the server that we want to
         // download them.
-        let fafsa_key = format!("financial_info/user_id/fafsa/file_name");
-        debug_log!("Getting FAFSA file with key {fafsa_key}");
+        get_student_files.dispatch(GetStudentFiles {
+            access_token: access_token.get().unwrap_or_default(),
+            student_id: student_id.get().unwrap_or_default(),
+            form_name: "financial_info".to_string(),
+            question_id: "fafsa".to_string(),
+        });
     };
+
+    let on_click_essay = move |_| {
+        debug_log!("Getting essay files");
+        get_student_files.dispatch(GetStudentFiles {
+            access_token: access_token.get().unwrap_or_default(),
+            student_id: student_id.get().unwrap_or_default(),
+            form_name: "scholarship_essays".to_string(),
+            question_id: scholarship_id.get(),
+        });
+    };
+
+    Effect::new(move || {
+        if let Some(Ok(file)) = get_student_files.value().get() {
+            let base64 = base64::engine::general_purpose::STANDARD.encode(file);
+            let data_url = format!("data:application/zip;base64,{}", base64);
+            // Create a base64 link and open it.
+            let a: HtmlAnchorElement = document()
+                .create_element("a")
+                .expect("Failed to create anchor element")
+                .dyn_into()
+                .unwrap();
+
+            a.set_download("testing.zip");
+            a.set_href(&data_url);
+            document().body().unwrap().append_child(&a).unwrap();
+            a.click();
+            a.remove();
+
+            get_student_files.clear();
+        }
+    });
 
     view! {
         <dialog
@@ -653,7 +698,18 @@ fn StudentInformationDialog(
         >
             <div class="p-5" on:click=move |e: MouseEvent| e.stop_propagation()>
                 <Suspense fallback=Loading>
-                    <ActionButton on:click=on_click_fafsa>"Get FAFSA"</ActionButton>
+                    <div class="flex flex-row">
+                        <Show when=move || fafsa_required.get()>
+                            <ActionButton on:click=on_click_fafsa disabled=get_buttons_disabled>
+                                "Get FAFSA File(s)"
+                            </ActionButton>
+                        </Show>
+                        <Show when=move || essay_required.get()>
+                            <ActionButton on:click=on_click_essay disabled=get_buttons_disabled>
+                                "Get Essay File(s)"
+                            </ActionButton>
+                        </Show>
+                    </div>
                     {move || Suspend::new(async move {
                         get_student_data(
                                 student_id.get().unwrap_or_default(),
