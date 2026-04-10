@@ -10,6 +10,7 @@ use leptos::logging::debug_log;
 use leptos::prelude::*;
 use leptos::wasm_bindgen::JsCast;
 use leptos::web_sys::HtmlAnchorElement;
+use leptos_icons::Icon;
 use leptos_oidc::{AuthLoaded, AuthSignal, Authenticated};
 use leptos_router::components::Outlet;
 use leptos_router::hooks::{query_signal, use_navigate};
@@ -692,11 +693,17 @@ fn StudentInformationDialog(
             node_ref=dialog_ref
             on:cancel=move |_: Event| on_close.run(())
             on:click=move |_| on_close.run(())
-            class="w-1/2 m-auto rounded-lg shadow-xl/50
-            backdrop:backdrop-blur-xs backdrop:transition-backdrop-filter
-            [open]:flex flex-col items-center transition-all duration-200"
+            class="py-5 w-1/2 m-auto rounded-lg shadow-xl/50
+            backdrop:backdrop-blur-xs backdrop:transition-all
+            relative open:grid grid-rows-[1fr] flex-col items-center transition-all duration-200 overflow-visible max-h-[90vh]"
         >
-            <div class="p-5" on:click=move |e: MouseEvent| e.stop_propagation()>
+            <div class="flex absolute rounded-full top-10 -right-6 size-12 items-center justify-center bg-gray-300 text-gray-700 hover:text-red-600 transition-all cursor-pointer">
+                <Icon icon=icondata::FaXmarkSolid width="2rem" height="2rem" />
+            </div>
+            <div
+                class="m-6 overflow-auto h-full"
+                on:click=move |e: MouseEvent| e.stop_propagation()
+            >
                 <Suspense fallback=Loading>
                     <div class="flex flex-row">
                         <Show when=move || fafsa_required.get()>
