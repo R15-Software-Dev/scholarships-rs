@@ -675,6 +675,54 @@ fn StudentInformationDialog(
             .build(),
     );
 
+    let academics_schema = StoredValue::new(
+        SchemaNode::builder()
+            .header_style(SchemaHeaderStyle::MainHeader)
+            .header("Academic Information")
+            .map()
+            .child(
+                "unweighted_gpa",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Unweighted GPA")
+                    .number()
+                    .build(),
+            )
+            .child(
+                "weighted_gpa",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Weighted GPA")
+                    .number()
+                    .build(),
+            )
+            .child(
+                "sat_score",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Highest SAT Score")
+                    .number()
+                    .build(),
+            )
+            .child(
+                "act_score",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Highest ACT Score")
+                    .number()
+                    .build(),
+            )
+            .child(
+                "academic_honors",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Academic Honors")
+                    .string()
+                    .build(),
+            )
+            .build(),
+    );
+
     let sports_schema = StoredValue::new(
         SchemaNode::builder()
             .header_style(SchemaHeaderStyle::MainHeader)
@@ -766,6 +814,280 @@ fn StudentInformationDialog(
                             )
                             .build(),
                     )
+                    .build(),
+            )
+            .build(),
+    );
+
+    let work_exp_schema = StoredValue::new(
+        SchemaNode::builder()
+            .header_style(SchemaHeaderStyle::MainHeader)
+            .header("Work Experience")
+            .map_list()
+            .item_template(
+                SchemaNode::builder()
+                    .container(SchemaContainerStyle::Capsule)
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Experience")
+                    .map()
+                    .child(
+                        "job_title",
+                        SchemaNode::builder()
+                            .header_style(SchemaHeaderStyle::Bold)
+                            .header("Job Title")
+                            .string()
+                            .build(),
+                    )
+                    .child(
+                        "employer",
+                        SchemaNode::builder()
+                            .header_style(SchemaHeaderStyle::Bold)
+                            .header("Employer")
+                            .string()
+                            .build(),
+                    )
+                    .child(
+                        "start_date",
+                        SchemaNode::builder()
+                            .header_style(SchemaHeaderStyle::Bold)
+                            .header("Start Date")
+                            .string()
+                            .build(),
+                    )
+                    .child(
+                        "end_date",
+                        SchemaNode::builder()
+                            .header_style(SchemaHeaderStyle::Bold)
+                            .header("End Date")
+                            .string()
+                            .build(),
+                    )
+                    .child(
+                        "num_hours",
+                        SchemaNode::builder()
+                            .header_style(SchemaHeaderStyle::Bold)
+                            .header("Approximate Number of Hours")
+                            .number()
+                            .build(),
+                    )
+                    .build(),
+            )
+            .build(),
+    );
+
+    let university_schema = StoredValue::new(
+        SchemaNode::builder()
+            .header_style(SchemaHeaderStyle::MainHeader)
+            .header("University Information")
+            .map()
+            .child(
+                "college_name",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("University Name")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "college_city",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("University Street Address")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "college_state",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("University State")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "college_zip",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("University ZIP")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "college_acceptance",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Has the student received an acceptance?")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "major",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Chosen Major")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "intended_career",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Intended Career")
+                    .string()
+                    .build(),
+            )
+            .build(),
+    );
+
+    let family_schema = StoredValue::new(
+        SchemaNode::builder()
+            .header_style(SchemaHeaderStyle::MainHeader)
+            .header("Family Information")
+            .map()
+            .child(
+                "num_children",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Total number of children in student's family")
+                    .number()
+                    .build(),
+            )
+            .child(
+                "num_children_college",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Total number of children currently attending college")
+                    .number()
+                    .build(),
+            )
+            .child(
+                "parent_one_name",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Parent/Guardian 1 Name")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "parent_one_relationship",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Parent/Guardian 1 Relationship")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "parent_one_occupation",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Parent/Guardian 1 Occupation")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "parent_one_employer",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Parent/Guardian 1 Employer")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "parent_two_name",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Parent/Guardian 2 Name")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "parent_two_relationship",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Parent/Guardian 2 Relationship")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "parent_two_occupation",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Parent/Guardian 2 Occupation")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "parent_two_employer",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Parent/Guardian 2 Employer")
+                    .string()
+                    .build(),
+            )
+            .build(),
+    );
+
+    let specifics_schema = StoredValue::new(
+        SchemaNode::builder()
+            .header_style(SchemaHeaderStyle::MainHeader)
+            .header("Extra Eligibility Information")
+            .map()
+            .child(
+                "attend_bas",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Did the student attend BAS?")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "middsouth_church",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Is the student a member of Midd-South Catholic Church?")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "family_military_service",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header(
+                        "Does the student have a family member who has served in the US Military?",
+                    )
+                    .string()
+                    .build(),
+            )
+            .child(
+                "youth_baseball",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Has the student participated in Pomperaug Youth Baseball?")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "aquatic_club",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Has the student participated in the Panthers Aquatic Club?")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "pea_member",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Does the student have a family member in the Region 15 PEA?")
+                    .string()
+                    .build(),
+            )
+            .child(
+                "music_program",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Has the student participated in the PHS Music Program?")
+                    .string()
                     .build(),
             )
             .build(),
@@ -879,6 +1201,21 @@ fn StudentInformationDialog(
                     {move || Suspend::new(async move {
                         get_student_data(
                                 student_id.get().unwrap_or_default(),
+                                "academics".to_string(),
+                            )
+                            .await
+                            .map(|student_info| {
+                                view! {
+                                    <DataDisplay
+                                        schema=academics_schema.get_value()
+                                        data_map=student_info
+                                    />
+                                }
+                            })
+                    })}
+                    {move || Suspend::new(async move {
+                        get_student_data(
+                                student_id.get().unwrap_or_default(),
                                 "athletics".to_string(),
                             )
                             .await
@@ -902,6 +1239,64 @@ fn StudentInformationDialog(
                                 view! {
                                     <DataDisplay
                                         schema=extracurricular_schema.get_value()
+                                        data_map=student_info
+                                    />
+                                }
+                            })
+                    })}
+                    {move || Suspend::new(async move {
+                        get_student_data(
+                                student_id.get().unwrap_or_default(),
+                                "workexp".to_string(),
+                            )
+                            .await
+                            .map(|student_info| {
+                                view! {
+                                    <DataDisplay
+                                        schema=work_exp_schema.get_value()
+                                        data_map=student_info
+                                        data_member="extracurricular"
+                                    />
+                                }
+                            })
+                    })}
+                    {move || Suspend::new(async move {
+                        get_student_data(
+                                student_id.get().unwrap_or_default(),
+                                "university".to_string(),
+                            )
+                            .await
+                            .map(|student_info| {
+                                view! {
+                                    <DataDisplay
+                                        schema=university_schema.get_value()
+                                        data_map=student_info
+                                    />
+                                }
+                            })
+                    })}
+                    {move || Suspend::new(async move {
+                        get_student_data(student_id.get().unwrap_or_default(), "family".to_string())
+                            .await
+                            .map(|student_info| {
+                                view! {
+                                    <DataDisplay
+                                        schema=family_schema.get_value()
+                                        data_map=student_info
+                                    />
+                                }
+                            })
+                    })}
+                    {move || Suspend::new(async move {
+                        get_student_data(
+                                student_id.get().unwrap_or_default(),
+                                "specifics".to_string(),
+                            )
+                            .await
+                            .map(|student_info| {
+                                view! {
+                                    <DataDisplay
+                                        schema=specifics_schema.get_value()
                                         data_map=student_info
                                     />
                                 }
