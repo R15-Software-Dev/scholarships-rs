@@ -1,22 +1,26 @@
 use leptos::prelude::*;
 use leptos::server_fn::codec::Json;
+use std::collections::HashMap;
+use std::io::Write;
 
 #[cfg(feature = "ssr")]
 mod imports {
     pub use super::super::MAIN_TABLE_NAME;
     pub use crate::common::ValueType;
+    pub use crate::pages::api::tokens::validate_and_get_token_info;
     pub use crate::utils::server::*;
     pub use aws_sdk_dynamodb::error::ProvideErrorMetadata;
     pub use aws_sdk_dynamodb::types::AttributeValue;
     pub use leptos::logging::{debug_log, error};
     pub use std::collections::HashMap;
+    pub use zip::write::SimpleFileOptions;
 }
 
 #[server(input = Json)]
 pub async fn put_student_data(
     subject: String,
     data_type: String,
-    data_map: std::collections::HashMap<String, crate::common::ValueType>,
+    data_map: HashMap<String, crate::common::ValueType>,
 ) -> Result<(), ServerFnError> {
     use imports::*;
 
@@ -52,7 +56,7 @@ pub async fn put_student_data(
 pub async fn get_student_data(
     subject: String,
     data_type: String,
-) -> Result<std::collections::HashMap<String, crate::common::ValueType>, ServerFnError> {
+) -> Result<HashMap<String, crate::common::ValueType>, ServerFnError> {
     use imports::*;
 
     let client = create_dynamo_client().await;
@@ -99,7 +103,7 @@ pub async fn get_student_data(
 #[server]
 pub async fn get_all_student_data(
     subject: String,
-) -> Result<std::collections::HashMap<String, crate::common::ValueType>, ServerFnError> {
+) -> Result<HashMap<String, crate::common::ValueType>, ServerFnError> {
     use imports::*;
 
     let client = create_dynamo_client().await;
@@ -130,4 +134,290 @@ pub async fn get_all_student_data(
             error!("{}", msg);
             ServerFnError::new(msg)
         })
+}
+
+#[server]
+pub async fn get_completed_students(
+    access_token: String,
+) -> Result<HashMap<String, HashMap<String, crate::common::ValueType>>, ServerFnError> {
+    use imports::*;
+
+    // We want to get all student information. The requirements are that the students have completed
+    // the demographics form - everything else may bed from this.
+    // The easiest way is to get all the information and filter on this side, instead of bookkeeping
+    // on the database's side.
+
+    // We want to verify the access token first, and make sure that the user has the correct access.
+    let claims = validate_and_get_token_info(access_token).await?;
+    if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
+        return Err(ServerFnError::new(
+            "User is not in the ScholarshipProviders group",
+        ));
+    }
+
+    let client = create_dynamo_client().await;
+
+    let response = client
+        .scan()
+        .table_name(MAIN_TABLE_NAME)
+        .send()
+        .await
+        .map_err(|err| {
+            let msg = err.message().unwrap_or("Unknown error occurred");
+            error!("{}", msg);
+            ServerFnError::new(msg)
+        })?;
+
+    let Some(items) = response.items else {
+        return Ok(HashMap::new());
+    };
+
+    let mut output = HashMap::<String, HashMap<String, ValueType>>::new();
+
+    items.into_iter().for_each(|mut form_info| {
+        let student_id_full = form_info
+            .get("HK")
+            .map(|v| v.as_s().cloned().unwrap_or_default())
+            .unwrap_or_default()
+            .to_owned();
+
+        let student_id = student_id_full.split("STUDENT#").collect::<String>();
+
+        form_info.remove("HK");
+        form_info.remove("SK");
+
+        let form_info_convert = form_info
+            .into_iter()
+            .map(|(k, v)| (k, ValueType::from(&v)))
+            .collect::<HashMap<String, ValueType>>();
+
+        // We want to insert all the remaining information into the output map
+        output
+            .entry(student_id)
+            .and_modify(|v| {
+                v.extend(form_info_convert.clone());
+            })
+            .or_insert(form_info_convert);
+    });
+
+    // Don't love this, but it does verify that the student has completed the demographics form
+    let output = output
+        .into_iter()
+        .filter_map(|(k, student_info)| {
+            student_info
+                .get("first_name")
+                .and_then(|_| Some((k, student_info.clone())))
+        })
+        .collect();
+
+    Ok(output)
+}
+
+/// # Get File by Key API
+/// This function gets a file from the corresponding S3 file key. If the subject found from the
+/// `access_token` does not match the owner of the requested file, the requesting user must have
+/// provider-level access or higher.
+///
+/// ## Possible errors
+/// Please check the [`validate_and_get_token_info`] function for all token parsing errors. Otherwise,
+/// if the requesting user does not have the correct permissions, it will return a message indicating
+/// such. If the file is not found, an error containing "File not found" will be returned.
+#[server]
+pub async fn get_file_by_key(
+    access_token: String,
+    file_key: String,
+) -> Result<Vec<u8>, ServerFnError> {
+    use imports::*;
+
+    let user_claims = validate_and_get_token_info(access_token).await?;
+
+    // Check if the user's subject is contained in the file_key (since all files are keyed by the
+    // user's subject)
+    if !file_key.contains(&user_claims.subject) {
+        // Check that the user is a provider.
+        if !user_claims
+            .groups
+            .contains(&"ScholarshipProviders".to_string())
+        {
+            return Err(ServerFnError::new(
+                "Access denied: user is not the student or a provider",
+            ));
+        }
+    }
+
+    // We now just need to get the actual file.
+    let client = aws_sdk_s3::Client::new(&create_aws_config().await);
+
+    let result = client
+        .get_object()
+        .key(file_key)
+        .send()
+        .await
+        .map_err(|e| {
+            let msg = e.message().unwrap_or("Unknown error occurred");
+            error!("{}", msg);
+            ServerFnError::new(msg)
+        })?;
+
+    let bytes = result.body.collect().await?;
+
+    Ok(bytes.to_vec())
+}
+
+/// # Get Student File Names API
+/// Gets a list of file names given a student's ID and the corresponding input ID from the forms.
+/// These file names can be used to construct a file key for S3.
+///
+/// This API is only accessible by provider-level users.
+#[server]
+pub async fn get_student_files(
+    access_token: String,
+    student_id: String,
+    form_name: String,
+    question_id: String,
+) -> Result<Vec<u8>, ServerFnError> {
+    use imports::*;
+
+    let claims = validate_and_get_token_info(access_token).await?;
+
+    // Check if the user has permission to get these files.
+    if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
+        return Err(ServerFnError::new("Access denied: user is not a provider"));
+    }
+
+    let client = create_dynamo_client().await;
+
+    let file_keys = client
+        .query()
+        .table_name(MAIN_TABLE_NAME)
+        .expression_attribute_values(":hk", AttributeValue::S(format!("STUDENT#{student_id}")))
+        .expression_attribute_values(
+            ":sk",
+            AttributeValue::S(format!("FILE#{form_name}#{question_id}")),
+        )
+        .key_condition_expression("HK = :hk and begins_with(SK, :sk)")
+        .send()
+        .await
+        .map_err(|e| {
+            let msg = e.message().unwrap_or("Unknown error occurred");
+            error!("{}", msg);
+            ServerFnError::new(msg)
+        })
+        .map(|output| {
+            let Some(items) = output.items else {
+                return Vec::new();
+            };
+
+            items
+                .into_iter()
+                .filter_map(|item| item.get("file_key")?.as_s().ok().cloned())
+                .collect::<Vec<String>>()
+        })?;
+
+    debug_log!("Await student file futures...");
+    let futures: Vec<_> = file_keys
+        .into_iter()
+        .map(|file_key| async move {
+            debug_log!("Requesting file from API with key {file_key}");
+            // Get all files from S3. This is a batch operation.
+            let s3_client = aws_sdk_s3::Client::new(&create_aws_config().await);
+            let file_output = s3_client
+                .get_object()
+                .bucket("leptos-scholarships")
+                .key(&file_key)
+                .send()
+                .await
+                .ok()?;
+
+            let bytes = file_output.body.collect().await.ok()?.to_vec();
+
+            Some((file_key, bytes))
+        })
+        .collect();
+
+    let results = futures::future::join_all(futures)
+        .await
+        .into_iter()
+        .flatten()
+        .collect::<Vec<(String, Vec<u8>)>>();
+
+    let cur = std::io::Cursor::new(Vec::new());
+    let mut writer = zip::ZipWriter::new(cur);
+
+    debug_log!("Writing {} files to zip file...", results.len());
+    for (key, file_bytes) in results {
+        let file_name = key.split('/').last().unwrap_or_default();
+        writer
+            .start_file(file_name, SimpleFileOptions::default())
+            .map_err(ServerFnError::new)?;
+        writer.write_all(&file_bytes).map_err(ServerFnError::new)?;
+    }
+
+    debug_log!("Getting finished file");
+    let finished = writer.finish().map_err(ServerFnError::new)?;
+
+    Ok(finished.into_inner())
+}
+
+/// # Get All Input Files API
+/// Gets all files that have been uploaded to the given input. For example, getting all the FAFSA
+/// files that were uploaded to the FAFSA file input on the Financial Info page.
+///
+/// Returns a `HashMap` keyed by the submitting user's ID, with a value of all files that were
+/// uploaded by that user.
+///
+/// This is only usable by users with provider-level access.
+#[server]
+pub async fn get_all_input_files(
+    access_token: String,
+    form_name: String,
+    input_name: String,
+) -> Result<HashMap<String, Vec<String>>, ServerFnError> {
+    use imports::*;
+
+    let claims = validate_and_get_token_info(access_token).await?;
+
+    if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
+        return Err(ServerFnError::new("Access denied: user is not a provider"));
+    }
+
+    let client = create_dynamo_client().await;
+
+    let res = client
+        .scan()
+        .table_name(MAIN_TABLE_NAME)
+        .filter_expression("begins_with(SK, :sk)")
+        .expression_attribute_values(
+            ":sk",
+            AttributeValue::S(format!("FILE#{form_name}#{input_name}")),
+        )
+        .send()
+        .await
+        .map_err(|e| {
+            let msg = e.message().unwrap_or("Unknown error occurred");
+            error!("{}", msg);
+            ServerFnError::new(msg)
+        })?;
+
+    let mut result_map = HashMap::<String, Vec<String>>::new();
+    res.items.unwrap_or_default().iter().for_each(|item| {
+        let id = item
+            .get("HK")
+            .map(|v| v.as_s().cloned().unwrap_or_default())
+            .unwrap_or_default()
+            .split("STUDENT#")
+            .collect::<String>();
+
+        let file_key = item
+            .get("file_key")
+            .map(|v| v.as_s().cloned().unwrap_or_default())
+            .unwrap_or_default();
+
+        result_map
+            .entry(id)
+            .and_modify(|v| v.push(file_key.clone()))
+            .or_insert(vec![file_key]);
+    });
+
+    Ok(result_map)
 }

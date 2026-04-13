@@ -25,10 +25,6 @@ pub fn StudentEligibilityPage() -> impl IntoView {
     let user_id = Memo::new(move |_| user_claims.get().map(|info| info.claims.subject.clone()));
     let access_token = Memo::new(move |_| auth.get().authenticated().map(|a| a.access_token()));
 
-    Effect::new(move || {
-        debug_log!("User ID was updated: {}", user_id.get().unwrap_or_default());
-    });
-
     let form_id = StoredValue::new("scholarship_essays".to_string());
 
     let refresh_trigger = Trigger::new();

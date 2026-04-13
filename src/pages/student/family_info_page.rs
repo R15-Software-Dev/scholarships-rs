@@ -1,11 +1,11 @@
-use leptos::prelude::*;
 use crate::components::{Loading, OutlinedTextField, TextFieldType, ValidatedForm};
 use crate::pages::student::form_setup::use_student_form;
+use leptos::prelude::*;
 
 #[component]
 pub fn StudentFamilyPage() -> impl IntoView {
     let controller = use_student_form("family", true);
-    
+
     view! {
         <Show when=move || controller.data_resource.get().is_some() fallback=Loading>
             <div class="flex flex-1" />

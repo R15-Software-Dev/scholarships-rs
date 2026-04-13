@@ -11,7 +11,6 @@ mod form_setup;
 mod home_page;
 mod shell;
 mod specific_requirements_page;
-mod test_display;
 mod university_page;
 mod work_experience_page;
 
@@ -27,6 +26,5 @@ pub use financial_page::*;
 pub use home_page::*;
 pub use shell::*;
 pub use specific_requirements_page::*;
-pub use test_display::*;
 pub use university_page::*;
 pub use work_experience_page::*;
