@@ -1,5 +1,8 @@
-﻿use crate::common::{ComparisonData, ExpandableInfo, SchemaNode, SchemaType, ValueType};
-use crate::components::{ActionButton, Banner, Loading, ValueDisplay};
+﻿use crate::common::{
+    ComparisonData, ExpandableInfo, SchemaContainerStyle, SchemaHeaderStyle, SchemaNode,
+    SchemaType, ValueType,
+};
+use crate::components::{ActionButton, Banner, DataDisplay, Loading};
 use crate::pages::UnauthenticatedPage;
 use crate::pages::api::get_comparison_info;
 use crate::pages::api::students::{GetStudentFiles, get_all_input_files, get_student_data};
@@ -9,7 +12,8 @@ use leptos::html::Dialog;
 use leptos::logging::debug_log;
 use leptos::prelude::*;
 use leptos::wasm_bindgen::JsCast;
-use leptos::web_sys::HtmlAnchorElement;
+use leptos::web_sys;
+use leptos::web_sys::{HtmlAnchorElement, ScrollBehavior};
 use leptos_icons::Icon;
 use leptos_oidc::{AuthLoaded, AuthSignal, Authenticated};
 use leptos_router::components::Outlet;
@@ -319,6 +323,14 @@ fn ApplicantsStudentListView(
     // let (current_student_id, set_current_student_id) = query_signal::<String>("student_id");
     let current_student_id = RwSignal::new(None);
     let navigate_student = Callback::new(move |id: String| {
+        let options = web_sys::ScrollToOptions::new();
+        options.set_top(0.0);
+        options.set_behavior(ScrollBehavior::Smooth);
+
+        if let Some(window) = web_sys::window() {
+            window.scroll_to_with_scroll_to_options(&options);
+        }
+
         current_student_id.set(Some(id));
     });
     let dialog_visible =
@@ -591,93 +603,172 @@ fn StudentInformationDialog(
     //#region Schema Definitions
 
     let demographics_schema = StoredValue::new(
-        SchemaNode::new(SchemaType::Map)
+        SchemaNode::builder()
+            .container(SchemaContainerStyle::Header)
+            .header_style(SchemaHeaderStyle::MainHeader)
             .header("Demographics Information")
+            .map()
             .child(
                 "first_name",
-                SchemaNode::new(SchemaType::String).header("First Name"),
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("First Name")
+                    .string()
+                    .build(),
             )
             .child(
                 "last_name",
-                SchemaNode::new(SchemaType::String).header("Last Name"),
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Last Name")
+                    .string()
+                    .build(),
             )
             .child(
                 "dob",
-                SchemaNode::new(SchemaType::String).header("Date of Birth"),
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Date of Birth")
+                    .string()
+                    .build(),
             )
             .child(
                 "gender",
-                SchemaNode::new(SchemaType::String).header("Gender"),
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Gender")
+                    .string()
+                    .build(),
             )
             .child(
                 "phone_number",
-                SchemaNode::new(SchemaType::String).header("Preferred Phone Number"),
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Preferred Phone Number")
+                    .string()
+                    .build(),
             )
             .child(
                 "email",
-                SchemaNode::new(SchemaType::String).header("Preferred Email Address"),
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Preferred Email Address")
+                    .string()
+                    .build(),
             )
             .child(
                 "street_address",
-                SchemaNode::new(SchemaType::String).header("Street Address"),
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Street Address")
+                    .string()
+                    .build(),
             )
-            .child("town", SchemaNode::new(SchemaType::String).header("Town")),
+            .child(
+                "town",
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Town")
+                    .string()
+                    .build(),
+            )
+            .build(),
     );
 
     let sports_schema = StoredValue::new(
-        SchemaNode::new(SchemaType::List)
+        SchemaNode::builder()
+            .header_style(SchemaHeaderStyle::MainHeader)
             .header("Sports Activities")
+            .map_list()
+            .primary_key("uuid")
             .item_template(
-                SchemaNode::new(SchemaType::Map)
+                SchemaNode::builder()
+                    .container(SchemaContainerStyle::Capsule)
+                    .header_style(SchemaHeaderStyle::Bold)
                     .header("Sport")
+                    .map()
                     .child(
                         "sport_name",
-                        SchemaNode::new(SchemaType::String).header("Sport Name"),
+                        SchemaNode::builder()
+                            .header_style(SchemaHeaderStyle::Bold)
+                            .header("Sport Name")
+                            .string()
+                            .build(),
                     )
                     .child(
                         "achievements",
-                        SchemaNode::new(SchemaType::String).header("Special Achievements"),
-                    ),
-            ),
+                        SchemaNode::builder()
+                            .header_style(SchemaHeaderStyle::Bold)
+                            .header("Special Achievements")
+                            .string()
+                            .build(),
+                    )
+                    .build(),
+            )
+            .build(),
     );
 
     let extracurricular_schema = StoredValue::new(
-        SchemaNode::new(SchemaType::Map)
+        SchemaNode::builder()
+            .header_style(SchemaHeaderStyle::MainHeader)
             .header("Extracurricular Activities")
+            .map()
             .child(
                 "service_hours",
-                SchemaNode::new(SchemaType::String).header("Total Number of Service Hours"),
+                SchemaNode::builder()
+                    .header_style(SchemaHeaderStyle::Bold)
+                    .header("Total Number of Service Hours")
+                    .number()
+                    .build(),
             )
             .child(
                 "extracurricular",
-                SchemaNode::new(SchemaType::List)
-                    .header("List of Activities")
+                SchemaNode::builder()
+                    .map_list()
+                    .primary_key("uuid")
                     .item_template(
-                        SchemaNode::new(SchemaType::Map)
+                        SchemaNode::builder()
+                            .container(SchemaContainerStyle::Capsule)
+                            .header_style(SchemaHeaderStyle::Bold)
                             .header("Activity")
+                            .map()
                             .child(
                                 "activity_name",
-                                SchemaNode::new(SchemaType::String).header("Activity Name"),
+                                SchemaNode::builder()
+                                    .header_style(SchemaHeaderStyle::Bold)
+                                    .header("Activity Name")
+                                    .string()
+                                    .build(),
                             )
                             .child(
                                 "num_hours",
-                                SchemaNode::new(SchemaType::String)
-                                    .header("Number of Hours Completed"),
+                                SchemaNode::builder()
+                                    .header_style(SchemaHeaderStyle::Bold)
+                                    .header("Approximate Number of Hours Completed")
+                                    .number()
+                                    .build(),
                             )
                             .child(
                                 "num_weeks",
-                                SchemaNode::new(SchemaType::String)
-                                    .header("Number of Weeks Participated"),
+                                SchemaNode::builder()
+                                    .header_style(SchemaHeaderStyle::Bold)
+                                    .header("Approximate Number of Weeks Participated")
+                                    .number()
+                                    .build(),
                             )
                             .child(
                                 "special_involvement",
-                                SchemaNode::new(SchemaType::String).header("Special Involvement"),
-                            ), // .child(
-                               //     "grades",
-                               //     SchemaNode::new(SchemaType::String).header("Grades Participated")
-                               // )
-                    ),
-            ),
+                                SchemaNode::builder()
+                                    .header_style(SchemaHeaderStyle::Bold)
+                                    .header("Special Involvement")
+                                    .string()
+                                    .build(),
+                            )
+                            .build(),
+                    )
+                    .build(),
+            )
+            .build(),
     );
 
     //#endregion
@@ -758,9 +849,6 @@ fn StudentInformationDialog(
             >
                 <Suspense fallback=Loading>
                     <h1 class="text-2xl font-bold">"Student Information"</h1>
-                    <div class="text-lg">
-                        "Click on any header to minimize that block of information."
-                    </div>
                     <div class="flex flex-row m-1.5">
                         <Show when=move || fafsa_required.get()>
                             <ActionButton on:click=on_click_fafsa disabled=get_buttons_disabled>
@@ -781,7 +869,7 @@ fn StudentInformationDialog(
                             .await
                             .map(|student_info| {
                                 view! {
-                                    <ValueDisplay
+                                    <DataDisplay
                                         schema=demographics_schema.get_value()
                                         data_map=student_info
                                     />
@@ -796,7 +884,7 @@ fn StudentInformationDialog(
                             .await
                             .map(|student_info| {
                                 view! {
-                                    <ValueDisplay
+                                    <DataDisplay
                                         schema=sports_schema.get_value()
                                         data_map=student_info
                                         data_member="sports_participation"
@@ -812,7 +900,7 @@ fn StudentInformationDialog(
                             .await
                             .map(|student_info| {
                                 view! {
-                                    <ValueDisplay
+                                    <DataDisplay
                                         schema=extracurricular_schema.get_value()
                                         data_map=student_info
                                     />
