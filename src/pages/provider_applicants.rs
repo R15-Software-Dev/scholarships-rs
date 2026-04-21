@@ -479,9 +479,18 @@ fn ApplicantsStudentListView(
                     if list.is_empty() {
                         return true;
                     }
+                    list.iter().any(|requirement| {
+                        let result = requirement.compare(&student).unwrap_or(false);
 
-                    list.iter()
-                        .any(|requirement| requirement.compare(&student).unwrap_or(false))
+                        if !result {
+                            debug_log!(
+                                "Student with id {id} failed - requirement with id {} failed.",
+                                requirement.id
+                            );
+                        }
+
+                        result
+                    })
                 });
 
                 if result { Some((id, student)) } else { None }
@@ -1119,6 +1128,7 @@ fn StudentInformationDialog(
             student_id: student_id.get().unwrap_or_default(),
             form_name: "financial_info".to_string(),
             question_id: "fafsa".to_string(),
+            file_name_postfix: "FafsaInfo".to_string(),
         });
     };
 
@@ -1129,11 +1139,12 @@ fn StudentInformationDialog(
             student_id: student_id.get().unwrap_or_default(),
             form_name: "scholarship_essays".to_string(),
             question_id: scholarship_id.get(),
+            file_name_postfix: "Essays".to_string(),
         });
     };
 
     Effect::new(move || {
-        if let Some(Ok(file)) = get_student_files.value().get() {
+        if let Some(Ok((file_name, file))) = get_student_files.value().get() {
             let base64 = base64::engine::general_purpose::STANDARD.encode(file);
             let data_url = format!("data:application/zip;base64,{}", base64);
             // Create a base64 link and open it.
@@ -1143,7 +1154,7 @@ fn StudentInformationDialog(
                 .dyn_into()
                 .unwrap();
 
-            a.set_download("");
+            a.set_download(&*file_name);
             a.set_href(&data_url);
             document().body().unwrap().append_child(&a).unwrap();
             a.click();
