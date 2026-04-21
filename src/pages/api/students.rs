@@ -275,7 +275,8 @@ pub async fn get_student_files(
     student_id: String,
     form_name: String,
     question_id: String,
-) -> Result<Vec<u8>, ServerFnError> {
+    file_name_postfix: String,
+) -> Result<(String, Vec<u8>), ServerFnError> {
     use imports::*;
 
     let claims = validate_and_get_token_info(access_token).await?;
@@ -286,6 +287,39 @@ pub async fn get_student_files(
     }
 
     let client = create_dynamo_client().await;
+
+    let demographics_res = client
+        .query()
+        .table_name(MAIN_TABLE_NAME)
+        .expression_attribute_values(":hk", AttributeValue::S(format!("STUDENT#{student_id}")))
+        .expression_attribute_values(":sk", AttributeValue::S("DEMOGRAPHICS".to_string()))
+        .key_condition_expression("HK = :hk and SK = :sk")
+        .send()
+        .await
+        .map_err(|e| {
+            let msg = e.message().unwrap_or("Unknown error occurred");
+            error!("{}", msg);
+            ServerFnError::new(msg)
+        })?;
+
+    let student_demographics = demographics_res
+        .items
+        .unwrap_or_default()
+        .into_iter()
+        .next()
+        .ok_or(ServerFnError::new(
+            "Failed to find student demographic information.",
+        ))?;
+
+    let first_name = student_demographics
+        .get("first_name")
+        .and_then(|v| v.as_s().ok().cloned())
+        .unwrap_or_default();
+
+    let last_name = student_demographics
+        .get("last_name")
+        .and_then(|v| v.as_s().ok().cloned())
+        .unwrap_or_default();
 
     let file_keys = client
         .query()
@@ -346,9 +380,25 @@ pub async fn get_student_files(
 
     debug_log!("Writing {} files to zip file...", results.len());
     for (key, file_bytes) in results {
-        let file_name = key.split('/').last().unwrap_or_default();
+        let file_name = key
+            .split('/')
+            .last()
+            .ok_or(ServerFnError::new("Failed to parse file name"))?
+            .split(".")
+            .next()
+            .unwrap_or_default();
+        let file_ext = key
+            .split('.')
+            .last()
+            .ok_or(ServerFnError::new("Failed to parse file extension"))?;
+
+        // Construct the real file name. This name should be under 150 characters.
+        let temp = format!("{first_name} {last_name} - {file_name}");
+        let file_name_no_ext = temp.chars().take(150).collect::<String>();
+        let file_name_complete = format!("{file_name_no_ext}.{file_ext}");
+
         writer
-            .start_file(file_name, SimpleFileOptions::default())
+            .start_file(file_name_complete, SimpleFileOptions::default())
             .map_err(ServerFnError::new)?;
         writer.write_all(&file_bytes).map_err(ServerFnError::new)?;
     }
@@ -356,7 +406,9 @@ pub async fn get_student_files(
     debug_log!("Getting finished file");
     let finished = writer.finish().map_err(ServerFnError::new)?;
 
-    Ok(finished.into_inner())
+    let file_name_hint = format!("{first_name}{last_name}_{file_name_postfix}.zip");
+
+    Ok((file_name_hint, finished.into_inner()))
 }
 
 /// # Get All Input Files API

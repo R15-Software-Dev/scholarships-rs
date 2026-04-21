@@ -14,7 +14,7 @@ pub fn ActionButton(
             r#type=button_type
             disabled=move || disabled.get()
         >
-        { children() }
+            {children()}
         </button>
     }
 }
