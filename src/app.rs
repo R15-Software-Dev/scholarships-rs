@@ -1,11 +1,6 @@
 use crate::components::ToastList;
 use crate::components::login::ProviderLoginContext;
-use crate::pages::{
-    AdminHomePage, AdminProviderPage, AdminScholarshipPage, AdminShell, AdminUtilsPage,
-    ApplicantsPageFallback, ApplicantsStudentList, AuthCallbackPage, LoanerBorrowForm,
-    LoanerFallback, LoanerReturnForm, LoanerShell, ProviderContactPage, ProviderPortal,
-    ScholarshipInfoPage,
-};
+use crate::pages::{AdminApplicantsPageFallback, AdminApplicantsPageShell, AdminApplicantsStudentList, AdminHomePage, AdminProviderPage, AdminScholarshipPage, AdminShell, AdminUtilsPage, ApplicantsPageFallback, ApplicantsStudentList, AuthCallbackPage, LoanerBorrowForm, LoanerFallback, LoanerReturnForm, LoanerShell, ProviderContactPage, ProviderPortal, ScholarshipInfoPage};
 use crate::pages::{ApplicantsPageShell, student};
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
@@ -126,6 +121,10 @@ fn AdminRoutes() -> impl MatchNestedRoutes + Clone {
             <Route path=path!("providers") view=AdminProviderPage />
             <Route path=path!("scholarships") view=AdminScholarshipPage />
             <Route path=path!("utilities") view=AdminUtilsPage />
+            <ParentRoute path=path!("applicants") view=AdminApplicantsPageShell>
+                <Route path=path!("") view=AdminApplicantsPageFallback />
+                <Route path=path!("/:scholarship_id") view=AdminApplicantsStudentList />
+            </ParentRoute>
         </ParentRoute>
     }
     .into_inner()

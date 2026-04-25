@@ -1,11 +1,8 @@
-﻿use crate::common::{
-    ComparisonData, ExpandableInfo, SchemaContainerStyle, SchemaHeaderStyle, SchemaNode,
-    SchemaType, ValueType,
-};
+﻿use crate::common::{ComparisonData, ExpandableInfo, SchemaContainerStyle, SchemaHeaderStyle, SchemaNode, SchemaType, ValueType};
 use crate::components::{ActionButton, Banner, DataDisplay, Loading};
 use crate::pages::UnauthenticatedPage;
 use crate::pages::api::get_comparison_info;
-use crate::pages::api::students::{GetStudentFiles, get_all_input_files, get_student_data};
+use crate::pages::api::students::{GetStudentFiles, provider_get_all_input_files, get_student_data};
 use base64::Engine;
 use leptos::ev::{Event, MouseEvent};
 use leptos::html::Dialog;
@@ -71,12 +68,12 @@ fn ApplicantsScholarshipList() -> impl IntoView {
 
     #[server]
     async fn get_provider_scholarships(
-        access_token: String,
+        access_token: String
     ) -> Result<Vec<ExpandableInfo>, ServerFnError> {
         use crate::pages::api::SCHOLARSHIPS_TABLE;
         use crate::pages::api::tokens::validate_and_get_token_info;
 
-        let claims = validate_and_get_token_info(access_token).await?;
+        let claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM".to_string(), "us-east-1".to_string()).await?;
 
         // Get the information from the database.
         let client = crate::utils::server::create_dynamo_client().await;
@@ -110,8 +107,10 @@ fn ApplicantsScholarshipList() -> impl IntoView {
     let trigger = Trigger::new();
     let scholarships_res = Resource::new(
         move || (trigger.track(), access_token.get()),
-        async move |(_, access_token)| {
-            get_provider_scholarships(access_token.unwrap_or_default()).await
+        move |(_, access_token)| async move {
+            get_provider_scholarships(
+                access_token.unwrap_or_default()
+            ).await
         },
     );
 
@@ -201,7 +200,7 @@ fn ApplicantsScholarshipEntry(
 #[component]
 pub fn ApplicantsStudentList() -> impl IntoView {
     use crate::pages::api::get_scholarship_info;
-    use crate::pages::api::students::get_completed_students;
+    use crate::pages::api::students::provider_get_completed_students;
     use leptos_router::hooks::use_params;
     use leptos_router::params::Params;
 
@@ -241,7 +240,7 @@ pub fn ApplicantsStudentList() -> impl IntoView {
         ServerFnError,
     > {
         let (students, scholarships, requirements_list) = tokio::join!(
-            get_completed_students(token),
+            provider_get_completed_students(token),
             get_scholarship_info(scholarship_id),
             get_comparison_info()
         );
@@ -374,7 +373,7 @@ fn ApplicantsStudentListView(
                 return Ok(HashMap::new());
             }
 
-            get_all_input_files(
+            provider_get_all_input_files(
                 access_token,
                 "financial_info".to_string(),
                 "fafsa".to_string(),
@@ -394,7 +393,7 @@ fn ApplicantsStudentListView(
                 return Ok(HashMap::new());
             }
 
-            get_all_input_files(
+            provider_get_all_input_files(
                 access_token,
                 "scholarship_essays".to_string(),
                 scholarship.get().subject,
@@ -592,7 +591,7 @@ fn ApplicantsStudentListView(
 }
 
 #[component]
-fn StudentInformationDialog(
+pub fn StudentInformationDialog(
     #[prop(into)] scholarship_id: Signal<String>,
     #[prop(into)] student_id: Signal<Option<String>>,
     #[prop(into)] visible: Signal<bool>,
@@ -1287,7 +1286,10 @@ fn StudentInformationDialog(
                             })
                     })}
                     {move || Suspend::new(async move {
-                        get_student_data(student_id.get().unwrap_or_default(), "family".to_string())
+                        get_student_data(
+                                student_id.get().unwrap_or_default(),
+                                "family".to_string()
+                            )
                             .await
                             .map(|student_info| {
                                 view! {

@@ -137,23 +137,40 @@ pub async fn get_all_student_data(
 }
 
 #[server]
-pub async fn get_completed_students(
+pub async fn provider_get_completed_students(
     access_token: String,
 ) -> Result<HashMap<String, HashMap<String, crate::common::ValueType>>, ServerFnError> {
+    use imports::*;
+
+    let claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
+    if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
+        return Err(ServerFnError::new(
+            "User is not in the ScholarshipProviders group",
+        ));
+    }
+
+    get_completed_students().await
+}
+
+#[server]
+pub async fn admin_get_completed_students(
+    access_token: String,
+) -> Result<HashMap<String, HashMap<String, crate::common::ValueType>>, ServerFnError> {
+    use imports::*;
+
+    let _ = validate_and_get_token_info(access_token, "us-east-1_rvCU4Xy4j", "us-east-1").await?;
+
+    get_completed_students().await
+}
+
+#[server]
+async fn get_completed_students() -> Result<HashMap<String, HashMap<String, crate::common::ValueType>>, ServerFnError> {
     use imports::*;
 
     // We want to get all student information. The requirements are that the students have completed
     // the demographics form - everything else may bed from this.
     // The easiest way is to get all the information and filter on this side, instead of bookkeeping
     // on the database's side.
-
-    // We want to verify the access token first, and make sure that the user has the correct access.
-    let claims = validate_and_get_token_info(access_token).await?;
-    if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
-        return Err(ServerFnError::new(
-            "User is not in the ScholarshipProviders group",
-        ));
-    }
 
     let client = create_dynamo_client().await;
 
@@ -229,7 +246,7 @@ pub async fn get_file_by_key(
 ) -> Result<Vec<u8>, ServerFnError> {
     use imports::*;
 
-    let user_claims = validate_and_get_token_info(access_token).await?;
+    let user_claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
 
     // Check if the user's subject is contained in the file_key (since all files are keyed by the
     // user's subject)
@@ -279,7 +296,7 @@ pub async fn get_student_files(
 ) -> Result<(String, Vec<u8>), ServerFnError> {
     use imports::*;
 
-    let claims = validate_and_get_token_info(access_token).await?;
+    let claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
 
     // Check if the user has permission to get these files.
     if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
@@ -420,18 +437,11 @@ pub async fn get_student_files(
 ///
 /// This is only usable by users with provider-level access.
 #[server]
-pub async fn get_all_input_files(
-    access_token: String,
+async fn get_all_input_files(
     form_name: String,
     input_name: String,
 ) -> Result<HashMap<String, Vec<String>>, ServerFnError> {
     use imports::*;
-
-    let claims = validate_and_get_token_info(access_token).await?;
-
-    if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
-        return Err(ServerFnError::new("Access denied: user is not a provider"));
-    }
 
     let client = create_dynamo_client().await;
 
@@ -472,4 +482,33 @@ pub async fn get_all_input_files(
     });
 
     Ok(result_map)
+}
+
+#[server]
+pub async fn admin_get_all_input_files(
+    access_token: String,
+    form_name: String,
+    input_name: String,
+) -> Result<HashMap<String, Vec<String>>, ServerFnError> {
+    use imports::*;
+
+    let _ = validate_and_get_token_info(access_token, "us-east-1_rvCU4Xy4j", "us-east-1").await?;
+
+    get_all_input_files(form_name, input_name).await
+}
+
+#[server]
+pub async fn provider_get_all_input_files(
+    access_token: String,
+    form_name: String,
+    input_name: String,
+) -> Result<HashMap<String, Vec<String>>, ServerFnError> {
+    use imports::*;
+
+    let claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
+    if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
+        return Err(ServerFnError::new("Access denied: user is not a provider"));
+    }
+
+    get_all_input_files(form_name, input_name).await
 }

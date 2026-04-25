@@ -25,6 +25,7 @@ pub fn AdminShell() -> impl IntoView {
                             TabInfo::new("Providers", "providers", None),
                             TabInfo::new("Scholarships", "scholarships", None),
                             TabInfo::new("Utilities", "utilities", None),
+                            TabInfo::new("Scholarship Applicants", "applicants", None),
                         ]
                     />
                 </Authenticated>

@@ -66,7 +66,7 @@ pub async fn upload_file(data: MultipartData) -> Result<String, ServerFnError> {
         return Err(ServerFnError::new("Missing file contents"));
     }
 
-    let user_claims = validate_and_get_token_info(access_token).await?;
+    let user_claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
     let subject = user_claims.subject;
 
     let key = format!("{form_id}/{subject}/{input_name}/{file_name}");
@@ -157,7 +157,7 @@ pub async fn delete_file(
 ) -> Result<String, ServerFnError> {
     use imports::*;
 
-    let user_claims = validate_and_get_token_info(access_token).await?;
+    let user_claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
     let subject = user_claims.subject;
 
     let entry_hk = format!("STUDENT#{subject}");
@@ -226,7 +226,7 @@ pub async fn list_files(
 ) -> Result<Vec<String>, ServerFnError> {
     use imports::*;
 
-    let user_claims = validate_and_get_token_info(access_token).await?;
+    let user_claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
     let subject = user_claims.subject;
 
     let entry_hk = format!("STUDENT#{subject}");
