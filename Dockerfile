@@ -27,14 +27,15 @@ RUN cargo binstall fnm -y \
 
 # Start second phase of build - install ca-certs and copy all build outputs from previous step into a
 # Debian image in the /app directory.
-FROM debian:trixie-slim AS runtime
+FROM rust:1.95-slim-trixie AS runtime
 WORKDIR /app
 RUN apt-get update -y \
-    && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && apt-get install -y --no-install-recommends openssl ca-certificates curl \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
+# Cargo, then binstall, then typst installation.
 RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 RUN cargo binstall typst-cli -y
 
