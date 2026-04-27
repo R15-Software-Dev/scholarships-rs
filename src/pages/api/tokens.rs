@@ -17,10 +17,19 @@ pub async fn fetch_jwks(user_pool_id: String, region: String) -> Result<JwkSet, 
 
 /// Validates a JWT, and, if successful, decodes it into a series of user claims.
 #[cfg(feature = "ssr")]
-pub async fn validate_and_get_token_info(token: String) -> Result<UserClaims, ServerFnError> {
+pub async fn validate_and_get_token_info(
+    token: String,
+    pool_id: impl Into<String>,
+    pool_region: impl Into<String>
+) -> Result<UserClaims, ServerFnError> {
     use jsonwebtoken::{Algorithm, Validation, decode};
 
-    let jwks = fetch_jwks("us-east-1_Lfjuy5zaM".into(), "us-east-1".into()).await?;
+    let pool_id = pool_id.into();
+
+    leptos::logging::debug_log!("Validating token using group {}", pool_id);
+
+    // let jwks = fetch_jwks("us-east-1_Lfjuy5zaM".into(), "us-east-1".into()).await?;
+    let jwks = fetch_jwks(pool_id, pool_region.into()).await?;
 
     let validation = Validation::new(Algorithm::RS256);
     // validation.set_audience(&["scholarships-rs"]);

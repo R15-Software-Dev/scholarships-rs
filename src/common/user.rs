@@ -25,6 +25,6 @@ pub struct UserClaims {
     /// The intended use for the token.
     pub token_use: String,
     /// The list of the names of user pool groups that have this user as a member.
-    #[serde(rename = "cognito:groups")]
+    #[serde(rename = "cognito:groups", default = "Vec::new")]
     pub groups: Vec<String>,
 }
