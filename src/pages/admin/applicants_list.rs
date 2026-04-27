@@ -44,16 +44,14 @@ pub fn AdminApplicantsPageShell() -> impl IntoView {
     // each of which is still considered a single page.
 
     view! {
-        <div class="flex flex-row mt-5">
-            <div class="flex-1" />
-            <div class="flex-3 flex flex-row items-start">
-                <AdminApplicantsScholarshipList />
-                <div class="flex-3 text-center">
-                    <Outlet />
-                </div>
+        <div class="flex-1" />
+        <div class="flex-3 flex flex-row items-start">
+            <AdminApplicantsScholarshipList />
+            <div class="flex-3 text-center">
+                <Outlet />
             </div>
-            <div class="flex-1" />
         </div>
+        <div class="flex-1" />
     }
 }
 
