@@ -13,10 +13,10 @@ mod imports {
     pub use aws_sdk_dynamodb::error::ProvideErrorMetadata;
     pub use aws_sdk_dynamodb::types::AttributeValue;
     pub use leptos::logging::{debug_log, error};
-    pub use std::collections::HashMap;
-    pub use zip::write::SimpleFileOptions;
     pub use leptos::serde_json;
+    pub use std::collections::HashMap;
     pub use std::process::Command;
+    pub use zip::write::SimpleFileOptions;
 }
 
 static PDF_TEMPLATE: &str = include_str!("../../../pdf_template.typ");
@@ -147,7 +147,8 @@ pub async fn provider_get_completed_students(
 ) -> Result<HashMap<String, HashMap<String, crate::common::ValueType>>, ServerFnError> {
     use imports::*;
 
-    let claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
+    let claims =
+        validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
     if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
         return Err(ServerFnError::new(
             "User is not in the ScholarshipProviders group",
@@ -169,7 +170,8 @@ pub async fn admin_get_completed_students(
 }
 
 #[server]
-async fn get_completed_students() -> Result<HashMap<String, HashMap<String, crate::common::ValueType>>, ServerFnError> {
+async fn get_completed_students()
+-> Result<HashMap<String, HashMap<String, crate::common::ValueType>>, ServerFnError> {
     use imports::*;
 
     // We want to get all student information. The requirements are that the students have completed
@@ -251,7 +253,8 @@ pub async fn get_file_by_key(
 ) -> Result<Vec<u8>, ServerFnError> {
     use imports::*;
 
-    let user_claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
+    let user_claims =
+        validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
 
     // Check if the user's subject is contained in the file_key (since all files are keyed by the
     // user's subject)
@@ -301,12 +304,19 @@ pub async fn get_student_files(
 ) -> Result<(String, Vec<u8>), ServerFnError> {
     use imports::*;
 
-    let claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
-
-    // Check if the user has permission to get these files.
-    if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
-        return Err(ServerFnError::new("Access denied: user is not a provider"));
-    }
+    match validate_and_get_token_info(access_token.clone(), "us-east-1_Lfjuy5zaM", "us-east-1")
+        .await
+    {
+        Ok(claims) => {
+            if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
+                return Err(ServerFnError::new("Access denied: user is not a provider"));
+            }
+        }
+        Err(_) => {
+            let _ = validate_and_get_token_info(access_token, "us-east-1_rvCU4Xy4j", "us-east-1")
+                .await?;
+        }
+    };
 
     let client = create_dynamo_client().await;
 
@@ -510,7 +520,8 @@ pub async fn provider_get_all_input_files(
 ) -> Result<HashMap<String, Vec<String>>, ServerFnError> {
     use imports::*;
 
-    let claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
+    let claims =
+        validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
     if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
         return Err(ServerFnError::new("Access denied: user is not a provider"));
     }
@@ -519,9 +530,7 @@ pub async fn provider_get_all_input_files(
 }
 
 #[server]
-pub async fn get_student_pdf(
-    student_id: String,
-) -> Result<(String, Vec<u8>), ServerFnError> {
+pub async fn get_student_pdf(student_id: String) -> Result<(String, Vec<u8>), ServerFnError> {
     use imports::*;
 
     // NOTE: this API requires that the server has the typst-cli available ON PATH.
@@ -529,11 +538,13 @@ pub async fn get_student_pdf(
     let student_info_str = get_student_info_json(student_id.clone()).await?;
     let student_info = get_student_data(student_id, "DEMOGRAPHICS".to_string()).await?;
 
-    let first_name = student_info.get("first_name")
+    let first_name = student_info
+        .get("first_name")
         .map(|v| v.to_string())
         .unwrap_or_default();
 
-    let last_name = student_info.get("last_name")
+    let last_name = student_info
+        .get("last_name")
         .map(|v| v.to_string())
         .unwrap_or_default();
 
@@ -577,9 +588,7 @@ pub async fn get_student_pdf(
 }
 
 #[server]
-pub async fn get_student_info_json(
-    student_id: String,
-) -> Result<String, ServerFnError> {
+pub async fn get_student_info_json(student_id: String) -> Result<String, ServerFnError> {
     use imports::*;
 
     let client = create_dynamo_client().await;
@@ -613,7 +622,8 @@ pub async fn get_student_info_json(
         .map(|output| {
             let items = output.items.unwrap_or_default();
             debug_log!("Number of items: {}", items.len());
-            items.into_iter()
+            items
+                .into_iter()
                 .next()
                 .unwrap_or_default()
                 .get("extracurricular")
@@ -637,7 +647,8 @@ pub async fn get_student_info_json(
         .map(|output| {
             let items = output.items.unwrap_or_default();
             debug_log!("Number of items: {}", items.len());
-            items.into_iter()
+            items
+                .into_iter()
                 .next()
                 .unwrap_or_default()
                 .get("extracurricular")
@@ -650,12 +661,12 @@ pub async fn get_student_info_json(
     };
 
     // Join items together into a single object.
-    let mut data = items.into_iter()
-        .fold(HashMap::new(), |mut map, item| {
-            item.into_iter()
-                .for_each(|(k, v)| { map.insert(k, v); });
-            map
+    let mut data = items.into_iter().fold(HashMap::new(), |mut map, item| {
+        item.into_iter().for_each(|(k, v)| {
+            map.insert(k, v);
         });
+        map
+    });
 
     data.insert("work_experience".to_string(), work_exp);
     data.insert("extracurricular".to_string(), extracurricular);
