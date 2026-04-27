@@ -1,8 +1,13 @@
-﻿use crate::common::{ComparisonData, ExpandableInfo, SchemaContainerStyle, SchemaHeaderStyle, SchemaNode, SchemaType, ValueType};
+﻿use crate::common::{
+    ComparisonData, ExpandableInfo, SchemaContainerStyle, SchemaHeaderStyle, SchemaNode,
+    SchemaType, ValueType,
+};
 use crate::components::{ActionButton, Banner, DataDisplay, Loading};
 use crate::pages::UnauthenticatedPage;
 use crate::pages::api::get_comparison_info;
-use crate::pages::api::students::{GetStudentFiles, provider_get_all_input_files, get_student_data, GetStudentPdf};
+use crate::pages::api::students::{
+    GetStudentFiles, GetStudentPdf, get_student_data, provider_get_all_input_files,
+};
 use base64::Engine;
 use leptos::ev::{Event, MouseEvent};
 use leptos::html::Dialog;
@@ -68,12 +73,17 @@ fn ApplicantsScholarshipList() -> impl IntoView {
 
     #[server]
     async fn get_provider_scholarships(
-        access_token: String
+        access_token: String,
     ) -> Result<Vec<ExpandableInfo>, ServerFnError> {
         use crate::pages::api::SCHOLARSHIPS_TABLE;
         use crate::pages::api::tokens::validate_and_get_token_info;
 
-        let claims = validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM".to_string(), "us-east-1".to_string()).await?;
+        let claims = validate_and_get_token_info(
+            access_token,
+            "us-east-1_Lfjuy5zaM".to_string(),
+            "us-east-1".to_string(),
+        )
+        .await?;
 
         // Get the information from the database.
         let client = crate::utils::server::create_dynamo_client().await;
@@ -108,9 +118,7 @@ fn ApplicantsScholarshipList() -> impl IntoView {
     let scholarships_res = Resource::new(
         move || (trigger.track(), access_token.get()),
         move |(_, access_token)| async move {
-            get_provider_scholarships(
-                access_token.unwrap_or_default()
-            ).await
+            get_provider_scholarships(access_token.unwrap_or_default()).await
         },
     );
 
@@ -1121,9 +1129,8 @@ pub fn StudentInformationDialog(
 
     let get_student_files = ServerAction::<GetStudentFiles>::new();
     let get_student_pdf = ServerAction::<GetStudentPdf>::new();
-    let get_buttons_disabled = Memo::new(move |_| {
-        get_student_files.pending().get() && get_student_pdf.pending().get()
-    });
+    let get_buttons_disabled =
+        Memo::new(move |_| get_student_files.pending().get() && get_student_pdf.pending().get());
     let on_click_fafsa = move |_| {
         get_student_files.dispatch(GetStudentFiles {
             access_token: access_token.get().unwrap_or_default(),
@@ -1310,10 +1317,7 @@ pub fn StudentInformationDialog(
                             })
                     })}
                     {move || Suspend::new(async move {
-                        get_student_data(
-                                student_id.get().unwrap_or_default(),
-                                "family".to_string()
-                            )
+                        get_student_data(student_id.get().unwrap_or_default(), "family".to_string())
                             .await
                             .map(|student_info| {
                                 view! {
