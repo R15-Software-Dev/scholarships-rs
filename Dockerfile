@@ -35,6 +35,9 @@ RUN apt-get update -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
+RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+RUN cargo binstall typst-cli -y
+
 # Remember to replace project_name with the actual project name
 COPY --from=builder /app/target/release/scholarships-rs /app/
 

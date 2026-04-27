@@ -2,7 +2,7 @@
 use crate::components::{ActionButton, Banner, DataDisplay, Loading};
 use crate::pages::UnauthenticatedPage;
 use crate::pages::api::get_comparison_info;
-use crate::pages::api::students::{GetStudentFiles, provider_get_all_input_files, get_student_data};
+use crate::pages::api::students::{GetStudentFiles, provider_get_all_input_files, get_student_data, GetStudentPdf};
 use base64::Engine;
 use leptos::ev::{Event, MouseEvent};
 use leptos::html::Dialog;
@@ -1120,7 +1120,10 @@ pub fn StudentInformationDialog(
     // scholarship, meaning their essays and/or FAFSA by request.
 
     let get_student_files = ServerAction::<GetStudentFiles>::new();
-    let get_buttons_disabled = get_student_files.pending();
+    let get_student_pdf = ServerAction::<GetStudentPdf>::new();
+    let get_buttons_disabled = Memo::new(move |_| {
+        get_student_files.pending().get() && get_student_pdf.pending().get()
+    });
     let on_click_fafsa = move |_| {
         get_student_files.dispatch(GetStudentFiles {
             access_token: access_token.get().unwrap_or_default(),
@@ -1142,23 +1145,41 @@ pub fn StudentInformationDialog(
         });
     };
 
+    let on_click_pdf = move |_| {
+        debug_log!("Getting student PDF");
+        get_student_pdf.dispatch(GetStudentPdf {
+            student_id: student_id.get().unwrap_or_default(),
+        });
+    };
+
+    fn open_file(file_name: String, file: Vec<u8>) {
+        let base64 = base64::engine::general_purpose::STANDARD.encode(file);
+        let data_url = format!("data:application/zip;base64,{}", base64);
+        // Create a base64 link and open it.
+        let a: HtmlAnchorElement = document()
+            .create_element("a")
+            .expect("Failed to create anchor element")
+            .dyn_into()
+            .unwrap();
+
+        a.set_download(&*file_name);
+        a.set_href(&data_url);
+        document().body().unwrap().append_child(&a).unwrap();
+        a.click();
+        a.remove();
+    }
+
     Effect::new(move || {
         if let Some(Ok((file_name, file))) = get_student_files.value().get() {
-            let base64 = base64::engine::general_purpose::STANDARD.encode(file);
-            let data_url = format!("data:application/zip;base64,{}", base64);
-            // Create a base64 link and open it.
-            let a: HtmlAnchorElement = document()
-                .create_element("a")
-                .expect("Failed to create anchor element")
-                .dyn_into()
-                .unwrap();
+            open_file(file_name, file);
+            get_student_files.clear();
+        }
+    });
 
-            a.set_download(&*file_name);
-            a.set_href(&data_url);
-            document().body().unwrap().append_child(&a).unwrap();
-            a.click();
-            a.remove();
-
+    // Copy and paste is bad, but it's a little short on time.
+    Effect::new(move || {
+        if let Some(Ok((file_name, file))) = get_student_pdf.value().get() {
+            open_file(file_name, file);
             get_student_files.clear();
         }
     });
@@ -1192,6 +1213,9 @@ pub fn StudentInformationDialog(
                                 "Download Essay File(s)"
                             </ActionButton>
                         </Show>
+                        <ActionButton on:click=on_click_pdf disabled=get_buttons_disabled>
+                            "Download Student Application"
+                        </ActionButton>
                     </div>
                     {move || Suspend::new(async move {
                         get_student_data(

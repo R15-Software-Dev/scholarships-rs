@@ -7,6 +7,7 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos::wasm_bindgen::JsCast;
 use leptos::web_sys::{Blob, HtmlAnchorElement, Url, js_sys};
+use crate::pages::api::students::{get_student_info_json, get_student_pdf};
 
 fn get_important_dates() -> Vec<DateInfo> {
     vec![
@@ -100,6 +101,36 @@ pub fn AdminUtilsPage() -> impl IntoView {
         });
     };
 
+    let on_click_json = move |_| {
+        spawn_local(async move {
+            let (file_name, file_bytes) = get_student_pdf("54d82438-c051-709d-30f7-c60e97f5112a".to_string())
+                .await
+                .unwrap_or_default();
+
+            let uint_arr = js_sys::Uint8Array::new_with_length(file_bytes.len() as u32);
+            uint_arr.copy_from(&file_bytes);
+
+            let blob_parts = js_sys::Array::new();
+            blob_parts.push(&uint_arr);
+
+            let blob = Blob::new_with_u8_array_sequence(&blob_parts).unwrap();
+
+            let blob_url = Url::create_object_url_with_blob(&blob).unwrap();
+
+            let window = window();
+            let document = window.document().unwrap();
+            let a: HtmlAnchorElement = document.create_element("a").unwrap().dyn_into().unwrap();
+
+            a.set_href(&blob_url);
+            a.set_download(&file_name);
+            document.body().unwrap().append_child(&a).unwrap();
+            a.click();
+
+            document.body().unwrap().remove_child(&a).unwrap();
+            Url::revoke_object_url(&blob_url).unwrap();
+        });
+    };
+
     view! {
         <div class="mx-auto px-6">
             <div class="flex flex-col gap-4">
@@ -109,6 +140,7 @@ pub fn AdminUtilsPage() -> impl IntoView {
                 <ActionButton on:click=on_click_comparisons>"Create Comparisons"</ActionButton>
                 <ActionButton on:click=on_click_dates>"Create Dates"</ActionButton>
                 <ActionButton on:click=on_click_export>"Scholarship Export"</ActionButton>
+                <ActionButton on:click=on_click_json>"Get student JSON"</ActionButton>
             </div>
         </div>
     }.into_any()
