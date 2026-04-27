@@ -554,7 +554,8 @@ pub async fn get_student_pdf(student_id: String) -> Result<(String, Vec<u8>), Se
         .replace("[", "(")
         .replace("]", ")")
         // Ensures trailing commas for lists of dictionaries
-        .replace("))", "),)");
+        .replace("))", "),)")
+        .replace("\")", "\",)");
 
     debug_log!("New string: {}", typst_string);
 
