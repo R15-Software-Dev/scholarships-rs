@@ -28,7 +28,6 @@ pub async fn validate_and_get_token_info(
 
     leptos::logging::debug_log!("Validating token using group {}", pool_id);
 
-    // let jwks = fetch_jwks("us-east-1_Lfjuy5zaM".into(), "us-east-1".into()).await?;
     let jwks = fetch_jwks(pool_id, pool_region.into()).await?;
 
     let validation = Validation::new(Algorithm::RS256);

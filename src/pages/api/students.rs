@@ -7,7 +7,7 @@ use std::process::Stdio;
 #[cfg(feature = "ssr")]
 mod imports {
     pub use super::super::MAIN_TABLE_NAME;
-    pub use crate::common::ValueType;
+    pub use crate::common::{ADMIN_POOL_ID, COGNITO_REGION, PROVIDER_GROUP, STUDENT_PROVIDER_POOL_ID, ValueType};
     pub use crate::pages::api::tokens::validate_and_get_token_info;
     pub use crate::utils::server::*;
     pub use aws_sdk_dynamodb::error::ProvideErrorMetadata;
@@ -148,11 +148,11 @@ pub async fn provider_get_completed_students(
     use imports::*;
 
     let claims =
-        validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
-    if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
-        return Err(ServerFnError::new(
-            "User is not in the ScholarshipProviders group",
-        ));
+        validate_and_get_token_info(access_token, STUDENT_PROVIDER_POOL_ID, COGNITO_REGION).await?;
+    if !claims.groups.contains(&PROVIDER_GROUP.to_string()) {
+        return Err(ServerFnError::new(format!(
+            "User is not in the {PROVIDER_GROUP} group",
+        )));
     }
 
     get_completed_students().await
@@ -164,7 +164,7 @@ pub async fn admin_get_completed_students(
 ) -> Result<HashMap<String, HashMap<String, crate::common::ValueType>>, ServerFnError> {
     use imports::*;
 
-    let _ = validate_and_get_token_info(access_token, "us-east-1_rvCU4Xy4j", "us-east-1").await?;
+    let _ = validate_and_get_token_info(access_token, ADMIN_POOL_ID, COGNITO_REGION).await?;
 
     get_completed_students().await
 }
@@ -254,7 +254,7 @@ pub async fn get_file_by_key(
     use imports::*;
 
     let user_claims =
-        validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
+        validate_and_get_token_info(access_token, STUDENT_PROVIDER_POOL_ID, COGNITO_REGION).await?;
 
     // Check if the user's subject is contained in the file_key (since all files are keyed by the
     // user's subject)
@@ -262,7 +262,7 @@ pub async fn get_file_by_key(
         // Check that the user is a provider.
         if !user_claims
             .groups
-            .contains(&"ScholarshipProviders".to_string())
+            .contains(&PROVIDER_GROUP.to_string())
         {
             return Err(ServerFnError::new(
                 "Access denied: user is not the student or a provider",
@@ -304,16 +304,16 @@ pub async fn get_student_files(
 ) -> Result<(String, Vec<u8>), ServerFnError> {
     use imports::*;
 
-    match validate_and_get_token_info(access_token.clone(), "us-east-1_Lfjuy5zaM", "us-east-1")
+    match validate_and_get_token_info(access_token.clone(), STUDENT_PROVIDER_POOL_ID, COGNITO_REGION)
         .await
     {
         Ok(claims) => {
-            if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
+            if !claims.groups.contains(&PROVIDER_GROUP.to_string()) {
                 return Err(ServerFnError::new("Access denied: user is not a provider"));
             }
         }
         Err(_) => {
-            let _ = validate_and_get_token_info(access_token, "us-east-1_rvCU4Xy4j", "us-east-1")
+            let _ = validate_and_get_token_info(access_token, ADMIN_POOL_ID, COGNITO_REGION)
                 .await?;
         }
     };
@@ -507,7 +507,7 @@ pub async fn admin_get_all_input_files(
 ) -> Result<HashMap<String, Vec<String>>, ServerFnError> {
     use imports::*;
 
-    let _ = validate_and_get_token_info(access_token, "us-east-1_rvCU4Xy4j", "us-east-1").await?;
+    let _ = validate_and_get_token_info(access_token, ADMIN_POOL_ID, COGNITO_REGION).await?;
 
     get_all_input_files(form_name, input_name).await
 }
@@ -521,8 +521,8 @@ pub async fn provider_get_all_input_files(
     use imports::*;
 
     let claims =
-        validate_and_get_token_info(access_token, "us-east-1_Lfjuy5zaM", "us-east-1").await?;
-    if !claims.groups.contains(&"ScholarshipProviders".to_string()) {
+        validate_and_get_token_info(access_token, STUDENT_PROVIDER_POOL_ID, COGNITO_REGION).await?;
+    if !claims.groups.contains(&PROVIDER_GROUP.to_string()) {
         return Err(ServerFnError::new("Access denied: user is not a provider"));
     }
 

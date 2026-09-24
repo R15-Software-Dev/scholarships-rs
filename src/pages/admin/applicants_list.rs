@@ -63,10 +63,11 @@ fn AdminApplicantsScholarshipList() -> impl IntoView {
     async fn admin_get_provider_scholarships(
         access_token: String,
     ) -> Result<Vec<ExpandableInfo>, ServerFnError> {
+        use crate::common::{ADMIN_POOL_ID, COGNITO_REGION};
         use crate::pages::api::SCHOLARSHIPS_TABLE;
         use crate::pages::api::tokens::validate_and_get_token_info;
 
-        let claims = validate_and_get_token_info(access_token, "us-east-1_rvCU4Xy4j", "us-east-1").await?;
+        let claims = validate_and_get_token_info(access_token, ADMIN_POOL_ID, COGNITO_REGION).await?;
 
         // Get the information from the database.
         let client = crate::utils::server::create_dynamo_client().await;

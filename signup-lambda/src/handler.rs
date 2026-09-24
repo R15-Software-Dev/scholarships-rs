@@ -4,6 +4,7 @@ use aws_config::BehaviorVersion;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use aws_sdk_cognitoidentityprovider::error::ProvideErrorMetadata;
+use crate::constants::{PROVIDER_GROUP, STUDENT_GROUP, STUDENT_PROVIDER_POOL_ID};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -43,7 +44,7 @@ async fn add_user_to_group(provider: Client, user_id: String, group_name: impl I
     println!("Adding user {} to group {}", user_id, group_name);
     match provider
         .admin_add_user_to_group()
-        .user_pool_id("us-east-1_Lfjuy5zaM")
+        .user_pool_id(STUDENT_PROVIDER_POOL_ID)
         .username(user_id)
         .group_name(group_name)
         .send()
@@ -63,8 +64,8 @@ pub(crate) async fn handler(event: LambdaEvent<PostConfirmationEvent>) -> Result
 
     // Check the client ID of the request to assign the user to the correct location.
     let res = match event.payload.caller_context.client_id.as_str() {
-        "10jr2h3vtpu9n7gj46pvg5qo2q" => add_user_to_group(client, user_id, "ScholarshipStudents").await,
-        "56c2bqvl021rv8d5mq36blt7jv" => add_user_to_group(client, user_id, "ScholarshipProviders").await,
+        "10jr2h3vtpu9n7gj46pvg5qo2q" => add_user_to_group(client, user_id, STUDENT_GROUP).await,
+        "56c2bqvl021rv8d5mq36blt7jv" => add_user_to_group(client, user_id, PROVIDER_GROUP).await,
         _ => Err("Invalid client ID, denying all user access.".to_string()),
     };
 

@@ -1,5 +1,6 @@
 use leptos::prelude::*;
 use super::setup::provide_auth_context;
+use crate::common::{COGNITO_REGION, STUDENT_PROVIDER_POOL_ID};
 
 ///# Student Login Context Component
 /// 
@@ -20,7 +21,7 @@ pub fn StudentLoginContext(
 ) -> impl IntoView {
     provide_auth_context(
         crate::utils::use_origin(),
-        "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Lfjuy5zaM",
+        format!("https://cognito-idp.{COGNITO_REGION}.amazonaws.com/{STUDENT_PROVIDER_POOL_ID}"),
         "10jr2h3vtpu9n7gj46pvg5qo2q",
         "/students/callback"
     );
