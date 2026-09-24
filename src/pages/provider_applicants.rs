@@ -75,13 +75,14 @@ fn ApplicantsScholarshipList() -> impl IntoView {
     async fn get_provider_scholarships(
         access_token: String,
     ) -> Result<Vec<ExpandableInfo>, ServerFnError> {
+        use crate::common::{COGNITO_REGION, STUDENT_PROVIDER_POOL_ID};
         use crate::pages::api::SCHOLARSHIPS_TABLE;
         use crate::pages::api::tokens::validate_and_get_token_info;
 
         let claims = validate_and_get_token_info(
             access_token,
-            "us-east-1_Lfjuy5zaM".to_string(),
-            "us-east-1".to_string(),
+            STUDENT_PROVIDER_POOL_ID.to_string(),
+            COGNITO_REGION.to_string(),
         )
         .await?;
 

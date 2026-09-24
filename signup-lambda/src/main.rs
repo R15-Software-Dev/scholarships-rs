@@ -1,4 +1,5 @@
 use lambda_runtime::{run, service_fn, tracing, Error};
+mod constants;
 mod handler;
 
 use handler::handler as function_handler;
